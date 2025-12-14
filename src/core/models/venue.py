@@ -2,6 +2,8 @@ from typing import Optional
 
 
 class Venue:
+    """Venue where the intern is allocated. Can have multiple Interns"""
+
     def __init__(
         self,
         venue_name: str,

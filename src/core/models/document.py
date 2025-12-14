@@ -2,6 +2,8 @@ from typing import Optional
 
 
 class Document:
+    """Documents associated with an Intern. Each Intern can have many Documents"""
+
     def __init__(
         self,
         intern_id: int,

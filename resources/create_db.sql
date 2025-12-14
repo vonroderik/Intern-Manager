@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS interns (
     working_days TEXT,
     working_hours TEXT,
     venue_id INTEGER,
+    term TEXT NOT NULL,
     last_update TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
     FOREIGN KEY (venue_id) REFERENCES venues(venue_id)
 );
