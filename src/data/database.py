@@ -1,10 +1,6 @@
 from pathlib import Path
 import sqlite3
 
-def get_db_path() -> Path:
-    """Returns the path to the SQLite database file."""
-
-    return get_resource_path("interns.db")
 
 def get_resource_path(filename: str) -> Path:
     """
@@ -20,6 +16,12 @@ def get_resource_path(filename: str) -> Path:
     script_path = Path(__file__).parent.absolute()
     project_folder = script_path.parent.parent
     return project_folder / "resources" / filename
+
+
+def get_db_path() -> Path:
+    """Returns the path to the SQLite database file."""
+
+    return get_resource_path("interns.db")
 
 
 def get_sql_path() -> Path:

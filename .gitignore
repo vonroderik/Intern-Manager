@@ -10,11 +10,11 @@ wheels/
 .venv
 
 # Database
-.db
+*.db
 
 # Pytest
-.pytest_cache
+*.pytest_cache
 
 # Ruff
-.ruff_cache
-.ruff
+*.ruff_cache
+*.ruff
