@@ -35,7 +35,7 @@ class Document:
             is_completed (int): Completion status (0 = not completed, 1 = completed).
             document_id (Optional[int]): Database identifier. None if not persisted.
         """
-        
+
         self.intern_id = intern_id
         self.document_name = document_name
         self.is_completed = is_completed

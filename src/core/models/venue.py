@@ -37,7 +37,7 @@ class Venue:
             venue_name (str): Name of the venue.
             venue_id (Optional[int]): Database identifier. None if not persisted.
             address (Optional[str]): Physical address of the venue.
-            supervisor_name (Optional[str]): Name of the supervisor responsible 
+            supervisor_name (Optional[str]): Name of the supervisor responsible
                 for interns at this venue.
             email (Optional[str]): Contact email address.
             phone (Optional[str]): Contact phone number.

@@ -27,7 +27,7 @@ class Comment:
             comment (str): Text content of the comment.
             comment_id (Optional[int]): Database identifier. None if not persisted.
         """
-        
+
         self.intern_id = intern_id
         self.comment = comment
         self.comment_id = comment_id

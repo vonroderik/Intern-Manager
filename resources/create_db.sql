@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS documents (
     document_name TEXT NOT NULL,
     is_completed INTEGER NOT NULL CHECK (is_completed IN (0, 1)),
     last_update TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
-    FOREIGN KEY (intern_id) REFERENCES interns(intern_id)
+    FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
 );
 
 -- CREATE COMMENTS TABLE
@@ -41,5 +41,5 @@ CREATE TABLE IF NOT EXISTS comments (
     intern_id INTEGER NOT NULL,
     comment TEXT NOT NULL,
     last_update TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
-    FOREIGN KEY (intern_id) REFERENCES interns(intern_id)
+    FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
 );

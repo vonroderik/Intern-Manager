@@ -3,7 +3,15 @@
 from data.database import DatabaseConnector
 from repository.intern_repo import InternRepository
 from core.models.intern import Intern
+from core.models.venue import Venue
 from typing import Optional
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 def main():
@@ -28,17 +36,42 @@ def main():
     # (Usando o modelo atualizado com 'term' e respeitando a ordem de argumentos)
     print("\n--- TESTANDO INSERÇÃO ---")
 
-    novo_estagiario1 = Intern(
-        name="Teste Integrado Fictício",
-        registration_number=2025001,
-        term="2026-1",
-        email="teste.ficticio@universidade.br",
-        start_date="2026-03-01",
-        end_date="2026-09-01",
-        working_days="Segunda a Sexta",
-        working_hours="08h às 14h",
-        venue_id=None,  # Assumimos que a Venue ID será inserida depois, ou é nula.
+
+    venue_to_save = Venue(
+    venue_name="Miracle Store",
+    supervisor_name="Gabriela Golubinski",
+    email="gabi@miraclestore.com",
+    phone="5194157618",
+    address="Rua Teste, 123" # Incluí o endereço
+)
+
+    # 2. SQL INSERT para a Venue
+    sql_insert_venue = """
+    INSERT INTO venues (venue_name, address, supervisor_name, email, phone) 
+    VALUES (?, ?, ?, ?, ?)
+    """
+    venue_data = (
+        venue_to_save.venue_name,
+        venue_to_save.address,
+        venue_to_save.supervisor_name,
+        venue_to_save.email,
+        venue_to_save.phone
     )
+
+    # 3. Execução e Commit
+    db_connector.cursor.execute(sql_insert_venue, venue_data)
+    db_connector.conn.commit()
+    novo_estagiario1 = Intern(
+            name="Alex Ellwanger Pereira",
+            registration_number=1833550,
+            term="2026-1",
+            email="alexellwanger2019@gmail.com",
+            start_date="2025-09-29",
+            end_date="2025-12-13",
+            working_days="Segunda a Sexta",
+            working_hours="14:00 as 20:00",
+            venue_id=1,  # Assumimos que a Venue ID será inserida depois, ou é nula.
+        )
 
     novo_estagiario2 = Intern(
         name="Rodrigo Mello",

@@ -1,6 +1,9 @@
 from data.database import DatabaseConnector
 from core.models.intern import Intern
 from typing import Optional, List
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class InternRepository:
@@ -209,7 +212,7 @@ working_days, working_hours, venue_id FROM interns WHERE name LIKE ?
 LIMIT 1
 """
 
-        self.cursor.execute(sql_query, (f'%{name}%',))
+        self.cursor.execute(sql_query, (f"%{name}%",))
 
         row = self.cursor.fetchone()
 
@@ -230,3 +233,58 @@ LIMIT 1
         )
 
         return intern
+
+    def update(self, intern: Intern) -> bool:
+        sql_query = """
+UPDATE interns SET
+name = ?, registration_number = ?, term = ?, email = ?, 
+    start_date = ?, end_date = ?, working_days = ?, working_hours = ?, 
+    venue_id = ?, 
+    last_update = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
+WHERE intern_id = ?
+"""
+
+        data = (
+            intern.name,
+            intern.registration_number,
+            intern.term,
+            intern.email,
+            intern.start_date,
+            intern.end_date,
+            intern.working_days,
+            intern.working_hours,
+            intern.venue_id,
+            intern.intern_id,
+        )
+        try:
+            self.cursor.execute(sql_query, data)
+            self.conn.commit()
+
+            return self.cursor.rowcount > 0
+
+        except Exception as e:
+            logger.error(
+                f"Falha ao atualizar estagiário '{intern.name}' (ID: {intern.intern_id}). Erro: {e}"
+            )
+            return False
+
+    def delete(self, intern: Intern) -> bool:
+        if intern.intern_id is None:
+            return False
+
+        sql_query = """
+DELETE FROM interns WHERE
+intern_id = ?
+"""
+
+        data = intern.intern_id
+
+        try:
+            self.cursor.execute(sql_query, (data,))
+            self.conn.commit()
+            return self.cursor.rowcount > 0
+        except Exception as e:
+            logger.error(
+                f"Falha ao deletar estagiário '{intern.name}' (ID: {intern.intern_id}). Erro: {e}"
+            )
+            return False

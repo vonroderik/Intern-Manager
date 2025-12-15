@@ -39,7 +39,6 @@ class Intern:
         working_hours: Optional[str] = None,
         venue_id: Optional[int] = None,
     ):
-        
         """
         Initializes an Intern instance.
 
@@ -56,7 +55,7 @@ class Intern:
             working_hours (Optional[str]): Description of working hours.
             venue_id (Optional[int]): Identifier of the associated venue.
         """
-        
+
         self.name = name
         self.registration_number = registration_number
         self.term = term
