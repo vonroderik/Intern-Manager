@@ -1,9 +1,12 @@
 from core.models.intern import Intern
 from repository.intern_repo import InternRepository
 import logging
-import re
 from typing import List, Optional
-from datetime import datetime
+from utils.validations import (
+    validate_required_fields,
+    validate_email_format,
+    validate_date_range,
+)
 
 DATE_FORMAT = "%d/%m/%Y"
 
@@ -27,61 +30,41 @@ class InternService:
         return self.repo.get_by_name(name)
 
     def add_new_intern(self, intern_data: Intern) -> Optional[int]:
-        # Checks if name, registrarion number and term are present
-        if not intern_data.registration_number:
-            logger.error("RA não informado")
-            raise ValueError("É necessário incluir o RA")
+        # Validate that required fields are present.
+        required_fields = {
+            "name": "Nome do Aluno",
+            "registration_number": "RA",
+            "term": "Semestre",
+            "email": "E-mail",
+            "start_date": "Data de Início",
+            "end_date": "Data de Encerramento",
+        }
 
-        if not intern_data.name:
-            logger.error("Nome não informado")
-            raise ValueError("É necessário incluir o nome do Aluno")
-
-        if not intern_data.term:
-            logger.error("Semestre não informado")
-            raise ValueError("É necessário incluir o semestre")
-
-        # Checks if user (name or registration number) already exists
-        existing_registration_number = self.repo.get_by_registration_number(
-            intern_data.registration_number
-        )
-
-        if existing_registration_number:
-            logger.error(
-                f"Estagiário {intern_data.name} (ID: {existing_registration_number.intern_id}) já está cadastrado"
-            )
-            raise ValueError(
-                f"Matrícula já está cadastrada para o estagiário {existing_registration_number.name} (ID: {existing_registration_number.intern_id})"
-            )
-
-        # Validates e-mail
-        email = intern_data.email
-        if not email:  # validates e-mail
-            raise ValueError("E-mail é obrigatório")
-        if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email):
-            raise ValueError("Verifique o e-mail")
-
-        # Checks if end date is after start date.
         try:
-            start_date = intern_data.start_date
-            end_date = intern_data.end_date
+            validate_required_fields(intern_data, required_fields)
 
-            dt_start = datetime.strptime(start_date, DATE_FORMAT)
-            dt_end = datetime.strptime(end_date, DATE_FORMAT)
-
-            if dt_end <= dt_start:
-                raise ValueError(
-                    "A data de encerramento deve ser posterior à data de início"
-                )
-
-            intern_data.start_date = dt_start.strftime("%Y-%m-%d")
-            intern_data.end_date = dt_end.strftime("%Y-%m-%d")
         except ValueError as e:
-            raise ValueError(
-                f"Erro no formato da data. Use o formato DD/MM/AAAA. Detalhe: {e}"
-            )
-        return self.repo.save(intern_data)
+            logger.error(f"Campos obrigatórios ausentes: {e}")
 
-        # TODO
+        # Validate that e-mail is present and in the correct format
+        try:
+            email = intern_data.email
+            validate_email_format(str(email))
+        except ValueError as e:
+            logger.error(f"E-mail ausente ou incorreto: {e}")
+
+        # Validate that the end date is later than the start date
+        start_date_str = str(intern_data.start_date)
+        end_date_str = str(intern_data.end_date)
+
+        try:
+            validate_date_range(start_date_str, end_date_str)
+        except ValueError as e:
+            logger.error(
+                f"A data de encerramento de estágio não pode ser anterior a data de início: {e}"
+            )
+
+        return self.repo.save(intern_data)
 
     def update_intern(self, intern_data: Intern) -> Optional[bool]:
         ...

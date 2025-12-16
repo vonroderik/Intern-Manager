@@ -40,3 +40,13 @@ class Document:
         self.document_name = document_name
         self.is_completed = is_completed
         self.document_id = document_id
+
+    def __repr__(self) -> str:
+        return (
+            f"Document("
+            f"intern_id={self.intern_id}"
+            f"document_name={self.document_name}"
+            f"is_completed={self.is_completed}"
+            f"document_id={self.document_id}"
+            f")"
+        )

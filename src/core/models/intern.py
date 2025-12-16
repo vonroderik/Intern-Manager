@@ -66,3 +66,19 @@ class Intern:
         self.working_days = working_days
         self.working_hours = working_hours
         self.venue_id = venue_id
+
+    def __repr__(self) -> str:
+        return (
+            f"Intern("
+            f"id={self.intern_id}, "
+            f"name={self.name}, "
+            f"registration_number={self.registration_number}, "
+            f"term={self.term}, "
+            f"email={self.email}, "
+            f"start_date={self.start_date}, "
+            f"end_date={self.end_date}, "
+            f"working_days={self.working_days}, "
+            f"working_hours={self.working_hours}, "
+            f"venue_id={self.venue_id}"
+            f")"
+        )

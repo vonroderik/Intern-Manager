@@ -49,3 +49,15 @@ class Venue:
         self.supervisor_name = supervisor_name
         self.email = email
         self.phone = phone
+
+    def __repr__(self) -> str:
+        return (
+            f"Venue("
+            f"venue_name={self.venue_name}, "
+            f"venue_id={self.venue_id}, "
+            f"venue_address={self.address}, "
+            f"supervisor_name={self.supervisor_name}, "
+            f"venue_email={self.email}, "
+            f"venue_phone={self.phone}, "
+            f")"
+        )

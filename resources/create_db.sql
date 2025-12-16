@@ -43,3 +43,12 @@ CREATE TABLE IF NOT EXISTS comments (
     last_update TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
     FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
 );
+
+-- CREATE MEETINGS TABLE
+CREATE TABLE IF NOT EXISTS comments (
+    meeting_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    intern_id INTEGER NOT NULL,
+    meeting_date TEXT NOT NULL,
+    is_intern_present INTEGER NOT NULL CHECK (is_intern_present IN (0, 1)),
+    FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
+);
