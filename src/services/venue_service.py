@@ -3,6 +3,8 @@ from core.models.venue import Venue
 from repository.venue_repo import VenueRepository
 from utils.validations import validate_email_format
 
+from typing import Optional
+
 REQUIRED_FIELDS = {
     "venue_name": "Nome do local de Estágio",
     "supervisor_name": "Nome do Supervisor",
@@ -38,6 +40,10 @@ class VenueService(BaseService[Venue]):
         self._validate_required_fields(venue)
         validate_email_format(str(venue.supervisor_email))
         return self.repo.save(venue)
+
+    def get_by_name(self, name: str) -> Optional[Venue]:
+        """Busca um local pelo nome (encapsulando o repositório)."""
+        return self.repo.get_by_name(name)
 
     def update_venue(self, venue: Venue):
         """

@@ -6,6 +6,7 @@ from utils.validations import (
     validate_date_range,
     parse_date_to_iso,
 )
+from typing import Optional
 
 REQUIRED_FIELDS = {
     "name": "Nome do Aluno",
@@ -79,6 +80,10 @@ class InternService(BaseService[Intern]):
             raise ValueError(f"RA {intern.registration_number} já está cadastrado.")
         self._normalize_intern_dates(intern)
         return self.repo.save(intern)
+
+    def get_by_name(self, name: str) -> Optional[Intern]:
+        """Busca um local pelo nome (encapsulando o repositório)."""
+        return self.repo.get_by_name(name)
 
     def update_intern(self, intern: Intern):
         """

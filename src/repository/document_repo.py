@@ -37,7 +37,7 @@ class DocumentRepository:
                     document_id=row[0],
                     intern_id=row[1],
                     document_name=row[2],
-                    is_completed=bool(row[3]), # Convertendo int(0/1) para bool
+                    is_completed=bool(row[3]),  # Convertendo int(0/1) para bool
                     last_update=row[4],
                 )
             )
@@ -82,11 +82,7 @@ class DocumentRepository:
 
         val_completed = 1 if document.is_completed else 0
 
-        data = (
-            document.document_name,
-            document.intern_id,
-            val_completed
-        )
+        data = (document.document_name, document.intern_id, val_completed)
 
         self.cursor.execute(sql_query, data)
         self.conn.commit()

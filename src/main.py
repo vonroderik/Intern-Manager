@@ -20,28 +20,30 @@ from services.comment_service import CommentService
 import random
 from datetime import datetime, timedelta
 
-def generate_fake_data(intern_id: int, start_date_str: str, 
-                       meeting_service: MeetingService, 
-                       doc_service: DocumentService, 
-                       comment_service: CommentService):
+
+def generate_fake_data(
+    intern_id: int,
+    start_date_str: str,
+    meeting_service: MeetingService,
+    doc_service: DocumentService,
+    comment_service: CommentService,
+):
     """
     Injeta dados fictícios (Meeting, Document, Comment) em um estagiário.
     """
-    
+
     # --- 1. Criar Reuniões (Placebos) ---
     try:
         dt_start = datetime.strptime(start_date_str, "%d/%m/%Y")
         meeting_date = dt_start + timedelta(days=7)
-        meeting_str = meeting_date.strftime("%d/%m/%Y") # Formato UI
-        
+        meeting_str = meeting_date.strftime("%d/%m/%Y")  # Formato UI
+
         # Randomiza se o aluno foi (80% de chance de ir)
         present = random.choice([True, True, True, True, False])
-        
+
         meeting_service.add_new_meeting(
             Meeting(
-                intern_id=intern_id,
-                meeting_date=meeting_str,
-                is_intern_present=present
+                intern_id=intern_id, meeting_date=meeting_str, is_intern_present=present
             )
         )
     except Exception as e:
@@ -54,17 +56,15 @@ def generate_fake_data(intern_id: int, start_date_str: str,
         "Termo de Compromisso de Estágio (TCE)",
         "Plano de Atividades",
         "Apólice de Seguro",
-        "Ficha de Frequência Mensal"
+        "Ficha de Frequência Mensal",
     ]
-    
+
     for doc_name in docs_template:
         try:
             is_done = random.choice([True, False])
             doc_service.add_new_document(
                 Document(
-                    intern_id=intern_id,
-                    document_name=doc_name,
-                    is_completed=is_done
+                    intern_id=intern_id, document_name=doc_name, is_completed=is_done
                 )
             )
         except Exception as e:
@@ -77,16 +77,13 @@ def generate_fake_data(intern_id: int, start_date_str: str,
         "Excelente técnica de pipetagem (metafórica, já que é estética).",
         "Chegou atrasado duas vezes, culpo o trânsito.",
         "Precisa melhorar a postura profissional com pacientes.",
-        "Destaque da turma, merece estrelinha."
+        "Destaque da turma, merece estrelinha.",
     ]
-    
+
     try:
         comment_text = random.choice(comments_pool)
         comment_service.add_new_comment(
-            Comment(
-                intern_id=intern_id,
-                comment=comment_text
-            )
+            Comment(intern_id=intern_id, comment=comment_text)
         )
     except Exception as e:
         pass
@@ -94,7 +91,7 @@ def generate_fake_data(intern_id: int, start_date_str: str,
 
 def main():
     db = DatabaseConnector()
-    
+
     # Inicializando a "equipe médica" (Services)
     v_service = VenueService(VenueRepository(db))
     i_service = InternService(InternRepository(db))
@@ -171,14 +168,14 @@ def main():
         },
         {
             "nome": "Estagiário Teste Sem WD",
-            "ra": 999999, 
+            "ra": 999999,
             "local": "Miracle Store",
             "sup": "Gabriela",
             "email": "teste@teste.com",
             "ini": "29/09/2025",
-            "fim": "13/12/2025"
+            "fim": "13/12/2025",
             # Note que NÃO tem a chave "wd" aqui
-        }
+        },
     ]
 
     print("--- INICIANDO PROTOCOLO DE POPULAÇÃO ---")
@@ -202,32 +199,34 @@ def main():
 
             # 2. Gerencia Intern (Estagiário)
             existing_i = i_service.repo.get_by_registration_number(item["ra"])
-            
+
             if existing_i:
                 # --- CENÁRIO DE ATUALIZAÇÃO (UPDATE) ---
-                print(f"🔄 Atualizando dados de: {item['nome']} (ID: {existing_i.intern_id})")
-                
+                print(
+                    f"🔄 Atualizando dados de: {item['nome']} (ID: {existing_i.intern_id})"
+                )
+
                 intern_to_update = Intern(
                     intern_id=existing_i.intern_id,
                     name=item["nome"],
                     registration_number=item["ra"],
                     term="5º Módulo",
                     # Mantém o email antigo se não vier novo
-                    email=item.get("email", existing_i.email), 
+                    email=item.get("email", existing_i.email),
                     start_date=item["ini"],
                     end_date=item["fim"],
                     # Atualiza WD se vier, senão passa None (e o update grava None se for o caso)
-                    working_days=item.get("wd"), 
+                    working_days=item.get("wd"),
                     venue_id=v_id,
                 )
-                
+
                 i_service.update_intern(intern_to_update)
                 intern_id = existing_i.intern_id
 
             else:
                 # --- CENÁRIO DE CRIAÇÃO (INSERT) ---
                 print(f"👶 Criando novo estagiário: {item['nome']}")
-                
+
                 new_intern = Intern(
                     name=item["nome"],
                     registration_number=item["ra"],
@@ -235,21 +234,24 @@ def main():
                     email=f"aluno{item['ra']}@teste.com",
                     start_date=item["ini"],
                     end_date=item["fim"],
-                    working_days=item.get("wd"), # .get evita o crash aqui!
+                    working_days=item.get("wd"),  # .get evita o crash aqui!
                     venue_id=v_id,
                 )
-                
+
                 intern_id = i_service.add_new_intern(new_intern)
 
             # 3. Injeta os dados fictícios (Meeting, Doc, Comment)
             if intern_id:
-                generate_fake_data(intern_id, item["ini"], m_service, d_service, c_service)
+                generate_fake_data(
+                    intern_id, item["ini"], m_service, d_service, c_service
+                )
                 print(f"   💉 Dados complementares injetados em {item['nome']}")
 
         except Exception as e:
             print(f"❌ ERRO CRÍTICO no processamento de {item['nome']}: {e}")
 
     print("--- PROTOCOLO FINALIZADO ---")
+
 
 if __name__ == "__main__":
     main()
