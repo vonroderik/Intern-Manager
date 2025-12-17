@@ -44,14 +44,16 @@ class VenueRepository:
 
         venues = []
         for row in results:
-            venues.append(Venue(
-                venue_id=row[0],
-                venue_name=row[1],
-                venue_address=row[2],
-                supervisor_name=row[3],
-                supervisor_email=row[4],
-                supervisor_phone=row[5],
-            ))
+            venues.append(
+                Venue(
+                    venue_id=row[0],
+                    venue_name=row[1],
+                    venue_address=row[2],
+                    supervisor_name=row[3],
+                    supervisor_email=row[4],
+                    supervisor_phone=row[5],
+                )
+            )
         return venues
 
     def get_by_id(self, venue_id: int) -> Optional[Venue]:

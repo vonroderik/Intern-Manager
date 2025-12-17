@@ -49,18 +49,20 @@ class InternRepository:
 
         interns = []
         for row in results:
-            interns.append(Intern(
-                intern_id=row[0],
-                name=row[1],
-                registration_number=row[2],
-                term=row[3],
-                email=row[4],
-                start_date=row[5],
-                end_date=row[6],
-                working_days=row[7],
-                working_hours=row[8],
-                venue_id=row[9],
-            ))
+            interns.append(
+                Intern(
+                    intern_id=row[0],
+                    name=row[1],
+                    registration_number=row[2],
+                    term=row[3],
+                    email=row[4],
+                    start_date=row[5],
+                    end_date=row[6],
+                    working_days=row[7],
+                    working_hours=row[8],
+                    venue_id=row[9],
+                )
+            )
         return interns
 
     def get_by_id(self, intern_id: int) -> Optional[Intern]:
@@ -183,9 +185,15 @@ class InternRepository:
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         data = (
-            intern.name, intern.registration_number, intern.term, intern.email,
-            intern.start_date, intern.end_date, intern.working_days,
-            intern.working_hours, intern.venue_id,
+            intern.name,
+            intern.registration_number,
+            intern.term,
+            intern.email,
+            intern.start_date,
+            intern.end_date,
+            intern.working_days,
+            intern.working_hours,
+            intern.venue_id,
         )
         self.cursor.execute(sql_query, data)
         self.conn.commit()
@@ -210,9 +218,16 @@ class InternRepository:
         WHERE intern_id = ?
         """
         data = (
-            intern.name, intern.registration_number, intern.term, intern.email,
-            intern.start_date, intern.end_date, intern.working_days,
-            intern.working_hours, intern.venue_id, intern.intern_id,
+            intern.name,
+            intern.registration_number,
+            intern.term,
+            intern.email,
+            intern.start_date,
+            intern.end_date,
+            intern.working_days,
+            intern.working_hours,
+            intern.venue_id,
+            intern.intern_id,
         )
         try:
             self.cursor.execute(sql_query, data)

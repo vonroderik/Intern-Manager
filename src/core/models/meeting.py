@@ -1,50 +1,48 @@
 from typing import Optional
 
 
-class Comment:
+class Meeting:
     """
-    Domain model representing a comment associated with an intern.
+    Domain model representing a supervisory meeting with an intern.
 
-    Each Comment stores a textual annotation linked to a specific Intern.
-    An intern may have multiple comments, typically used for notes,
-    observations, or administrative records.
-
-    This class mirrors the structure of the `comments` table in the database.
+    This class mirrors the structure of the `meetings` table in the database.
+    It tracks whether the intern was present and when the meeting occurred.
 
     Attributes:
-        comment_id (Optional[int]): Unique database identifier. None if the
-            comment has not yet been persisted.
+        meeting_id (Optional[int]): Unique database identifier.
         intern_id (int): Identifier of the associated intern.
-        comment (str): Textual content of the comment.
+        meeting_date (str): Date of the meeting (ISO format preferred for DB).
+        is_intern_present (int): 1 if present, 0 if absent.
     """
 
     def __init__(
         self,
         intern_id: int,
         meeting_date: str,
-        meeting_id,
-        is_intern_present: Optional[int] = None,
+        is_intern_present: bool,
+        meeting_id: Optional[int] = None,
     ):
         """
-        Initializes a Comment instance.
+        Initializes a Meeting instance.
 
         Args:
             intern_id (int): Identifier of the associated intern.
-            comment (str): Text content of the comment.
-            comment_id (Optional[int]): Database identifier. None if not persisted.
+            meeting_date (str): Date of the meeting.
+            is_intern_present (bool): True if intern was present, False otherwise.
+            meeting_id (Optional[int]): Database identifier. None if not persisted.
         """
-
         self.intern_id = intern_id
         self.meeting_date = meeting_date
+        # Converte bool para int (0 ou 1) para o SQLite, se vier como bool
+        self.is_intern_present = 1 if is_intern_present else 0
         self.meeting_id = meeting_id
-        self.is_intern_present = is_intern_present
 
     def __repr__(self) -> str:
         return (
-            f"Comment("
-            f"intern_id={self.intern_id}"
-            f"meeting_date={self.meeting_date}"
-            f"meeting_id={self.meeting_id}"
-            f"is_intern_present={self.is_intern_present}"
+            f"Meeting("
+            f"id={self.meeting_id}, "
+            f"intern_id={self.intern_id}, "
+            f"date='{self.meeting_date}', "
+            f"present={self.is_intern_present}"
             f")"
         )

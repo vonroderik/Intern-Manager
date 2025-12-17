@@ -21,6 +21,7 @@ class InternService(BaseService[Intern]):
     """
     Service class responsible for business logic related to interns.
     """
+
     REQUIRED_FIELDS = REQUIRED_FIELDS
 
     def __init__(self, repo: InternRepository):

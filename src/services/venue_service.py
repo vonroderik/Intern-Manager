@@ -13,6 +13,7 @@ class VenueService(BaseService[Venue]):
     """
     Service class responsible for business logic related to internship venues.
     """
+
     REQUIRED_FIELDS = REQUIRED_FIELDS
 
     def __init__(self, repo: VenueRepository):

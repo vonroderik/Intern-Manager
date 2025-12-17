@@ -12,6 +12,7 @@ class CommentService(BaseService[Comment]):
     """
     Service class responsible for business logic related to intern comments.
     """
+
     REQUIRED_FIELDS = REQUIRED_FIELDS
 
     def __init__(self, repo: CommentRepository):
