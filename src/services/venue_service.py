@@ -23,3 +23,7 @@ class VenueService(BaseService[Venue]):
     def update_venue(self, venue: Venue):
         self._ensure_has_id(venue, "venue")
         return self.repo.update(venue)
+
+    def delete_venue(self, venue: Venue):
+
+        return self.delete(venue, "venue")

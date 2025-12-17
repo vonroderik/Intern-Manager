@@ -18,7 +18,13 @@ class Comment:
         comment (str): Textual content of the comment.
     """
 
-    def __init__(self, intern_id: int, comment: str, comment_id: Optional[int] = None):
+    def __init__(
+        self,
+        intern_id: int,
+        comment: str,
+        comment_id: Optional[int] = None,
+        last_update: Optional[str] = None,
+    ):
         """
         Initializes a Comment instance.
 
@@ -31,6 +37,7 @@ class Comment:
         self.intern_id = intern_id
         self.comment = comment
         self.comment_id = comment_id
+        self.last_update = last_update
 
     def __repr__(self) -> str:
         return (
@@ -38,5 +45,6 @@ class Comment:
             f"intern_id={self.intern_id}"
             f"comment={self.comment}"
             f"comment_id={self.comment_id}"
+            f"last_update={self.last_update}"
             f")"
         )

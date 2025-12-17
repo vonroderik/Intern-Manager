@@ -25,7 +25,7 @@ class VenueRepository:
 
     def __init__(self, db: DatabaseConnector):
         """
-        Initializes the VenuenRepository with an active database connection.
+        Initializes the VenueRepository with an active database connection.
 
         Args:
             db (DatabaseConnector): Database connector providing an open
@@ -35,42 +35,6 @@ class VenueRepository:
         self.db = db
         self.conn = db.conn
         self.cursor = db.cursor
-
-    def save(self, venue: Venue) -> Optional[int]:
-        """
-        Persists a new Venue entity in the database.
-
-        The method inserts a new record into the `venues` table and commits
-        the transaction. If the Venue already has an `venue_id`, the method
-        assumes it is already persisted and aborts the operation.
-
-        Args:
-            venue (Venue): Venue entity to be persisted.
-
-        Returns:
-            Optional[int]: The generated database ID of the new venue,
-            or None if the venue already has an ID.
-        """
-
-        if venue.venue_id is not None:
-            return None
-
-        sql_query = """
-INSERT INTO venues (venue_name, address, supervisor_name, email, phone) 
-VALUES (?, ?, ?, ?, ?)
-"""
-        data = (
-            venue.venue_name,
-            venue.venue_address,
-            venue.supervisor_name,
-            venue.supervisor_email,
-            venue.supervisor_phone,
-        )
-
-        self.cursor.execute(sql_query, data)
-        self.conn.commit()
-
-        return self.cursor.lastrowid
 
     def get_all(self) -> List[Venue]:
         """
@@ -82,7 +46,8 @@ VALUES (?, ?, ?, ?, ?)
         """
 
         sql_query = """
-SELECT venue_id, venue_name, address, supervisor_name, email, phone FROM venues
+SELECT venue_id, venue_name, address, supervisor_name, email, phone FROM venues 
+ORDER BY name COLLATE NOCASE ASC
 """
         self.cursor.execute(sql_query)
         results = self.cursor.fetchall()
@@ -153,7 +118,7 @@ SELECT venue_id, venue_name, address, supervisor_name, email, phone FROM venues 
 
         sql_query = """
 SELECT venue_id, venue_name, address, supervisor_name, email, phone FROM venues WHERE venue_name LIKE ?
-LIMIT 1
+ORDER BY name COLLATE NOCASE ASC
 """
 
         self.cursor.execute(sql_query, (f"%{name}%",))
@@ -173,6 +138,42 @@ LIMIT 1
         )
 
         return venue
+
+    def save(self, venue: Venue) -> Optional[int]:
+        """
+        Persists a new Venue entity in the database.
+
+        The method inserts a new record into the `venues` table and commits
+        the transaction. If the Venue already has an `venue_id`, the method
+        assumes it is already persisted and aborts the operation.
+
+        Args:
+            venue (Venue): Venue entity to be persisted.
+
+        Returns:
+            Optional[int]: The generated database ID of the new venue,
+            or None if the venue already has an ID.
+        """
+
+        if venue.venue_id is not None:
+            return None
+
+        sql_query = """
+INSERT INTO venues (venue_name, address, supervisor_name, email, phone) 
+VALUES (?, ?, ?, ?, ?)
+"""
+        data = (
+            venue.venue_name,
+            venue.venue_address,
+            venue.supervisor_name,
+            venue.supervisor_email,
+            venue.supervisor_phone,
+        )
+
+        self.cursor.execute(sql_query, data)
+        self.conn.commit()
+
+        return self.cursor.lastrowid
 
     def update(self, venue: Venue) -> bool:
         sql_query = """

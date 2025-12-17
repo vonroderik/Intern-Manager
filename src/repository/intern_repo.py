@@ -36,48 +36,6 @@ class InternRepository:
         self.conn = db.conn
         self.cursor = db.cursor
 
-    def save(self, intern: Intern) -> Optional[int]:
-        """
-        Persists a new Intern entity in the database.
-
-        The method inserts a new record into the `interns` table and commits
-        the transaction. If the Intern already has an `intern_id`, the method
-        assumes it is already persisted and aborts the operation.
-
-        Args:
-            intern (Intern): Intern entity to be persisted.
-
-        Returns:
-            Optional[int]: The generated database ID of the new intern,
-            or None if the intern already has an ID.
-        """
-
-        if intern.intern_id is not None:
-            return None
-
-        sql_query = """
-INSERT INTO interns (
-name, registration_number, term, email, start_date, end_date, working_days, working_hours, venue_id) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-"""
-
-        data = (
-            intern.name,
-            intern.registration_number,
-            intern.term,
-            intern.email,
-            intern.start_date,
-            intern.end_date,
-            intern.working_days,
-            intern.working_hours,
-            intern.venue_id,
-        )
-
-        self.cursor.execute(sql_query, data)
-        self.conn.commit()
-
-        return self.cursor.lastrowid
-
     def get_all(self) -> List[Intern]:
         """
         Retrieves all interns stored in the database.
@@ -89,7 +47,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 
         sql_query = """
 SELECT intern_id, name, registration_number, term, email, start_date, end_date, 
-working_days, working_hours, venue_id FROM interns
+working_days, working_hours, venue_id FROM interns ORDER BY name COLLATE NOCASE ASC
 """
         self.cursor.execute(sql_query)
         results = self.cursor.fetchall()
@@ -209,7 +167,7 @@ working_days, working_hours, venue_id FROM interns WHERE registration_number = ?
         sql_query = """
 SELECT intern_id, name, registration_number, term, email, start_date, end_date, 
 working_days, working_hours, venue_id FROM interns WHERE name LIKE ?
-LIMIT 1
+ORDER BY name COLLATE NOCASE ASC
 """
 
         self.cursor.execute(sql_query, (f"%{name}%",))
@@ -233,6 +191,48 @@ LIMIT 1
         )
 
         return intern
+
+    def save(self, intern: Intern) -> Optional[int]:
+        """
+        Persists a new Intern entity in the database.
+
+        The method inserts a new record into the `interns` table and commits
+        the transaction. If the Intern already has an `intern_id`, the method
+        assumes it is already persisted and aborts the operation.
+
+        Args:
+            intern (Intern): Intern entity to be persisted.
+
+        Returns:
+            Optional[int]: The generated database ID of the new intern,
+            or None if the intern already has an ID.
+        """
+
+        if intern.intern_id is not None:
+            return None
+
+        sql_query = """
+INSERT INTO interns (
+name, registration_number, term, email, start_date, end_date, working_days, working_hours, venue_id) 
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+"""
+
+        data = (
+            intern.name,
+            intern.registration_number,
+            intern.term,
+            intern.email,
+            intern.start_date,
+            intern.end_date,
+            intern.working_days,
+            intern.working_hours,
+            intern.venue_id,
+        )
+
+        self.cursor.execute(sql_query, data)
+        self.conn.commit()
+
+        return self.cursor.lastrowid
 
     def update(self, intern: Intern) -> bool:
         sql_query = """
