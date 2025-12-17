@@ -25,6 +25,7 @@ class ImportService:
                 intern_name = row["nome"]
                 current_venue_id = None
 
+                # --- 1. VENUE PROCESSING ---
                 if venue_name not in processed_venues:
                     existing_venue = self.venue_service.get_by_name(venue_name)
 
@@ -47,6 +48,8 @@ class ImportService:
 
                         new_id = self.venue_service.add_new_venue(venue_to_add)
 
+                        current_venue_id = new_id
+
                     processed_venues.add(venue_name)
                     venue_id_map[venue_name] = current_venue_id
 
@@ -57,6 +60,7 @@ class ImportService:
                         if v:
                             current_venue_id = v.venue_id
 
+                # --- 2. INTERN PROCESSING ---
                 if intern_name in processed_interns:
                     continue
 
@@ -64,7 +68,8 @@ class ImportService:
                 intern_data = {
                     "name": row["nome"],
                     "registration_number": row["ra"],
-                    "term": "2026",
+                    "venue_id": current_venue_id,
+                    "term": row["periodo"],
                     "email": f"aluno{row['ra']}@teste.com",
                     "start_date": row["data_inicio"],
                     "end_date": row["data_fim"],
@@ -80,4 +85,4 @@ class ImportService:
                 else:
                     intern_to_add = Intern(**intern_data)
                     self.intern_service.add_new_intern(intern_to_add)
-                    processed_interns.add(intern_name)
+                processed_interns.add(intern_name)
