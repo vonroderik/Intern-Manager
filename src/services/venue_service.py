@@ -25,5 +25,4 @@ class VenueService(BaseService[Venue]):
         return self.repo.update(venue)
 
     def delete_venue(self, venue: Venue):
-
         return self.delete(venue, "venue")

@@ -57,5 +57,4 @@ class InternService(BaseService[Intern]):
         return self.repo.update(intern)
 
     def delete_intern(self, intern: Intern):
-
         return self.delete(intern, "intern")

@@ -23,7 +23,8 @@ class Document:
         self,
         intern_id: int,
         document_name: str,
-        is_completed: int,
+        is_completed: bool,
+        last_update: Optional[str] = None,
         document_id: Optional[int] = None,
     ):
         """
@@ -39,6 +40,7 @@ class Document:
         self.intern_id = intern_id
         self.document_name = document_name
         self.is_completed = is_completed
+        self.last_update = last_update
         self.document_id = document_id
 
     def __repr__(self) -> str:
@@ -47,6 +49,7 @@ class Document:
             f"intern_id={self.intern_id}"
             f"document_name={self.document_name}"
             f"is_completed={self.is_completed}"
+            f"last_update={self.last_update}"
             f"document_id={self.document_id}"
             f")"
         )

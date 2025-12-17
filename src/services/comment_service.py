@@ -7,6 +7,7 @@ REQUIRED_FIELDS = {
     "intern_id": "Nome do Estagiário",
 }
 
+
 class CommentService(BaseService[Comment]):
     REQUIRED_FIELDS = REQUIRED_FIELDS
 
@@ -23,5 +24,4 @@ class CommentService(BaseService[Comment]):
         return self.repo.update(comment)
 
     def delete_comment(self, comment: Comment):
-
         return self.delete(comment, "comment")
