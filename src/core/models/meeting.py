@@ -33,7 +33,6 @@ class Meeting:
         """
         self.intern_id = intern_id
         self.meeting_date = meeting_date
-        # Converte bool para int (0 ou 1) para o SQLite, se vier como bool
         self.is_intern_present = 1 if is_intern_present else 0
         self.meeting_id = meeting_id
 

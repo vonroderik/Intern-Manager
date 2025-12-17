@@ -39,7 +39,7 @@ class Document:
 
         self.intern_id = intern_id
         self.document_name = document_name
-        self.is_completed = is_completed
+        self.is_completed = 1 if is_completed else 0
         self.last_update = last_update
         self.document_id = document_id
 
