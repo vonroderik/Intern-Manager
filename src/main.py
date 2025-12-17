@@ -25,18 +25,16 @@ def generate_fake_data(intern_id: int, start_date_str: str,
                        doc_service: DocumentService, 
                        comment_service: CommentService):
     """
-    Injeta dados fictícios (Meeting, Document, Comment) em um estagiário
-    para fins de teste de estresse do sistema.
+    Injeta dados fictícios (Meeting, Document, Comment) em um estagiário.
     """
     
     # --- 1. Criar Reuniões (Placebos) ---
-    # Tenta criar uma reunião 7 dias após o início
     try:
         dt_start = datetime.strptime(start_date_str, "%d/%m/%Y")
         meeting_date = dt_start + timedelta(days=7)
         meeting_str = meeting_date.strftime("%d/%m/%Y") # Formato UI
         
-        # Randomiza se o aluno foi (80% de chance de ir, afinal eles precisam de nota)
+        # Randomiza se o aluno foi (80% de chance de ir)
         present = random.choice([True, True, True, True, False])
         
         meeting_service.add_new_meeting(
@@ -47,7 +45,9 @@ def generate_fake_data(intern_id: int, start_date_str: str,
             )
         )
     except Exception as e:
-        print(f"   ⚠️ Falha ao criar reunião fake: {e}")
+        # Se der erro aqui, geralmente é porque já existe ou data inválida
+        # Apenas logamos e seguimos
+        print(f"   ⚠️ (Info) Reunião não criada: {e}")
 
     # --- 2. Criar Documentos (Burocracia) ---
     docs_template = [
@@ -59,7 +59,7 @@ def generate_fake_data(intern_id: int, start_date_str: str,
     
     for doc_name in docs_template:
         try:
-            is_done = random.choice([True, False]) # 50/50, clássico de aluno
+            is_done = random.choice([True, False])
             doc_service.add_new_document(
                 Document(
                     intern_id=intern_id,
@@ -68,7 +68,8 @@ def generate_fake_data(intern_id: int, start_date_str: str,
                 )
             )
         except Exception as e:
-            print(f"   ⚠️ Falha ao criar documento fake ({doc_name}): {e}")
+            # Ignora erros silenciosamente se for duplicidade, etc.
+            pass
 
     # --- 3. Criar Comentários (Fofoca Acadêmica) ---
     comments_pool = [
@@ -88,7 +89,7 @@ def generate_fake_data(intern_id: int, start_date_str: str,
             )
         )
     except Exception as e:
-        print(f"   ⚠️ Falha ao criar comentário fake: {e}")
+        pass
 
 
 def main():
@@ -101,7 +102,7 @@ def main():
     d_service = DocumentService(DocumentRepository(db))
     c_service = CommentService(CommentRepository(db))
 
-    # Seus dados reais (Pacientes Zero)
+    # Seus dados reais + O Paciente Teste (RA 999999)
     dados_manuais = [
         {
             "nome": "Alex Ellwanger Pereira",
@@ -155,6 +156,7 @@ def main():
             "sup": "Larissa Kayser",
             "email": "larissa@luvclinic.com",
             "ini": "21/07/2025",
+            "wd": "segunda a sábado",
             "fim": "13/11/2025",
         },
         {
@@ -168,15 +170,15 @@ def main():
             "fim": "13/12/2025",
         },
         {
-    "nome": "Estagiário Teste Sem WD",
-    "ra": 999999, # Um RA novo que não está no banco
-    "local": "Miracle Store",
-    "sup": "Gabriela",
-    "email": "teste@teste.com",
-    "ini": "29/09/2025",
-    "fim": "13/12/2025"
-    # Note que NÃO tem a chave "wd" aqui
-}
+            "nome": "Estagiário Teste Sem WD",
+            "ra": 999999, 
+            "local": "Miracle Store",
+            "sup": "Gabriela",
+            "email": "teste@teste.com",
+            "ini": "29/09/2025",
+            "fim": "13/12/2025"
+            # Note que NÃO tem a chave "wd" aqui
+        }
     ]
 
     print("--- INICIANDO PROTOCOLO DE POPULAÇÃO ---")
@@ -199,29 +201,47 @@ def main():
                 print(f"✨ Novo local criado: {item['local']}")
 
             # 2. Gerencia Intern (Estagiário)
-            # Tenta buscar pelo RA primeiro para evitar erro de UNIQUE constraint
             existing_i = i_service.repo.get_by_registration_number(item["ra"])
             
             if existing_i:
-                intern_id = existing_i.intern_id
-                print(f"👤 Estagiário já existe: {item['nome']} (ID: {intern_id})")
-            else:
-                intern_id = i_service.add_new_intern(
-                    Intern(
-                        name=item["nome"],
-                        registration_number=item["ra"],
-                        term="5º Módulo",
-                        email=f"aluno{item['ra']}@teste.com",
-                        start_date=item["ini"],
-                        end_date=item["fim"],
-                        working_days=item.get("wd"),
-                        venue_id=v_id,
-                    )
+                # --- CENÁRIO DE ATUALIZAÇÃO (UPDATE) ---
+                print(f"🔄 Atualizando dados de: {item['nome']} (ID: {existing_i.intern_id})")
+                
+                intern_to_update = Intern(
+                    intern_id=existing_i.intern_id,
+                    name=item["nome"],
+                    registration_number=item["ra"],
+                    term="5º Módulo",
+                    # Mantém o email antigo se não vier novo
+                    email=item.get("email", existing_i.email), 
+                    start_date=item["ini"],
+                    end_date=item["fim"],
+                    # Atualiza WD se vier, senão passa None (e o update grava None se for o caso)
+                    working_days=item.get("wd"), 
+                    venue_id=v_id,
                 )
-                print(f"👶 Novo estagiário nascido: {item['nome']} (ID: {intern_id})")
+                
+                i_service.update_intern(intern_to_update)
+                intern_id = existing_i.intern_id
+
+            else:
+                # --- CENÁRIO DE CRIAÇÃO (INSERT) ---
+                print(f"👶 Criando novo estagiário: {item['nome']}")
+                
+                new_intern = Intern(
+                    name=item["nome"],
+                    registration_number=item["ra"],
+                    term="5º Módulo",
+                    email=f"aluno{item['ra']}@teste.com",
+                    start_date=item["ini"],
+                    end_date=item["fim"],
+                    working_days=item.get("wd"), # .get evita o crash aqui!
+                    venue_id=v_id,
+                )
+                
+                intern_id = i_service.add_new_intern(new_intern)
 
             # 3. Injeta os dados fictícios (Meeting, Doc, Comment)
-            # Só pra garantir que temos um ID válido
             if intern_id:
                 generate_fake_data(intern_id, item["ini"], m_service, d_service, c_service)
                 print(f"   💉 Dados complementares injetados em {item['nome']}")
