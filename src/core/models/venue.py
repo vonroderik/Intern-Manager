@@ -25,10 +25,10 @@ class Venue:
         self,
         venue_name: str,
         venue_id: Optional[int] = None,
-        address: Optional[str] = None,
+        venue_address: Optional[str] = None,
         supervisor_name: Optional[str] = None,
-        email: Optional[str] = None,
-        phone: Optional[str] = None,
+        supervisor_email: Optional[str] = None,
+        supervisor_phone: Optional[str] = None,
     ):
         """
         Initializes a Venue instance.
@@ -45,19 +45,19 @@ class Venue:
 
         self.venue_name = venue_name
         self.venue_id = venue_id
-        self.address = address
+        self.venue_address = venue_address
         self.supervisor_name = supervisor_name
-        self.email = email
-        self.phone = phone
+        self.supervisor_email = supervisor_email
+        self.supervisor_phone = supervisor_phone
 
     def __repr__(self) -> str:
         return (
             f"Venue("
             f"venue_name={self.venue_name}, "
             f"venue_id={self.venue_id}, "
-            f"venue_address={self.address}, "
+            f"venue_address={self.venue_address}, "
             f"supervisor_name={self.supervisor_name}, "
-            f"venue_email={self.email}, "
-            f"venue_phone={self.phone}, "
+            f"venue_email={self.supervisor_email}, "
+            f"venue_phone={self.supervisor_phone}, "
             f")"
         )

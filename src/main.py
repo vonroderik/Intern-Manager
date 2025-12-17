@@ -1,106 +1,43 @@
-# Arquivo: src/main.py
-
 from data.database import DatabaseConnector
-from repository.intern_repo import InternRepository
-from core.models.intern import Intern
 from core.models.venue import Venue
-from typing import Optional
-import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-
+from core.models.intern import Intern
+from repository.venue_repo import VenueRepository
+from repository.intern_repo import InternRepository
+from services.venue_service import VenueService
+from services.intern_service import InternService
 
 def main():
-    print("--- 🛠️ INICIANDO O TESTE DE INFRAESTRUTURA E PERSISTÊNCIA ---")
+    db = DatabaseConnector()
+    v_service = VenueService(VenueRepository(db))
+    i_service = InternService(InternRepository(db))
 
-    # 1. TESTE DA CAMADA INFRA: Criação da Conexão e do DB
-    # Isso também garante que a leitura do create_db.sql funcione
-    try:
-        db_connector = DatabaseConnector()
-        print(
-            "✅ 1. Conexão com o banco de dados estabelecida. (DB e tabelas criadas se não existiam)"
-        )
-    except Exception as e:
-        print(f"❌ ERRO GRAVE na Conexão/Criação do DB: {e}")
-        return
+    dados_manuais = [
+        {"nome": "Alex Ellwanger Pereira", "ra": 1833550, "local": "Miracle Store", "sup": "Gabriela Golubinski", "email": "gabigolubinski@hotmail.com", "ini": "29/09/2025", "fim": "13/12/2025"},
+        {"nome": "Hellen Gouvea Schmidt", "ra": 1928926, "local": "Tassia Triboli Saúde", "sup": "Tassia Triboli", "email": "tassia.triboli@outlook.com", "ini": "06/08/2025", "fim": "05/12/2025"},
+        {"nome": "Isadora Bitencourt", "ra": 1933829, "local": "Clinitá", "sup": "Alana Sebastiany", "email": "alana@clinitas.com", "ini": "01/08/2025", "fim": "26/11/2025"},
+        {"nome": "Julian Benito Garcia", "ra": 1944929, "local": "Espaço Facial", "sup": "Josiele Maiara", "email": "biomed.josielemaiara@gmail.com", "ini": "01/08/2025", "fim": "13/12/2025"},
+        {"nome": "Larissa de Freitas", "ra": 1931492, "local": "Clínica Wasser", "sup": "Paula Taís", "email": "paula@wasser.com", "ini": "04/08/2025", "fim": "19/12/2025"},
+        {"nome": "Laura Chinazzo Altmann", "ra": 1929568, "local": "Luv Clinic", "sup": "Larissa Kayser", "email": "larissa@luvclinic.com", "ini": "21/07/2025", "fim": "13/11/2025"},
+        {"nome": "Laura Reichert Freitas", "ra": 1930812, "local": "Emagrecentro", "sup": "Marines Silva", "email": "emagrecentro@gmail.com", "ini": "21/07/2025", "fim": "13/12/2025"}
+    ]
 
-    # 2. TESTE DA CAMADA REPOSITÓRIO: Injeção de Dependência
-    repo = InternRepository(db_connector)
-    print("✅ 2. InternRepository inicializado com sucesso.")
-
-    # 3. TESTE DA CAMADA MODELO & SALVAMENTO: Criando um novo Intern
-    # (Usando o modelo atualizado com 'term' e respeitando a ordem de argumentos)
-    print("\n--- TESTANDO INSERÇÃO ---")
-
-    venue_to_save = Venue(
-        venue_name="Miracle Store",
-        supervisor_name="Gabriela Golubinski",
-        email="gabi@miraclestore.com",
-        phone="5194157618",
-        address="Rua Teste, 123",  # Incluí o endereço
-    )
-
-    # 2. SQL INSERT para a Venue
-    sql_insert_venue = """
-    INSERT INTO venues (venue_name, address, supervisor_name, email, phone) 
-    VALUES (?, ?, ?, ?, ?)
-    """
-    venue_data = (
-        venue_to_save.venue_name,
-        venue_to_save.address,
-        venue_to_save.supervisor_name,
-        venue_to_save.email,
-        venue_to_save.phone,
-    )
-
-    # 3. Execução e Commit
-    db_connector.cursor.execute(sql_insert_venue, venue_data)
-    db_connector.conn.commit()
-    novo_estagiario1 = Intern(
-        name="Alex Ellwanger Pereira",
-        registration_number=1833550,
-        term="2026-1",
-        email="alexellwanger2019@gmail.com",
-        start_date="2025-09-29",
-        end_date="2025-12-13",
-        working_days="Segunda a Sexta",
-        working_hours="14:00 as 20:00",
-        venue_id=1,  # Assumimos que a Venue ID será inserida depois, ou é nula.
-    )
-
-    novo_estagiario2 = Intern(
-        name="Rodrigo Mello",
-        registration_number=2025002,
-        term="2026-1",
-        email="teste.ficticio@universidade.br",
-        start_date="2026-03-01",
-        end_date="2026-09-01",
-        working_days="Segunda a Sexta",
-        working_hours="08h às 14h",
-        venue_id=None,  # Assumimos que a Venue ID será inserida depois, ou é nula.
-    )
-    # 4. SALVAR NO DB
-    print(f"Tentando salvar: {novo_estagiario1.name}...")
-
-    intern_id = repo.save(novo_estagiario1)
-    intern_id = repo.save(novo_estagiario2)
-
-    if intern_id:
-        print(f"✅ 3. Salvamento bem-sucedido! ID gerado no banco: {intern_id}")
-        print(
-            f"O objeto Python (novo_estagiario.intern_id) também foi atualizado para: {novo_estagiario1.intern_id}"
-        )
-    else:
-        print("❌ ERRO: Falha ao salvar o estagiário (ID não retornado).")
-
-    print("\n--- FIM DO TESTE ---")
-
+    for item in dados_manuais:
+        try:
+            # Gerencia Venue
+            existing_v = v_service.repo.get_by_name(item["local"])
+            if existing_v:
+                v_id = existing_v.venue_id
+            else:
+                v_id = v_service.add_new_venue(Venue(venue_name=item["local"], supervisor_name=item["sup"], supervisor_email=item["email"]))
+            
+            # Gerencia Intern
+            i_service.add_new_intern(Intern(
+                name=item["nome"], registration_number=item["ra"], term="5º Módulo",
+                email=f"aluno{item['ra']}@teste.com", start_date=item["ini"], end_date=item["fim"], venue_id=v_id
+            ))
+            print(f"✅ {item['nome']} salvo com sucesso!")
+        except Exception as e:
+            print(f"❌ Erro em {item['nome']}: {e}")
 
 if __name__ == "__main__":
-    # Garanta que você está no diretório 'src' quando rodar:
-    # python main.py
     main()
