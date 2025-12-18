@@ -67,7 +67,6 @@ class DatabaseConnector:
             sqlite3.Error: If the database connection fails.
         """
         self.db_path = get_db_path()
-        print(f"DEBUG: Conectando ao banco em: {self.db_path}")
 
         self.conn = sqlite3.connect(self.db_path)
         self.cursor = self.conn.cursor()
@@ -92,7 +91,6 @@ class DatabaseConnector:
         """
 
         sql_path = get_sql_path()
-        print(f"DEBUG: Buscando SQL em: {sql_path}")
 
         if not sql_path.exists():
             raise FileNotFoundError(
