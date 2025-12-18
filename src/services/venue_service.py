@@ -38,7 +38,9 @@ class VenueService(BaseService[Venue]):
             int: The ID of the newly created venue.
         """
         self._validate_required_fields(venue)
-        validate_email_format(str(venue.supervisor_email))
+
+        if venue.supervisor_email:
+            validate_email_format(str(venue.supervisor_email))
         return self.repo.save(venue)
 
     def get_by_name(self, name: str) -> Optional[Venue]:

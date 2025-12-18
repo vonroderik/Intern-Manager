@@ -57,7 +57,7 @@ class Venue:
             f"venue_id={self.venue_id}, "
             f"venue_address={self.venue_address}, "
             f"supervisor_name={self.supervisor_name}, "
-            f"venue_email={self.supervisor_email}, "
+            f"supervisor_email={self.supervisor_email}, "
             f"venue_phone={self.supervisor_phone}, "
             f")"
         )

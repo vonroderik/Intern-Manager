@@ -41,9 +41,10 @@ class InternService(BaseService[Intern]):
         Args:
             intern (Intern): The intern instance to be validated.
         """
+        validate_date_range(str(intern.start_date), str(intern.end_date))
         self._validate_required_fields(intern)
         validate_email_format(str(intern.email))
-        validate_date_range(str(intern.start_date), str(intern.end_date))
+
 
     def _normalize_intern_dates(self, intern_data: Intern) -> None:
         """
