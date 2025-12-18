@@ -12,7 +12,6 @@ REQUIRED_FIELDS = {
     "name": "Nome do Aluno",
     "registration_number": "RA",
     "term": "Semestre",
-    "email": "E-mail",
     "start_date": "Data de Início",
     "end_date": "Data de Encerramento",
 }
@@ -43,8 +42,8 @@ class InternService(BaseService[Intern]):
         """
         validate_date_range(str(intern.start_date), str(intern.end_date))
         self._validate_required_fields(intern)
-        validate_email_format(str(intern.email))
-
+        if intern.email:
+            validate_email_format(str(intern.email))
 
     def _normalize_intern_dates(self, intern_data: Intern) -> None:
         """
@@ -75,11 +74,12 @@ class InternService(BaseService[Intern]):
         Returns:
             int: The ID of the newly created intern.
         """
-        self._validate_common_intern_data(intern)
-        existing = self.repo.get_by_registration_number(intern.registration_number)
-        if existing:
-            raise ValueError(f"RA {intern.registration_number} já está cadastrado.")
+        if self.repo.get_by_registration_number(intern.registration_number):
+            raise ValueError("RA já cadastrado.")
+
         self._normalize_intern_dates(intern)
+        self._validate_common_intern_data(intern)
+
         return self.repo.save(intern)
 
     def get_by_name(self, name: str) -> Optional[Intern]:

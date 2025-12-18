@@ -2,7 +2,7 @@ from pathlib import Path
 import sqlite3
 
 
-def get_resource_path(filename: str) -> Path:
+def get_project_root() -> Path:
     """
     Returns the absolute path to a file inside the project resources directory.
 
@@ -13,21 +13,26 @@ def get_resource_path(filename: str) -> Path:
         Path: Absolute path to the requested resource.
     """
 
-    script_path = Path(__file__).parent.absolute()
-    project_folder = script_path.parent.parent
-    return project_folder / "resources" / filename
+    current_file = Path(__file__).resolve()
+    return current_file.parent.parent.parent
 
 
 def get_db_path() -> Path:
     """Returns the path to the SQLite database file."""
 
-    return get_resource_path("interns.db")
+    root = get_project_root()
+    db_path = root / "resources" / "interns.db"
+
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    return db_path
 
 
 def get_sql_path() -> Path:
     """Returns the path to the SQL DDL file."""
 
-    return get_resource_path("create_db.sql")
+    root = get_project_root()
+    return root / "resources" / "create_db.sql"
 
 
 class DatabaseConnector:
@@ -61,10 +66,13 @@ class DatabaseConnector:
         Raises:
             sqlite3.Error: If the database connection fails.
         """
+        self.db_path = get_db_path()
+        print(f"DEBUG: Conectando ao banco em: {self.db_path}")
 
-        self.conn = sqlite3.connect(get_db_path())
+        self.conn = sqlite3.connect(self.db_path)
         self.cursor = self.conn.cursor()
         self.cursor.execute("PRAGMA foreign_keys = ON")
+
         self._create_tables()
 
     def _create_tables(self):
@@ -84,13 +92,19 @@ class DatabaseConnector:
         """
 
         sql_path = get_sql_path()
+        print(f"DEBUG: Buscando SQL em: {sql_path}")
+
+        if not sql_path.exists():
+            raise FileNotFoundError(
+                f"CRITICAL: ARquivo 'create_db.sql' não encontrado em: {sql_path}\n"
+                f"Verifique se o arquivo esta na pasta 'resources' na raiz do projeto"
+            )
 
         try:
-            with open(sql_path, "r") as f:
+            with open(sql_path, "r", encoding="utf-8") as f:
                 sql_file = f.read()
-        except FileNotFoundError:
-            print(f"ERRO: Arquivo DDL não encontrado em: {sql_path}")
-            return
-
-        self.cursor.executescript(sql_file)
-        self.conn.commit()
+            self.cursor.executescript(sql_file)
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(f"CRITICAL: Erro de SQL ao criar tabelas: {e}")
+            raise

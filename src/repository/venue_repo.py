@@ -35,7 +35,7 @@ class VenueRepository:
         """
         # ✅ Correção: mudado de 'name' para 'venue_name'
         sql_query = """
-        SELECT venue_id, venue_name, address, supervisor_name, email, phone 
+        SELECT venue_id, venue_name, address, supervisor_name, supervisor_email, supervisor_phone 
         FROM venues 
         ORDER BY venue_name COLLATE NOCASE ASC
         """
@@ -67,7 +67,7 @@ class VenueRepository:
             Optional[Venue]: The Venue object if found, or None otherwise.
         """
         sql_query = """
-        SELECT venue_id, venue_name, address, supervisor_name, email, phone 
+        SELECT venue_id, venue_name, address, supervisor_name, supervisor_email, supervisor_phone 
         FROM venues WHERE venue_id = ?
         """
         self.cursor.execute(sql_query, (venue_id,))
@@ -97,7 +97,7 @@ class VenueRepository:
         """
         # ✅ Correção: mudado de 'name' para 'venue_name' no ORDER BY
         sql_query = """
-        SELECT venue_id, venue_name, address, supervisor_name, email, phone 
+        SELECT venue_id, venue_name, address, supervisor_name, supervisor_email, supervisor_phone 
         FROM venues WHERE venue_name LIKE ?
         ORDER BY venue_name COLLATE NOCASE ASC
         """
@@ -130,7 +130,7 @@ class VenueRepository:
             return None
 
         sql_query = """
-        INSERT INTO venues (venue_name, address, supervisor_name, email, phone) 
+        INSERT INTO venues (venue_name, address, supervisor_name, supervisor_email, supervisor_phone) 
         VALUES (?, ?, ?, ?, ?)
         """
         data = (
@@ -156,8 +156,8 @@ class VenueRepository:
         """
         sql_query = """
         UPDATE venues SET
-            venue_name = ?, address = ?, supervisor_name = ?, email = ?, 
-            phone = ?, 
+            venue_name = ?, address = ?, supervisor_name = ?, supervisor_email = ?, 
+            supervisor_phone = ?, 
             last_update = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
         WHERE venue_id = ?
         """

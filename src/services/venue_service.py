@@ -44,7 +44,7 @@ class VenueService(BaseService[Venue]):
         return self.repo.save(venue)
 
     def get_by_name(self, name: str) -> Optional[Venue]:
-        """Busca um local pelo nome (encapsulando o repositório)."""
+        """Searches a Venue by name."""
         return self.repo.get_by_name(name)
 
     def update_venue(self, venue: Venue):

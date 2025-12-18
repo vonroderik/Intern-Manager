@@ -17,8 +17,8 @@ class Venue:
         venue_name (str): Name of the venue.
         address (Optional[str]): Physical address of the venue.
         supervisor_name (Optional[str]): Name of the responsible supervisor.
-        email (Optional[str]): Contact email for the venue.
-        phone (Optional[str]): Contact phone number for the venue.
+        supervisor_email (Optional[str]): Contact email for the venue.
+        supervisor_phone (Optional[str]): Contact phone number for the venue.
     """
 
     def __init__(
@@ -39,8 +39,8 @@ class Venue:
             address (Optional[str]): Physical address of the venue.
             supervisor_name (Optional[str]): Name of the supervisor responsible
                 for interns at this venue.
-            email (Optional[str]): Contact email address.
-            phone (Optional[str]): Contact phone number.
+            supervisor_email (Optional[str]): Contact email address.
+            supervisor_phone (Optional[str]): Contact phone number.
         """
 
         self.venue_name = venue_name
@@ -58,6 +58,6 @@ class Venue:
             f"venue_address={self.venue_address}, "
             f"supervisor_name={self.supervisor_name}, "
             f"supervisor_email={self.supervisor_email}, "
-            f"venue_phone={self.supervisor_phone}, "
+            f"supervisor_phone={self.supervisor_phone}, "
             f")"
         )

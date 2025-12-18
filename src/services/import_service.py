@@ -7,82 +7,137 @@ from core.models.intern import Intern
 
 
 class ImportService:
+    """
+    Service responsible for importing internship data from a CSV file.
+    """
+
     def __init__(self, intern_service: InternService, venue_service: VenueService):
         self.intern_service = intern_service
         self.venue_service = venue_service
 
-    def read_file(self, filename):
+    def read_file(self, filename: str | Path) -> None:
+        """
+        Reads a CSV file and imports its contents into the system.
+        """
         processed_venues = set()
         processed_interns = set()
+        venue_id_map: dict[str, int] = {}
 
-        venue_id_map = {}
+        encoding = "utf-8-sig"
 
-        with open(filename, "r", newline="", encoding="utf-8") as csv_file:
-            reader = csv.DictReader(csv_file)
+        try:
+            with open(filename, "r", newline="", encoding=encoding) as csv_file:
+                sample = csv_file.read(2048)
+                csv_file.seek(0)
 
-            for row in reader:
-                venue_name = row["local"]
-                intern_name = row["nome"]
-                current_venue_id = None
+                try:
+                    dialect = csv.Sniffer().sniff(sample)
+                    delimiter = dialect.delimiter
 
-                # --- 1. VENUE PROCESSING ---
-                if venue_name not in processed_venues:
-                    existing_venue = self.venue_service.get_by_name(venue_name)
+                except csv.Error:
+                    delimiter = ";"
 
-                    venue_data = {
-                        "venue_name": row["local"],
-                        "supervisor_name": row["nome_supervisor"],
-                        "supervisor_email": row.get("email_supervisor"),
-                        "supervisor_phone": row.get("telefone_supervisor"),
+                reader = csv.DictReader(csv_file, delimiter=delimiter)
+
+                line_count = 0
+                for row in reader:
+                    line_count += 1
+                    # --- SANITIZATION ---
+
+                    venue_name = row.get("local", "").strip()
+                    intern_name = row.get("nome", "").strip()
+                    ra_raw = row.get("ra", "").strip()
+
+                    if not intern_name or not ra_raw:
+                        print(
+                            f"AVISO: Linha {line_count} ignorada (Nome ou RA vazios)."
+                        )
+                        continue
+
+                    # Lógica segura para o email do supervisor
+                    raw_sup_email = row.get("email_supervisor")
+                    email_supervisor_limpo = (
+                        raw_sup_email.strip() if raw_sup_email else None
+                    )
+
+                    current_venue_id: int | None = None
+
+                    # --------------------------------------------------
+                    # 1. VENUE PROCESSING
+                    # --------------------------------------------------
+                    if venue_name and venue_name not in processed_venues:
+                        existing_venue = self.venue_service.get_by_name(venue_name)
+
+                        venue_data = {
+                            "venue_name": venue_name,
+                            "supervisor_name": row.get("nome_supervisor", "").strip(),
+                            "supervisor_email": email_supervisor_limpo,
+                            "supervisor_phone": row.get(
+                                "telefone_supervisor", ""
+                            ).strip(),
+                        }
+
+                        if existing_venue:
+                            venue_to_update = Venue(
+                                venue_id=existing_venue.venue_id, **venue_data
+                            )
+                            self.venue_service.update_venue(venue_to_update)
+                            current_venue_id = existing_venue.venue_id
+                        else:
+                            venue_to_add = Venue(**venue_data)
+                            current_venue_id = self.venue_service.add_new_venue(
+                                venue_to_add
+                            )
+
+                        if current_venue_id is None:
+                            v = self.venue_service.get_by_name(venue_name)
+                            if v:
+                                current_venue_id = v.venue_id
+
+                        if current_venue_id is None:
+                            raise RuntimeError(
+                                f"Erro Crítico: Não foi possível obter ID para o local '{venue_name}'"
+                            )
+
+                        processed_venues.add(venue_name)
+                        venue_id_map[venue_name] = current_venue_id
+                    elif venue_name:
+                        current_venue_id = venue_id_map.get(venue_name)
+                        if not current_venue_id:
+                            venue = self.venue_service.get_by_name(venue_name)
+                            if venue:
+                                current_venue_id = venue.venue_id
+
+                    # --------------------------------------------------
+                    # 2. INTERN PROCESSING
+                    # --------------------------------------------------
+                    if intern_name in processed_interns:
+                        continue
+
+                    existing_intern = self.intern_service.get_by_name(intern_name)
+
+                    intern_data = {
+                        "name": intern_name,
+                        "registration_number": ra_raw,  # RA já limpo
+                        "venue_id": current_venue_id,
+                        "term": row.get("periodo", "").strip(),
+                        "email": row.get("email", None),
+                        "start_date": row.get("data_inicio", "").strip(),
+                        "end_date": row.get("data_fim", "").strip(),
+                        "working_hours": row.get("horarios", "").strip(),
                     }
 
-                    if existing_venue:
-                        venue_to_update = Venue(
-                            venue_id=existing_venue.venue_id, **venue_data
+                    if existing_intern:
+                        intern_to_update = Intern(
+                            intern_id=existing_intern.intern_id, **intern_data
                         )
-
-                        self.venue_service.update_venue(venue_to_update)
-                        current_venue_id = existing_venue.venue_id
+                        self.intern_service.update_intern(intern_to_update)
                     else:
-                        venue_to_add = Venue(**venue_data)
+                        intern_to_add = Intern(**intern_data)
+                        self.intern_service.add_new_intern(intern_to_add)
 
-                        new_id = self.venue_service.add_new_venue(venue_to_add)
+                    processed_interns.add(intern_name)
 
-                        current_venue_id = new_id
-
-                    processed_venues.add(venue_name)
-                    venue_id_map[venue_name] = current_venue_id
-
-                else:
-                    current_venue_id = venue_id_map.get(venue_name)
-                    if not current_venue_id:
-                        v = self.venue_service.get_by_name(venue_name)
-                        if v:
-                            current_venue_id = v.venue_id
-
-                # --- 2. INTERN PROCESSING ---
-                if intern_name in processed_interns:
-                    continue
-
-                existing_intern = self.intern_service.get_by_name(intern_name)
-                intern_data = {
-                    "name": row["nome"],
-                    "registration_number": row["ra"],
-                    "venue_id": current_venue_id,
-                    "term": row["periodo"],
-                    "email": f"aluno{row['ra']}@teste.com",
-                    "start_date": row["data_inicio"],
-                    "end_date": row["data_fim"],
-                    "working_days": row["horarios"],
-                }
-
-                if existing_intern:
-                    intern_to_update = Intern(
-                        intern_id=existing_intern.intern_id, **intern_data
-                    )
-                    self.intern_service.update_intern(intern_to_update)
-
-                else:
-                    intern_to_add = Intern(**intern_data)
-                    self.intern_service.add_new_intern(intern_to_add)
-                processed_interns.add(intern_name)
+        except Exception as e:
+            print(f"ERRO DE LEITURA: {e}")
+            raise
