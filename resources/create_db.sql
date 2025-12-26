@@ -35,11 +35,11 @@ CREATE TABLE IF NOT EXISTS documents (
     FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
 );
 
--- CREATE COMMENTS TABLE
-CREATE TABLE IF NOT EXISTS comments (
-    comment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+-- CREATE OBSERVATIONS TABLE
+CREATE TABLE IF NOT EXISTS observations (
+    obersvation_id INTEGER PRIMARY KEY AUTOINCREMENT,
     intern_id INTEGER NOT NULL,
-    comment TEXT NOT NULL,
+    obersvation TEXT NOT NULL,
     last_update TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
     FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
 );
