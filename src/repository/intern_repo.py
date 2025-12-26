@@ -1,3 +1,5 @@
+# TODO - Change try-except for Raise (update, save, delete)
+
 from data.database import DatabaseConnector
 from core.models.intern import Intern
 from typing import Optional, List
@@ -176,8 +178,10 @@ class InternRepository:
             Optional[int]: The generated database ID, or None if it already has one.
         """
         if intern.intern_id is not None:
-            return None
-
+            raise ValueError(
+                "Cannot save a intern that already has an ID. Use update instead."
+            )
+        
         sql_query = """
         INSERT INTO interns (
         name, registration_number, term, email, start_date, end_date, 
@@ -197,6 +201,10 @@ class InternRepository:
         )
         self.cursor.execute(sql_query, data)
         self.conn.commit()
+        if self.cursor.lastrowid is None:
+            raise RuntimeError(
+                "Database failed to generate an ID for the new intern."
+            )
         return self.cursor.lastrowid
 
     def update(self, intern: Intern) -> bool:
@@ -229,13 +237,11 @@ class InternRepository:
             intern.venue_id,
             intern.intern_id,
         )
-        try:
-            self.cursor.execute(sql_query, data)
-            self.conn.commit()
-            return self.cursor.rowcount > 0
-        except Exception as e:
-            logger.error(f"Erro ao atualizar Intern {intern.intern_id}: {e}")
-            return False
+
+        self.cursor.execute(sql_query, data)
+        self.conn.commit()
+        return self.cursor.rowcount > 0
+
 
     def delete(self, intern: Intern) -> bool:
         """

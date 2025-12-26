@@ -1,3 +1,5 @@
+# TODO - Change try-except for Raise (update, save, delete)
+
 from data.database import DatabaseConnector
 from core.models.observation import Observation
 from typing import Optional, List

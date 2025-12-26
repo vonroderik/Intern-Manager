@@ -1,9 +1,6 @@
 from data.database import DatabaseConnector
 from core.models.document import Document
 from typing import Optional, List
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class DocumentRepository:
@@ -37,7 +34,7 @@ class DocumentRepository:
                     document_id=row[0],
                     intern_id=row[1],
                     document_name=row[2],
-                    is_completed=bool(row[3]),  # Convertendo int(0/1) para bool
+                    is_completed=bool(row[3]),
                     last_update=row[4],
                 )
             )
@@ -73,7 +70,9 @@ class DocumentRepository:
         Persists a new Document entity in the database.
         """
         if document.document_id is not None:
-            return None
+            raise ValueError(
+                "Cannot save a document that already has an ID. Use update instead."
+            )
 
         sql_query = """
         INSERT INTO documents (document_name, intern_id, is_completed)
@@ -87,6 +86,11 @@ class DocumentRepository:
         self.cursor.execute(sql_query, data)
         self.conn.commit()
 
+        if self.cursor.lastrowid is None:
+            raise RuntimeError(
+                "Database failed to generate an ID for the new document."
+            )
+
         return self.cursor.lastrowid
 
     def update(self, document: Document) -> bool:
@@ -94,7 +98,7 @@ class DocumentRepository:
         Updates an existing Document record in the database.
         """
         if document.document_id is None:
-            return False
+            raise ValueError("Cannot update a document without an ID.")
 
         val_completed = 1 if document.is_completed else 0
 
@@ -107,36 +111,22 @@ class DocumentRepository:
 
         data = (document.document_name, val_completed, document.document_id)
 
-        try:
-            self.cursor.execute(sql_query, data)
-            self.conn.commit()
-            return self.cursor.rowcount > 0
-
-        except Exception as e:
-            logger.error(
-                f"Falha ao atualizar Documento (ID: {document.document_id}). Erro: {e}"
-            )
-            return False
+        self.cursor.execute(sql_query, data)
+        self.conn.commit()
+        return self.cursor.rowcount > 0
 
     def delete(self, document: Document) -> bool:
         """
         Deletes a Document record from the database.
         """
         if document.document_id is None:
-            return False
+            raise ValueError("Cannot delete a document without an ID.")
 
         sql_query = """
         DELETE FROM documents
         WHERE document_id = ?
         """
 
-        try:
-            self.cursor.execute(sql_query, (document.document_id,))
-            self.conn.commit()
-            return self.cursor.rowcount > 0
-
-        except Exception as e:
-            logger.error(
-                f"Falha ao deletar Documento (ID: {document.document_id}). Erro: {e}"
-            )
-            return False
+        self.cursor.execute(sql_query, (document.document_id,))
+        self.conn.commit()
+        return self.cursor.rowcount > 0

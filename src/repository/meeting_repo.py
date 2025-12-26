@@ -1,9 +1,6 @@
 from data.database import DatabaseConnector
 from core.models.meeting import Meeting
 from typing import Optional, List
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class MeetingRepository:
@@ -66,7 +63,9 @@ class MeetingRepository:
         Persists a new Meeting entity.
         """
         if meeting.meeting_id is not None:
-            return None
+            raise ValueError(
+                "Cannot save a meeting that already has an ID. Use update instead."
+            )
 
         sql_query = """
         INSERT INTO meetings (intern_id, meeting_date, is_intern_present)
@@ -77,6 +76,8 @@ class MeetingRepository:
         self.cursor.execute(sql_query, data)
         self.conn.commit()
 
+        if self.cursor.lastrowid is None:
+            raise RuntimeError("Database failed to generate an ID for the new meeting.")
         return self.cursor.lastrowid
 
     def delete(self, meeting: Meeting) -> bool:
@@ -84,13 +85,10 @@ class MeetingRepository:
         Deletes a Meeting record.
         """
         if meeting.meeting_id is None:
-            return False
+            raise ValueError("Cannot delete a meeting without an ID")
 
         sql_query = "DELETE FROM meetings WHERE meeting_id = ?"
-        try:
-            self.cursor.execute(sql_query, (meeting.meeting_id,))
-            self.conn.commit()
-            return self.cursor.rowcount > 0
-        except Exception as e:
-            logger.error(f"Erro ao deletar Meeting {meeting.meeting_id}: {e}")
-            return False
+
+        self.cursor.execute(sql_query, (meeting.meeting_id,))
+        self.conn.commit()
+        return self.cursor.rowcount > 0

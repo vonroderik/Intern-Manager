@@ -1,3 +1,5 @@
+# TODO - Change try-except for Raise (update, save, delete)
+
 from data.database import DatabaseConnector
 from core.models.venue import Venue
 from typing import Optional, List
