@@ -2,8 +2,10 @@ import csv
 from pathlib import Path
 from services.intern_service import InternService
 from services.venue_service import VenueService
+from services.document_service import DocumentService
 from core.models.venue import Venue
 from core.models.intern import Intern
+from core.models.document import Document
 
 
 class ImportService:
@@ -11,9 +13,15 @@ class ImportService:
     Service responsible for importing internship data from a CSV file.
     """
 
-    def __init__(self, intern_service: InternService, venue_service: VenueService):
+    def __init__(
+        self,
+        intern_service: InternService,
+        venue_service: VenueService,
+        document_service: DocumentService,
+    ):
         self.intern_service = intern_service
         self.venue_service = venue_service
+        self.document_service = document_service
 
     def read_file(self, filename: str | Path) -> None:
         """
@@ -22,6 +30,15 @@ class ImportService:
         processed_venues = set()
         processed_interns = set()
         venue_id_map: dict[str, int] = {}
+
+        DEFAULT_DOCS = [
+            "Termo de Compromisso",
+            "Plano de Atividades",
+            "Ficha de Frequência",
+            "Relatório Parcial",
+            "Relatório Final",
+            "Avaliação do Supervisor",
+        ]
 
         encoding = "utf-8-sig"
 
@@ -33,7 +50,6 @@ class ImportService:
                 try:
                     dialect = csv.Sniffer().sniff(sample)
                     delimiter = dialect.delimiter
-
                 except csv.Error:
                     delimiter = ";"
 
@@ -42,7 +58,6 @@ class ImportService:
                 line_count = 0
                 for row in reader:
                     line_count += 1
-                    # --- SANITIZATION ---
 
                     venue_name = row.get("local", "").strip()
                     intern_name = row.get("nome", "").strip()
@@ -54,7 +69,6 @@ class ImportService:
                         )
                         continue
 
-                    # Lógica segura para o email do supervisor
                     raw_sup_email = row.get("email_supervisor")
                     email_supervisor_limpo = (
                         raw_sup_email.strip() if raw_sup_email else None
@@ -66,7 +80,7 @@ class ImportService:
                     # 1. VENUE PROCESSING
                     # --------------------------------------------------
                     if venue_name and venue_name not in processed_venues:
-                        existing_venue = self.venue_service.get_by_name(venue_name)
+                        existing_venue = self.venue_service.repo.get_by_name(venue_name)
 
                         venue_data = {
                             "venue_name": venue_name,
@@ -90,7 +104,7 @@ class ImportService:
                             )
 
                         if current_venue_id is None:
-                            v = self.venue_service.get_by_name(venue_name)
+                            v = self.venue_service.repo.get_by_name(venue_name)
                             if v:
                                 current_venue_id = v.venue_id
 
@@ -104,7 +118,7 @@ class ImportService:
                     elif venue_name:
                         current_venue_id = venue_id_map.get(venue_name)
                         if not current_venue_id:
-                            venue = self.venue_service.get_by_name(venue_name)
+                            venue = self.venue_service.repo.get_by_name(venue_name)
                             if venue:
                                 current_venue_id = venue.venue_id
 
@@ -114,11 +128,11 @@ class ImportService:
                     if intern_name in processed_interns:
                         continue
 
-                    existing_intern = self.intern_service.get_by_name(intern_name)
+                    existing_intern = self.intern_service.repo.get_by_name(intern_name)
 
                     intern_data = {
                         "name": intern_name,
-                        "registration_number": ra_raw,  # RA já limpo
+                        "registration_number": ra_raw,
                         "venue_id": current_venue_id,
                         "term": row.get("periodo", "").strip(),
                         "email": row.get("email", None),
@@ -134,9 +148,23 @@ class ImportService:
                         self.intern_service.update_intern(intern_to_update)
                     else:
                         intern_to_add = Intern(**intern_data)
-                        self.intern_service.add_new_intern(intern_to_add)
+                        new_intern_id = self.intern_service.add_new_intern(
+                            intern_to_add
+                        )
+
+                        if new_intern_id:
+                            print(f"   -> Gerando documentos para: {intern_name}")
+                            for doc_name in DEFAULT_DOCS:
+                                new_doc = Document(
+                                    intern_id=new_intern_id,
+                                    document_name=doc_name,
+                                    is_completed=False,
+                                )
+                                self.document_service.add_new_document(new_doc)
 
                     processed_interns.add(intern_name)
+
+            print(f"Importação concluída. {line_count} linhas processadas.")
 
         except Exception as e:
             print(f"ERRO DE LEITURA: {e}")
