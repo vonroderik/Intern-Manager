@@ -1,11 +1,6 @@
-# TODO - Change try-except for Raise (update, save, delete)
-
 from data.database import DatabaseConnector
 from core.models.venue import Venue
 from typing import Optional, List
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class VenueRepository:
@@ -129,7 +124,9 @@ class VenueRepository:
             Optional[int]: The generated database ID, or None if it already has one.
         """
         if venue.venue_id is not None:
-            return None
+            raise ValueError(
+                "Cannot save a Venue that already has an ID. Use update insteade."
+            )
 
         sql_query = """
         INSERT INTO venues (venue_name, address, supervisor_name, supervisor_email, supervisor_phone) 
@@ -156,6 +153,10 @@ class VenueRepository:
         Returns:
             bool: True if the update was successful.
         """
+
+        if venue.venue_id is None:
+            raise ValueError("Cannot update a Venue without an ID.")
+
         sql_query = """
         UPDATE venues SET
             venue_name = ?, address = ?, supervisor_name = ?, supervisor_email = ?, 
@@ -171,13 +172,10 @@ class VenueRepository:
             venue.supervisor_phone,
             venue.venue_id,
         )
-        try:
-            self.cursor.execute(sql_query, data)
-            self.conn.commit()
-            return self.cursor.rowcount > 0
-        except Exception as e:
-            logger.error(f"Erro ao atualizar Venue {venue.venue_id}: {e}")
-            return False
+
+        self.cursor.execute(sql_query, data)
+        self.conn.commit()
+        return self.cursor.rowcount > 0
 
     def delete(self, venue: Venue) -> bool:
         """
@@ -190,13 +188,10 @@ class VenueRepository:
             bool: True if the record was deleted.
         """
         if venue.venue_id is None:
-            return False
+            raise ValueError("Cannot delete a Venue without an ID.")
 
         sql_query = "DELETE FROM venues WHERE venue_id = ?"
-        try:
-            self.cursor.execute(sql_query, (venue.venue_id,))
-            self.conn.commit()
-            return self.cursor.rowcount > 0
-        except Exception as e:
-            logger.error(f"Erro ao deletar Venue {venue.venue_id}: {e}")
-            return False
+
+        self.cursor.execute(sql_query, (venue.venue_id,))
+        self.conn.commit()
+        return self.cursor.rowcount > 0

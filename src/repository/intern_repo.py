@@ -1,11 +1,6 @@
-# TODO - Change try-except for Raise (update, save, delete)
-
 from data.database import DatabaseConnector
 from core.models.intern import Intern
 from typing import Optional, List
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class InternRepository:
@@ -181,7 +176,7 @@ class InternRepository:
             raise ValueError(
                 "Cannot save a intern that already has an ID. Use update instead."
             )
-        
+
         sql_query = """
         INSERT INTO interns (
         name, registration_number, term, email, start_date, end_date, 
@@ -202,9 +197,7 @@ class InternRepository:
         self.cursor.execute(sql_query, data)
         self.conn.commit()
         if self.cursor.lastrowid is None:
-            raise RuntimeError(
-                "Database failed to generate an ID for the new intern."
-            )
+            raise RuntimeError("Database failed to generate an ID for the new intern.")
         return self.cursor.lastrowid
 
     def update(self, intern: Intern) -> bool:
@@ -217,6 +210,10 @@ class InternRepository:
         Returns:
             bool: True if the update affected at least one row.
         """
+
+        if intern.intern_id is None:
+            raise ValueError("Cannot update an intern without an ID.")
+
         sql_query = """
         UPDATE interns SET
         name = ?, registration_number = ?, term = ?, email = ?, 
@@ -242,7 +239,6 @@ class InternRepository:
         self.conn.commit()
         return self.cursor.rowcount > 0
 
-
     def delete(self, intern: Intern) -> bool:
         """
         Deletes an Intern record.
@@ -254,13 +250,10 @@ class InternRepository:
             bool: True if the record was deleted.
         """
         if intern.intern_id is None:
-            return False
+            raise ValueError("Cannot delete an intern without an ID.")
 
         sql_query = "DELETE FROM interns WHERE intern_id = ?"
-        try:
-            self.cursor.execute(sql_query, (intern.intern_id,))
-            self.conn.commit()
-            return self.cursor.rowcount > 0
-        except Exception as e:
-            logger.error(f"Erro ao deletar Intern {intern.intern_id}: {e}")
-            return False
+
+        self.cursor.execute(sql_query, (intern.intern_id,))
+        self.conn.commit()
+        return self.cursor.rowcount > 0

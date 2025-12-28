@@ -3,14 +3,14 @@ from core.models.observation import Observation
 from repository.observation_repo import ObservationRepository
 
 REQUIRED_FIELDS = {
-    "obersvation": "Comentário",
+    "observation": "Comentário",
     "intern_id": "ID do Estagiário",
 }
 
 
 class ObservationService(BaseService[Observation]):
     """
-    Service class responsible for business logic related to intern obersvations.
+    Service class responsible for business logic related to intern observations.
     """
 
     REQUIRED_FIELDS = REQUIRED_FIELDS
@@ -20,45 +20,45 @@ class ObservationService(BaseService[Observation]):
         Initializes the ObservationService with the specified repository.
 
         Args:
-            repo (ObservationRepository): Repository for obersvation persistence.
+            repo (ObservationRepository): Repository for observation persistence.
         """
         super().__init__(repo)
 
-    def add_new_obersvation(self, obersvation: Observation):
+    def add_new_observation(self, observation: Observation):
         """
-        Validates and adds a new obersvation to the system.
+        Validates and adds a new observation to the system.
 
         Args:
-            obersvation (Observation): The obersvation instance to be added.
+            observation (Observation): The observation instance to be added.
 
         Returns:
-            int: The ID of the newly created obersvation.
+            int: The ID of the newly created observation.
         """
-        self._validate_required_fields(obersvation)
-        return self.repo.save(obersvation)
+        self._validate_required_fields(observation)
+        return self.repo.save(observation)
 
-    def update_obersvation(self, obersvation: Observation):
+    def update_observation(self, observation: Observation):
         """
-        Updates an existing obersvation after ensuring it has a valid ID.
+        Updates an existing observation after ensuring it has a valid ID.
 
         Args:
-            obersvation (Observation): The obersvation instance to be updated.
+            observation (Observation): The observation instance to be updated.
 
         Returns:
             bool: True if the update was successful, False otherwise.
         """
-        self._ensure_has_id(obersvation, "obersvation")
-        self._validate_required_fields(obersvation)
-        return self.repo.update(obersvation)
+        self._ensure_has_id(observation, "observation")
+        self._validate_required_fields(observation)
+        return self.repo.update(observation)
 
-    def delete_obersvation(self, obersvation: Observation):
+    def delete_observation(self, observation: Observation):
         """
-        Removes a obersvation from the system using the base service logic.
+        Removes a observation from the system using the base service logic.
 
         Args:
-            obersvation (Observation): The obersvation instance to be deleted.
+            observation (Observation): The observation instance to be deleted.
 
         Returns:
             bool: True if the deletion was successful, False otherwise.
         """
-        return self.delete(obersvation, "obersvation")
+        return self.delete(observation, "observation")

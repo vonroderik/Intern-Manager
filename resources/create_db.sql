@@ -37,9 +37,9 @@ CREATE TABLE IF NOT EXISTS documents (
 
 -- CREATE OBSERVATIONS TABLE
 CREATE TABLE IF NOT EXISTS observations (
-    obersvation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id INTEGER PRIMARY KEY AUTOINCREMENT,
     intern_id INTEGER NOT NULL,
-    obersvation TEXT NOT NULL,
+    observation TEXT NOT NULL,
     last_update TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
     FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
 );
@@ -51,4 +51,23 @@ CREATE TABLE IF NOT EXISTS meetings (
     meeting_date TEXT NOT NULL,
     is_intern_present INTEGER NOT NULL CHECK (is_intern_present IN (0, 1)),
     FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
+);
+
+-- CREATE EVALUATION CRITERIA TABLE
+CREATE TABLE IF NOT EXISTS evaluation_criteria (
+    criteria_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    weight REAL DEFAULT 1.0
+);
+
+-- CREATE GRADES TABLE
+CREATE TABLE IF NOT EXISTS grades (
+    grade_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    intern_id INTEGER NOT NULL,
+    criteria_id INTEGER NOT NULL,
+    value REAL NOT NULL,
+    FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE,
+    FOREIGN KEY (criteria_id) REFERENCES evaluation_criteria(criteria_id) ON DELETE RESTRICT,
+    UNIQUE(intern_id, criteria_id) 
 );
