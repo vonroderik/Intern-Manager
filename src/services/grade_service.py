@@ -1,5 +1,3 @@
-# src/services/grade_service.py
-
 from typing import List
 from services.base_service import BaseService
 from core.models.grade import Grade
@@ -62,3 +60,27 @@ class GradeService(BaseService[Grade]):
 
     def delete_grade(self, grade: Grade) -> bool:
         return self.delete(grade, "grade")
+
+    def get_grades_by_intern(self, intern_id: int) -> list[Grade]:
+        """Busca todas as notas lançadas para um estagiário."""
+        if not intern_id:
+            return []
+        return self.repo.get_by_intern_id(intern_id)
+
+    def save_batch_grades(self, grades: list[Grade]):
+        """
+        Salva uma lista de notas.
+        Lógica: Verifica se já existe nota para aquele critério+aluno.
+        Se existir, ATUALIZA. Se não, INSERE.
+        """
+        for grade in grades:
+            existing_grades = self.repo.get_by_intern_id(grade.intern_id)
+            target_grade = next(
+                (g for g in existing_grades if g.criteria_id == grade.criteria_id), None
+            )
+
+            if target_grade and target_grade.id:
+                target_grade.value = grade.value
+                self.repo.update(target_grade)
+            else:
+                self.repo.save(grade)

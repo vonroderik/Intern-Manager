@@ -30,7 +30,6 @@ class VenueRepository:
         Returns:
             List[Venue]: A list of Venue objects ordered by name.
         """
-        # ✅ Correção: mudado de 'name' para 'venue_name'
         sql_query = """
         SELECT venue_id, venue_name, address, supervisor_name, supervisor_email, supervisor_phone 
         FROM venues 
@@ -92,7 +91,6 @@ class VenueRepository:
         Returns:
             Optional[Venue]: The first matching Venue object, or None.
         """
-        # ✅ Correção: mudado de 'name' para 'venue_name' no ORDER BY
         sql_query = """
         SELECT venue_id, venue_name, address, supervisor_name, supervisor_email, supervisor_phone 
         FROM venues WHERE venue_name LIKE ?

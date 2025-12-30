@@ -130,3 +130,21 @@ class DocumentRepository:
         self.cursor.execute(sql_query, (document.document_id,))
         self.conn.commit()
         return self.cursor.rowcount > 0
+
+    def create_batch(self, documents: list[Document]):
+        """
+        Salva uma lista de documentos de uma vez só.
+        Muito mais rápido e seguro que salvar um por um.
+        """
+        query = "INSERT INTO documents (intern_id, document_name, is_completed) VALUES (?, ?, ?)"
+
+        data = [
+            (doc.intern_id, doc.document_name, doc.is_completed) for doc in documents
+        ]
+
+        try:
+            self.cursor.executemany(query, data)
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback()
+            raise e

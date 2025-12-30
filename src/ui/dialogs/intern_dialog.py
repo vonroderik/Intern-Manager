@@ -12,7 +12,6 @@ from core.models.intern import Intern
 
 
 class InternDialog(QDialog):
-
     def __init__(self, parent=None, intern: Optional[Intern] = None):
         super().__init__(parent)
         self.intern = intern
@@ -47,7 +46,7 @@ class InternDialog(QDialog):
         self.form_layout.addRow("Início do Estágio:", self.date_start)
         self.form_layout.addRow("Previsão de Fim:", self.date_end)
 
-        self.main_layout.addLayout(self.form_layout)  # Usando main_layout aqui
+        self.main_layout.addLayout(self.form_layout)
 
         buttons = (
             QDialogButtonBox.StandardButton.Save

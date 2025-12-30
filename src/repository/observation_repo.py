@@ -44,7 +44,6 @@ class ObservationRepository:
         """
         Retrieves a observation by its unique database identifier.
         """
-        # CORREÇÃO: Nome da tabela padronizado para 'observations' (plural)
         sql_query = """
         SELECT observation_id, intern_id, observation, last_update
         FROM observations 
@@ -68,13 +67,11 @@ class ObservationRepository:
         """
         Persists a new Observation entity in the database.
         """
-        # CORREÇÃO LÓGICA: Se JÁ TEM ID, não podemos salvar (deveria ser update).
         if observation.observation_id is not None:
             raise ValueError(
                 "Cannot save an observation that already has an ID. Use update instead."
             )
 
-        # CORREÇÃO: Nome da tabela 'observations'
         sql_query = """
         INSERT INTO observations (observation, intern_id)
         VALUES (?, ?)
@@ -99,7 +96,6 @@ class ObservationRepository:
         """
         Updates an existing Observation record in the database.
         """
-        # CORREÇÃO LÓGICA: Aqui sim, se NÃO TEM ID, erro.
         if observation.observation_id is None:
             raise ValueError("Cannot update an observation without an ID.")
 

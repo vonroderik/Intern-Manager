@@ -31,15 +31,6 @@ class ImportService:
         processed_interns = set()
         venue_id_map: dict[str, int] = {}
 
-        DEFAULT_DOCS = [
-            "Contrato de EStágio",
-            "Ficha de Frequência",
-            "Diário de Campo",
-            "Projeto de Intervenção",
-            "Avaliação do Supervisor Local - Física",
-            "Avaliação do Supervisor Local - Carreiras",
-        ]
-
         encoding = "utf-8-sig"
 
         try:
@@ -76,9 +67,6 @@ class ImportService:
 
                     current_venue_id: int | None = None
 
-                    # --------------------------------------------------
-                    # 1. VENUE PROCESSING
-                    # --------------------------------------------------
                     if venue_name and venue_name not in processed_venues:
                         existing_venue = self.venue_service.repo.get_by_name(venue_name)
 
@@ -122,9 +110,6 @@ class ImportService:
                             if venue:
                                 current_venue_id = venue.venue_id
 
-                    # --------------------------------------------------
-                    # 2. INTERN PROCESSING
-                    # --------------------------------------------------
                     if intern_name in processed_interns:
                         continue
 
@@ -154,17 +139,16 @@ class ImportService:
 
                         if new_intern_id:
                             print(f"   -> Gerando documentos para: {intern_name}")
-                            for doc_name in DEFAULT_DOCS:
-                                new_doc = Document(
-                                    intern_id=new_intern_id,
-                                    document_name=doc_name,
-                                    is_completed=False,
+                            try:
+                                self.document_service.create_initial_documents_batch(
+                                    new_intern_id
                                 )
-                                self.document_service.add_new_document(new_doc)
+                            except Exception as e:
+                                print(f"      [AVISO] Falha ao gerar documentos: {e}")
 
                     processed_interns.add(intern_name)
 
-            print(f"Importação concluída. {line_count} linhas processadas.")
+            print(f"   -> Importação concluída. {line_count} linhas processadas.")
 
         except Exception as e:
             print(f"ERRO DE LEITURA: {e}")

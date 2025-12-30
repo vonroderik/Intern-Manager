@@ -87,7 +87,7 @@ def main():
     if csv_path:
         try:
             imp_service.read_file(csv_path)
-            print("   -> Import processed.\n")
+            db.conn.commit()
         except Exception as e:
             print(f"ERROR: Failed to process import file. Details: {e}\n")
     else:
@@ -95,7 +95,11 @@ def main():
 
     print("LAUNCHING GUI...")
 
-    window = MainWindow(intern_service=i_service)
+    window = MainWindow(
+        intern_service=i_service,
+        criteria_service=criteria_service,
+        grade_service=grade_service,
+    )
 
     window.show()
 

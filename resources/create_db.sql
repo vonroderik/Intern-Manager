@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS evaluation_criteria (
     criteria_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
-    weight REAL DEFAULT 1.0
+    weight REAL DEFAULT 1.0,
+    last_update TEXT DEFAULT (datetime('now', 'localtime'))
 );
 
 -- CREATE GRADES TABLE
@@ -67,6 +68,7 @@ CREATE TABLE IF NOT EXISTS grades (
     intern_id INTEGER NOT NULL,
     criteria_id INTEGER NOT NULL,
     value REAL NOT NULL,
+    last_update TEXT DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE,
     FOREIGN KEY (criteria_id) REFERENCES evaluation_criteria(criteria_id) ON DELETE RESTRICT,
     UNIQUE(intern_id, criteria_id) 

@@ -2,9 +2,6 @@ from datetime import datetime
 import re
 from typing import Any, Optional
 
-# ---------------------------------------------------------------------
-# Date formats supported by the application
-# ---------------------------------------------------------------------
 
 DATE_BR_FORMAT = "%d/%m/%Y"  # Example: 25/12/2026 (UI input)
 DATE_ISO_FORMAT = "%Y-%m-%d"  # Example: 2026-12-25 (database)

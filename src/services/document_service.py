@@ -62,3 +62,22 @@ class DocumentService(BaseService[Document]):
             bool: True if the deletion was successful, False otherwise.
         """
         return self.delete(document, "document")
+
+    def create_initial_documents_batch(self, intern_id: int):
+        """Gera e salva todos os documentos padrão de uma vez."""
+        default_docs_names = [
+            "Contrato de Estágio",
+            "Ficha de Frequência",
+            "Diário de Campo",
+            "Projeto de Intervenção",
+            "Avaliação do Supervisor Local - Física",
+            "Avaliação do Supervisor Local - Carreiras",
+        ]
+
+        docs_to_create = []
+        for name in default_docs_names:
+            docs_to_create.append(
+                Document(intern_id=intern_id, document_name=name, is_completed=False)
+            )
+
+        self.repo.create_batch(docs_to_create)

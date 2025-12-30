@@ -48,3 +48,7 @@ class EvaluationCriteriaService(BaseService[EvaluationCriteria]):
 
     def delete_criteria(self, criteria: EvaluationCriteria) -> bool:
         return self.delete(criteria, "evaluation criteria")
+
+    def list_active_criteria(self):
+        """Retorna todos os critérios cadastrados"""
+        return self.repo.get_all()
