@@ -16,6 +16,7 @@ class Observation:
             observation has not yet been persisted.
         intern_id (int): Identifier of the associated intern.
         observation (str): Textual content of the observation.
+        last_update (Optional[str]): Date string representing the last modification.
     """
 
     def __init__(
@@ -32,6 +33,7 @@ class Observation:
             intern_id (int): Identifier of the associated intern.
             observation (str): Text content of the observation.
             observation_id (Optional[int]): Database identifier. None if not persisted.
+            last_update (Optional[str]): Date/time of the last update.
         """
 
         self.intern_id = intern_id
@@ -44,7 +46,7 @@ class Observation:
             f"Observation("
             f"intern_id={self.intern_id}"
             f"observation={self.observation}"
-            f"observation={self.observation_id}"
+            f"observation_id={self.observation_id}"
             f"last_update={self.last_update}"
             f")"
         )

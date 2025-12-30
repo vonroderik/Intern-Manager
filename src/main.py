@@ -87,7 +87,10 @@ def main():
     if csv_path:
         try:
             imp_service.read_file(csv_path)
-            db.conn.commit()
+            if db.conn:
+                db.conn.commit()
+            else:
+                print("ERRO CRÍTICO: Conexão perdida ao tentar salvar importação.")
         except Exception as e:
             print(f"ERROR: Failed to process import file. Details: {e}\n")
     else:

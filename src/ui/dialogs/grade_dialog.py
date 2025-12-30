@@ -18,7 +18,6 @@ from services.evaluation_criteria_service import EvaluationCriteriaService
 from services.grade_service import GradeService
 
 
-# --- COMPONENTE INTELIGENTE ---
 class SmartGradeInput(QDoubleSpinBox):
     """
     Um SpinBox educado que:
@@ -29,21 +28,17 @@ class SmartGradeInput(QDoubleSpinBox):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        # Remove as setinhas (se quiser elas de volta, apague esta linha)
         self.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
-        # Alinha o texto à esquerda ou direita? Direita é padrão numérico.
         self.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     def focusInEvent(self, event):
         """Ao ganhar foco (clique ou Tab), seleciona todo o texto."""
         super().focusInEvent(event)
-        # O Timer é um hack necessário do Qt para garantir a seleção após o evento de foco
         QTimer.singleShot(0, self.selectAll)
 
     def keyPressEvent(self, event: QKeyEvent):
         """Troca Ponto por Vírgula na marra."""
         if event.text() == ".":
-            # Simula a digitação de uma vírgula
             new_event = QKeyEvent(
                 QKeyEvent.Type.KeyPress,
                 Qt.Key.Key_Comma,
@@ -53,9 +48,6 @@ class SmartGradeInput(QDoubleSpinBox):
             super().keyPressEvent(new_event)
         else:
             super().keyPressEvent(event)
-
-
-# --- FIM DO COMPONENTE ---
 
 
 class GradeDialog(QDialog):
@@ -73,29 +65,28 @@ class GradeDialog(QDialog):
 
         self.inputs: Dict[int, SmartGradeInput] = {}
 
+        # Header
         self.setWindowTitle(f"Avaliação: {self.intern.name}")
         self.setMinimumWidth(450)
 
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
 
-        # 1. Cabeçalho
         lbl_info = QLabel(
             f"Lançamento de notas para o RA: {self.intern.registration_number}"
         )
         lbl_info.setStyleSheet("color: gray; font-style: italic;")
         self.main_layout.addWidget(lbl_info)
 
-        # 2. Formulário
+        # Form
         self.form_layout = QFormLayout()
-        # Dica de UX: Espaço maior entre as linhas para não clicar errado
         self.form_layout.setVerticalSpacing(15)
 
         self.form_widget = QWidget()
         self.form_widget.setLayout(self.form_layout)
         self.main_layout.addWidget(self.form_widget)
 
-        # 3. Total
+        # Total
         self.lbl_total = QLabel("Nota Final: 0.0")
         self.lbl_total.setStyleSheet(
             "font-size: 18px; font-weight: bold; color: #2196F3; margin-top: 10px;"
@@ -103,7 +94,7 @@ class GradeDialog(QDialog):
         self.lbl_total.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.main_layout.addWidget(self.lbl_total)
 
-        # 4. Botões
+        # Buttons
         buttons = (
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
@@ -133,14 +124,12 @@ class GradeDialog(QDialog):
                 if c_id is None:
                     continue
 
-                # USA O NOSSO COMPONENTE INTELIGENTE AGORA
                 spinner = SmartGradeInput()
 
                 max_val = float(criterion.weight)
                 spinner.setRange(0, max_val)
                 spinner.setSingleStep(0.5)
 
-                # Preenche valor
                 current_val = grade_map.get(c_id, 0.0)
                 spinner.setValue(float(current_val))
 
@@ -148,7 +137,6 @@ class GradeDialog(QDialog):
 
                 self.inputs[c_id] = spinner
 
-                # Estiliza o Label para ficar mais legível
                 lbl_text = f"{criterion.name} <span style='color:gray; font-size:10px;'>(Max: {max_val})</span>"
                 label = QLabel(lbl_text)
 

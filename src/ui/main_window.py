@@ -108,8 +108,6 @@ class MainWindow(QMainWindow):
         interns = self.service.get_all_interns()
         self.table.setRowCount(0)
 
-        today = datetime.now().strftime("%Y-%m-%d")
-
         for row_idx, intern in enumerate(interns):
             self.table.insertRow(row_idx)
 
@@ -117,11 +115,7 @@ class MainWindow(QMainWindow):
             cell_name = QTableWidgetItem(str(intern.name or ""))
             cell_ra = QTableWidgetItem(str(intern.registration_number or ""))
 
-            status_text = "Ativo"
-            if intern.end_date and intern.end_date < today:
-                status_text = "Concluído"
-
-            cell_status = QTableWidgetItem(status_text)
+            cell_status = QTableWidgetItem(intern.status)
 
             cell_id.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             cell_ra.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
