@@ -31,10 +31,10 @@ class ObservationRepository:
         for row in results:
             observations.append(
                 Observation(
-                    observation_id=row[0],
-                    intern_id=row[1],
-                    observation=row[2],
-                    last_update=row[3],
+                    observation_id=row["observation_id"],
+                    intern_id=row["intern_id"],
+                    observation=row["observation"],
+                    last_update=row["last_update"],
                 )
             )
 
@@ -58,10 +58,10 @@ class ObservationRepository:
             return None
 
         return Observation(
-            observation_id=row[0],
-            intern_id=row[1],
-            observation=row[2],
-            last_update=row[3],
+            observation_id=row["observation_id"],
+            intern_id=row["intern_id"],
+            observation=row["observation"],
+            last_update=row["last_update"],
         )
 
     def save(self, observation: Observation) -> int:

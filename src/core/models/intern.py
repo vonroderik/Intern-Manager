@@ -15,7 +15,7 @@ class Intern:
         intern_id (Optional[int]): Unique database identifier. None if the
             intern has not yet been persisted.
         name (str): Full name of the intern.
-        registration_number (int): Unique registration number assigned
+        registration_number (str): Unique registration number assigned
             to the intern.
         term (str): Academic term or internship period.
         email (Optional[str]): Contact email address.
@@ -29,7 +29,7 @@ class Intern:
     def __init__(
         self,
         name: str,
-        registration_number: int,
+        registration_number: str,
         term: str,
         intern_id: Optional[int] = None,
         email: Optional[str] = None,
@@ -44,7 +44,7 @@ class Intern:
 
         Args:
             name (str): Full name of the intern.
-            registration_number (int): Unique registration number.
+            registration_number (str): Unique registration number.
             term (str): Academic term or internship period.
             intern_id (Optional[int]): Database identifier. Should be None
                 for new interns not yet persisted.

@@ -43,12 +43,12 @@ class VenueRepository:
         for row in results:
             venues.append(
                 Venue(
-                    venue_id=row[0],
-                    venue_name=row[1],
-                    venue_address=row[2],
-                    supervisor_name=row[3],
-                    supervisor_email=row[4],
-                    supervisor_phone=row[5],
+                    venue_id=row["venue_id"],
+                    venue_name=row["venue_name"],
+                    venue_address=row["address"],
+                    supervisor_name=row["supervisor_name"],
+                    supervisor_email=row["supervisor_email"],
+                    supervisor_phone=row["supervisor_phone"],
                 )
             )
         return venues
@@ -74,12 +74,12 @@ class VenueRepository:
             return None
 
         return Venue(
-            venue_id=row[0],
-            venue_name=row[1],
-            venue_address=row[2],
-            supervisor_name=row[3],
-            supervisor_email=row[4],
-            supervisor_phone=row[5],
+            venue_id=row["venue_id"],
+            venue_name=row["venue_name"],
+            venue_address=row["address"],
+            supervisor_name=row["supervisor_name"],
+            supervisor_email=row["supervisor_email"],
+            supervisor_phone=row["supervisor_phone"],
         )
 
     def get_by_name(self, name: str) -> Optional[Venue]:
@@ -105,12 +105,12 @@ class VenueRepository:
             return None
 
         return Venue(
-            venue_id=row[0],
-            venue_name=row[1],
-            venue_address=row[2],
-            supervisor_name=row[3],
-            supervisor_email=row[4],
-            supervisor_phone=row[5],
+            venue_id=row["venue_id"],
+            venue_name=row["venue_name"],
+            venue_address=row["address"],
+            supervisor_name=row["supervisor_name"],
+            supervisor_email=row["supervisor_email"],
+            supervisor_phone=row["supervisor_phone"],
         )
 
     def save(self, venue: Venue) -> Optional[int]:

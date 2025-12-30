@@ -5,8 +5,8 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "pyside6>=6.10.1",
     "ruff>=0.14.9",
-    "streamlit>=1.52.1",
 ]
 [tool.pytest.ini_options]
 pythonpath = ["src"]

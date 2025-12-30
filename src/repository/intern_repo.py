@@ -48,16 +48,16 @@ class InternRepository:
         for row in results:
             interns.append(
                 Intern(
-                    intern_id=row[0],
-                    name=row[1],
-                    registration_number=row[2],
-                    term=row[3],
-                    email=row[4],
-                    start_date=row[5],
-                    end_date=row[6],
-                    working_days=row[7],
-                    working_hours=row[8],
-                    venue_id=row[9],
+                    intern_id=row["intern_id"],
+                    name=row["name"],
+                    registration_number=row["registration_number"],
+                    term=row["term"],
+                    email=row["email"],
+                    start_date=row["start_date"],
+                    end_date=row["end_date"],
+                    working_days=row["working_days"],
+                    working_hours=row["working_hours"],
+                    venue_id=row["venue_id"],
                 )
             )
         return interns
@@ -83,24 +83,24 @@ class InternRepository:
             return None
 
         return Intern(
-            intern_id=row[0],
-            name=row[1],
-            registration_number=row[2],
-            term=row[3],
-            email=row[4],
-            start_date=row[5],
-            end_date=row[6],
-            working_days=row[7],
-            working_hours=row[8],
-            venue_id=row[9],
+            intern_id=row["intern_id"],
+            name=row["name"],
+            registration_number=row["registration_number"],
+            term=row["term"],
+            email=row["email"],
+            start_date=row["start_date"],
+            end_date=row["end_date"],
+            working_days=row["working_days"],
+            working_hours=row["working_hours"],
+            venue_id=row["venue_id"],
         )
 
-    def get_by_registration_number(self, registration_number: int) -> Optional[Intern]:
+    def get_by_registration_number(self, registration_number: str) -> Optional[Intern]:
         """
         Retrieves an intern by registration number (RA).
 
         Args:
-            registration_number (int): Registration number of the intern.
+            registration_number (str): Registration number of the intern.
 
         Returns:
             Optional[Intern]: The Intern object if found, or None otherwise.
@@ -116,16 +116,16 @@ class InternRepository:
             return None
 
         return Intern(
-            intern_id=row[0],
-            name=row[1],
-            registration_number=row[2],
-            term=row[3],
-            email=row[4],
-            start_date=row[5],
-            end_date=row[6],
-            working_days=row[7],
-            working_hours=row[8],
-            venue_id=row[9],
+            intern_id=row["intern_id"],
+            name=row["name"],
+            registration_number=row["registration_number"],
+            term=row["term"],
+            email=row["email"],
+            start_date=row["start_date"],
+            end_date=row["end_date"],
+            working_days=row["working_days"],
+            working_hours=row["working_hours"],
+            venue_id=row["venue_id"],
         )
 
     def get_by_name(self, name: str) -> Optional[Intern]:
@@ -150,16 +150,16 @@ class InternRepository:
             return None
 
         return Intern(
-            intern_id=row[0],
-            name=row[1],
-            registration_number=row[2],
-            term=row[3],
-            email=row[4],
-            start_date=row[5],
-            end_date=row[6],
-            working_days=row[7],
-            working_hours=row[8],
-            venue_id=row[9],
+            intern_id=row["intern_id"],
+            name=row["name"],
+            registration_number=row["registration_number"],
+            term=row["term"],
+            email=row["email"],
+            start_date=row["start_date"],
+            end_date=row["end_date"],
+            working_days=row["working_days"],
+            working_hours=row["working_hours"],
+            venue_id=row["venue_id"],
         )
 
     def save(self, intern: Intern) -> Optional[int]:

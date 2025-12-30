@@ -6,7 +6,7 @@ from utils.validations import (
     validate_date_range,
     parse_date_to_iso,
 )
-from typing import Optional
+from typing import Optional, List
 
 REQUIRED_FIELDS = {
     "name": "Nome do Aluno",
@@ -116,3 +116,14 @@ class InternService(BaseService[Intern]):
             bool: True if the deletion was successful, False otherwise.
         """
         return self.delete(intern, "intern")
+
+    def get_all_interns(self) -> List[Intern]:
+        """
+        Returns a list of all interns registered in the system.
+        Used by the UI to populate the table.
+        """
+        return self.repo.get_all()
+
+    def get_by_id(self, entity_id: int) -> Optional[Intern]:
+        """Busca um estagiário pelo ID (útil para edição)"""
+        return self.repo.get_by_id(entity_id)

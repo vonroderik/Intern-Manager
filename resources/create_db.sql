@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS venues (
 CREATE TABLE IF NOT EXISTS interns (
     intern_id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    registration_number INTEGER UNIQUE NOT NULL,
+    registration_number TEXT UNIQUE NOT NULL,
     email TEXT,
     start_date TEXT,
     end_date TEXT,

@@ -27,10 +27,10 @@ class EvaluationCriteriaRepository:
 
         return [
             EvaluationCriteria(
-                criteria_id=row[0],
-                name=row[1],
-                description=row[2],
-                weight=row[3],
+                criteria_id=row["criteria_id"],
+                name=row["name"],
+                description=row["description"],
+                weight=row["weight"],
             )
             for row in results
         ]
@@ -51,10 +51,10 @@ class EvaluationCriteriaRepository:
             return None
 
         return EvaluationCriteria(
-            criteria_id=row[0],
-            name=row[1],
-            description=row[2],
-            weight=row[3],
+            criteria_id=row["criteria_id"],
+            name=row["name"],
+            description=row["description"],
+            weight=row["weight"],
         )
 
     def save(self, criteria: EvaluationCriteria) -> int:

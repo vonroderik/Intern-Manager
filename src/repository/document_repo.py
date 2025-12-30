@@ -31,11 +31,11 @@ class DocumentRepository:
         for row in results:
             documents.append(
                 Document(
-                    document_id=row[0],
-                    intern_id=row[1],
-                    document_name=row[2],
-                    is_completed=bool(row[3]),
-                    last_update=row[4],
+                    document_id=row["document_id"],
+                    intern_id=row["intern_id"],
+                    document_name=row["document_name"],
+                    is_completed=bool(row["is_completed"]),
+                    last_update=row["last_update"],
                 )
             )
 
@@ -58,11 +58,11 @@ class DocumentRepository:
             return None
 
         return Document(
-            document_id=row[0],
-            intern_id=row[1],
-            document_name=row[2],
-            is_completed=bool(row[3]),
-            last_update=row[4],
+            document_id=row["document_id"],
+            intern_id=row["intern_id"],
+            document_name=row["document_name"],
+            is_completed=bool(row["is_completed"]),
+            last_update=row["last_update"],
         )
 
     def save(self, document: Document) -> Optional[int]:

@@ -27,10 +27,10 @@ class MeetingRepository:
 
         return [
             Meeting(
-                meeting_id=row[0],
-                intern_id=row[1],
-                meeting_date=row[2],
-                is_intern_present=bool(row[3]),
+                meeting_id=row["meeting_jd"],
+                intern_id=row["intern_id"],
+                meeting_date=row["meeting_date"],
+                is_intern_present=bool(row["is_intern_present"]),
             )
             for row in results
         ]
@@ -50,10 +50,10 @@ class MeetingRepository:
 
         return [
             Meeting(
-                meeting_id=row[0],
-                intern_id=row[1],
-                meeting_date=row[2],
-                is_intern_present=bool(row[3]),
+                meeting_id=row["meeting_jd"],
+                intern_id=row["intern_id"],
+                meeting_date=row["meeting_date"],
+                is_intern_present=bool(row["is_intern_present"]),
             )
             for row in results
         ]

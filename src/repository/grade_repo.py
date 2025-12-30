@@ -27,11 +27,11 @@ class GradeRepository:
 
         return [
             Grade(
-                grade_id=row[0],
-                intern_id=row[1],
-                criteria_id=row[2],
-                value=row[3],
-                last_update=row[4],
+                grade_id=row["grade_id"],
+                intern_id=row["intern_id"],
+                criteria_id=row["criteria_id"],
+                value=row["value"],
+                last_update=row["last_update"],
             )
             for row in results
         ]
@@ -51,11 +51,11 @@ class GradeRepository:
 
         return [
             Grade(
-                grade_id=row[0],
-                intern_id=row[1],
-                criteria_id=row[2],
-                value=row[3],
-                last_update=row[4],
+                grade_id=row["grade_id"],
+                intern_id=row["intern_id"],
+                criteria_id=row["criteria_id"],
+                value=row["value"],
+                last_update=row["last_update"],
             )
             for row in results
         ]
@@ -75,12 +75,12 @@ class GradeRepository:
         if row is None:
             return None
 
-        return Grade(
-            grade_id=row[0],
-            intern_id=row[1],
-            criteria_id=row[2],
-            value=row[3],
-            last_update=row[4],
+        Grade(
+            grade_id=row["grade_id"],
+            intern_id=row["intern_id"],
+            criteria_id=row["criteria_id"],
+            value=row["value"],
+            last_update=row["last_update"],
         )
 
     def save(self, grade: Grade) -> int:

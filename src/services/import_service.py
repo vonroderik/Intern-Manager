@@ -32,12 +32,12 @@ class ImportService:
         venue_id_map: dict[str, int] = {}
 
         DEFAULT_DOCS = [
-            "Termo de Compromisso",
-            "Plano de Atividades",
+            "Contrato de EStágio",
             "Ficha de Frequência",
-            "Relatório Parcial",
-            "Relatório Final",
-            "Avaliação do Supervisor",
+            "Diário de Campo",
+            "Projeto de Intervenção",
+            "Avaliação do Supervisor Local - Física",
+            "Avaliação do Supervisor Local - Carreiras",
         ]
 
         encoding = "utf-8-sig"
@@ -132,7 +132,7 @@ class ImportService:
 
                     intern_data = {
                         "name": intern_name,
-                        "registration_number": ra_raw,
+                        "registration_number": str(ra_raw),
                         "venue_id": current_venue_id,
                         "term": row.get("periodo", "").strip(),
                         "email": row.get("email", None),

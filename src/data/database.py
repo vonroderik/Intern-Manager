@@ -69,8 +69,10 @@ class DatabaseConnector:
         self.db_path = get_db_path()
 
         self.conn = sqlite3.connect(self.db_path)
+        self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
         self.cursor.execute("PRAGMA foreign_keys = ON")
+        self._closed = False
 
         self._create_tables()
 
@@ -106,3 +108,31 @@ class DatabaseConnector:
         except sqlite3.Error as e:
             print(f"CRITICAL: Erro de SQL ao criar tabelas: {e}")
             raise
+
+    def rollback(self):
+        try:
+            self.conn.rollback()
+        except Exception:
+            pass
+
+    def close(self):
+        """
+        Closes the database connection.
+        """
+
+        if getattr(self, "_closed", False):
+            return
+
+        try:
+            self.rollback()
+        finally:
+            try:
+                self.cursor.close()
+            except Exception:
+                pass
+            try:
+                self.conn.close()
+            except Exception:
+                pass
+            finally:
+                self._closed = True
