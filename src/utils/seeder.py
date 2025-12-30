@@ -3,6 +3,18 @@ from core.models.evaluation_criteria import EvaluationCriteria
 
 
 def seed_default_criteria(service: EvaluationCriteriaService):
+    """
+    Populates the database with a standard set of evaluation criteria.
+
+    This function acts as a database seeder. It first checks if any criteria
+    already exist to avoid duplication. If the table is empty, it inserts
+    default criteria (e.g., Field Diary, Intervention Action, Meetings)
+    to ensure the system is ready for use upon first launch.
+
+    Args:
+        service (EvaluationCriteriaService): The service instance used to
+            persist the new criteria.
+    """
     existing = service.repo.get_all()
     if len(existing) > 0:
         return

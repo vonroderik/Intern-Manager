@@ -1,21 +1,48 @@
 from data.database import DatabaseConnector
 from core.models.meeting import Meeting
 from typing import Optional, List
+from sqlite3 import Connection, Cursor
 
 
 class MeetingRepository:
     """
     Repository responsible for persistence and retrieval of Meeting entities.
+
+    This class handles the database interactions for supervisory meetings,
+    tracking attendance and dates. It maps directly to the `meetings` table.
+
+    Attributes:
+        db (DatabaseConnector): The database connector instance.
+        conn (Connection): Active SQLite connection.
+        cursor (Cursor): Active SQLite cursor.
     """
 
     def __init__(self, db: DatabaseConnector):
+        """
+        Initializes the repository with an active database connection.
+
+        Args:
+            db (DatabaseConnector): An initialized connector with an open connection.
+
+        Raises:
+            RuntimeError: If the connector does not hold a valid connection or cursor.
+        """
         self.db = db
-        self.conn = db.conn
-        self.cursor = db.cursor
+        if db.conn is None or db.cursor is None:
+            raise RuntimeError(
+                "Repository initialized without a valid database connection."
+            )
+        self.conn: Connection = db.conn
+        self.cursor: Cursor = db.cursor
 
     def get_all(self) -> List[Meeting]:
         """
         Retrieves all meetings stored in the database.
+
+        Results are ordered by date in descending order (newest first).
+
+        Returns:
+            List[Meeting]: A list of all recorded meetings.
         """
         sql_query = """
         SELECT meeting_id, intern_id, meeting_date, is_intern_present
@@ -27,7 +54,7 @@ class MeetingRepository:
 
         return [
             Meeting(
-                meeting_id=row["meeting_jd"],
+                meeting_id=row["meeting_jd"],  # AVISO: Typo original mantido (jd vs id)
                 intern_id=row["intern_id"],
                 meeting_date=row["meeting_date"],
                 is_intern_present=bool(row["is_intern_present"]),
@@ -37,7 +64,14 @@ class MeetingRepository:
 
     def get_by_intern_id(self, intern_id: int) -> List[Meeting]:
         """
-        Retrieves all meetings for a specific intern.
+        Retrieves all meetings associated with a specific intern.
+
+        Args:
+            intern_id (int): The unique identifier of the intern.
+
+        Returns:
+            List[Meeting]: A list of Meeting objects for that intern,
+            ordered by date descending.
         """
         sql_query = """
         SELECT meeting_id, intern_id, meeting_date, is_intern_present
@@ -50,7 +84,7 @@ class MeetingRepository:
 
         return [
             Meeting(
-                meeting_id=row["meeting_jd"],
+                meeting_id=row["meeting_id"],
                 intern_id=row["intern_id"],
                 meeting_date=row["meeting_date"],
                 is_intern_present=bool(row["is_intern_present"]),
@@ -61,6 +95,16 @@ class MeetingRepository:
     def save(self, meeting: Meeting) -> Optional[int]:
         """
         Persists a new Meeting entity.
+
+        Args:
+            meeting (Meeting): The meeting entity to save. Must not have an ID.
+
+        Returns:
+            Optional[int]: The unique identifier (primary key) of the newly created record.
+
+        Raises:
+            ValueError: If the meeting object already has an assigned ID.
+            RuntimeError: If the database fails to generate an ID.
         """
         if meeting.meeting_id is not None:
             raise ValueError(
@@ -82,7 +126,16 @@ class MeetingRepository:
 
     def delete(self, meeting: Meeting) -> bool:
         """
-        Deletes a Meeting record.
+        Permanently deletes a Meeting record.
+
+        Args:
+            meeting (Meeting): The meeting entity to delete. Must have an ID.
+
+        Returns:
+            bool: True if the deletion was successful, False otherwise.
+
+        Raises:
+            ValueError: If the meeting object does not have an ID.
         """
         if meeting.meeting_id is None:
             raise ValueError("Cannot delete a meeting without an ID")

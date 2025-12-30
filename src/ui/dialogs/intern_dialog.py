@@ -12,7 +12,26 @@ from core.models.intern import Intern
 
 
 class InternDialog(QDialog):
+    """
+    Dialog window for creating or editing an Intern record.
+
+    This dialog handles the data entry for personal and academic information.
+    When editing an existing intern, the Registration Number (RA) field is
+    locked to preserve data integrity (and your sanity).
+
+    Attributes:
+        intern (Optional[Intern]): The intern object being edited, or None if creating new.
+    """
+
     def __init__(self, parent=None, intern: Optional[Intern] = None):
+        """
+        Initializes the dialog.
+
+        Args:
+            parent (QWidget): Parent widget.
+            intern (Optional[Intern]): Intern object to edit. If None, the dialog
+                starts in 'Create' mode with empty fields.
+        """
         super().__init__(parent)
         self.intern = intern
 
@@ -62,7 +81,12 @@ class InternDialog(QDialog):
             self.load_data()
 
     def load_data(self):
-        """Pega os dados do objeto Intern e joga na tela"""
+        """
+        Populates the form fields with data from the provided Intern object.
+
+        Sets the RA (Registration Number) field to Read-Only to prevent
+        primary key modifications during updates.
+        """
         if not self.intern:
             return
 
@@ -82,13 +106,25 @@ class InternDialog(QDialog):
         self.txt_ra.setReadOnly(True)
         self.txt_ra.setToolTip("O RA não pode ser alterado após a criação.")
 
-    def get_data(self) -> dict:
-        """Pega o que o usuário digitou e retorna um dicionário"""
-        return {
-            "name": self.txt_name.text().strip(),
-            "registration_number": self.txt_ra.text().strip(),
-            "email": self.txt_email.text().strip(),
-            "term": self.txt_term.text().strip(),
-            "start_date": self.date_start.date().toString("yyyy-MM-dd"),
-            "end_date": self.date_end.date().toString("yyyy-MM-dd"),
-        }
+    def get_data(self) -> Intern:
+        """
+        Retrieves user input from the form widgets.
+
+        Converts QDate objects to ISO 8601 strings (YYYY-MM-DD) suitable
+        for database storage.
+
+        Returns:
+            dict: A dictionary containing the raw form data.
+        """
+        current_id = self.intern.intern_id if self.intern else None
+                
+        return Intern(
+                intern_id=current_id,
+                name=self.txt_name.text().strip(),
+                registration_number=self.txt_ra.text().strip(),
+                email=self.txt_email.text().strip() or None, # Converte string vazia para None
+                term=self.txt_term.text().strip(),
+                start_date=self.date_start.date().toString("yyyy-MM-dd"),
+                end_date=self.date_end.date().toString("yyyy-MM-dd"),
+                # Adicione working_hours/days se tiver os campos na tela
+                )

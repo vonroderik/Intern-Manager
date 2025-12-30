@@ -1,4 +1,3 @@
-from datetime import datetime
 from PySide6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
@@ -24,14 +23,35 @@ from ui.dialogs.grade_dialog import GradeDialog
 
 
 class MainWindow(QMainWindow):
+    """
+    Main application window for the Intern Manager system.
+
+    This class serves as the central hub of the application, displaying a
+    data table of registered interns and providing access to CRUD operations
+    (Create, Read, Update, Delete) and the Grading module.
+
+    Attributes:
+        service (InternService): Service for intern management.
+        criteria_service (EvaluationCriteriaService): Service for criteria management.
+        grade_service (GradeService): Service for grade management.
+        table (QTableWidget): The main data grid displaying intern records.
+    """
+
     def __init__(
         self,
         intern_service: InternService,
         criteria_service: EvaluationCriteriaService,
         grade_service: GradeService,
     ):
+        """
+        Initializes the main window and its dependencies.
+
+        Args:
+            intern_service (InternService): Service to handle intern persistence.
+            criteria_service (EvaluationCriteriaService): Service to handle criteria.
+            grade_service (GradeService): Service to handle grades.
+        """
         super().__init__()
-        self.service = intern_service
 
         self.service = intern_service
         self.criteria_service = criteria_service
@@ -50,6 +70,13 @@ class MainWindow(QMainWindow):
         self.load_data()
 
     def setup_ui(self):
+        """
+        Configures the visual elements of the window.
+
+        Sets up the top toolbar (buttons, labels), the main data table
+        configuration (columns, selection mode), and connects signals (clicks)
+        to their respective slot methods.
+        """
         top_layout = QHBoxLayout()
 
         self.lbl_titulo = QLabel("Estagiários Cadastrados")
@@ -104,7 +131,12 @@ class MainWindow(QMainWindow):
         self.table.doubleClicked.connect(self.open_edit_dialog)
 
     def load_data(self):
-        """Recarrega a tabela do zero"""
+        """
+        Fetches the latest data from the service and repopulates the table.
+
+        This method clears existing rows and rebuilds the table from scratch
+        to ensure the UI reflects the current database state.
+        """
         interns = self.service.get_all_interns()
         self.table.setRowCount(0)
 
@@ -127,13 +159,18 @@ class MainWindow(QMainWindow):
             self.table.setItem(row_idx, 3, cell_status)
 
     def open_add_dialog(self):
-        """Abre o formulário vazio para criar novo"""
+        """
+        Opens the dialog to register a new intern.
+
+        Retrieves data from the dialog and passes it to the service.
+        Note: Assumes get_data() returns a compatible object/structure.
+        """
         dialog = InternDialog(self)
 
         if dialog.exec():
             data = dialog.get_data()
             try:
-                new_intern = Intern(**data)
+                new_intern = dialog.get_data()
                 self.service.add_new_intern(new_intern)
                 self.load_data()
                 QMessageBox.information(
@@ -143,7 +180,12 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Erro", f"Não foi possível salvar: {e}")
 
     def open_edit_dialog(self):
-        """Abre o formulário preenchido para editar"""
+        """
+        Opens the dialog to edit the currently selected intern.
+
+        Retrieves the selected row's ID, fetches the object, populates the dialog,
+        and updates the object attributes with the returned data.
+        """
         selected_rows = self.table.selectionModel().selectedRows()
         if not selected_rows:
             QMessageBox.warning(self, "Atenção", "Selecione um aluno para editar.")
@@ -166,13 +208,13 @@ class MainWindow(QMainWindow):
         dialog = InternDialog(self, intern=intern_obj)
 
         if dialog.exec():
-            data = dialog.get_data()
+            updated_data = dialog.get_data()
             try:
-                intern_obj.name = data["name"]
-                intern_obj.email = data["email"]
-                intern_obj.term = data["term"]
-                intern_obj.start_date = data["start_date"]
-                intern_obj.end_date = data["end_date"]
+                intern_obj.name = updated_data.name
+                intern_obj.email = updated_data.email
+                intern_obj.term = updated_data.term
+                intern_obj.start_date = updated_data.start_date
+                intern_obj.end_date = updated_data.end_date
 
                 self.service.update_intern(intern_obj)
                 self.load_data()
@@ -181,7 +223,9 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Erro", f"Erro ao atualizar: {e}")
 
     def delete_intern(self):
-        """Exclui o registro"""
+        """
+        Deletes the currently selected intern after user confirmation.
+        """
         selected_rows = self.table.selectionModel().selectedRows()
         if not selected_rows:
             QMessageBox.warning(self, "Atenção", "Selecione um aluno para excluir.")
@@ -215,7 +259,10 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, "Erro", f"Falha ao excluir: {e}")
 
     def open_grades_dialog(self):
-        """Abre a tela de notas para o aluno selecionado"""
+        """
+        Opens the grading interface for the currently selected intern.
+        Passes all necessary services to the GradeDialog.
+        """
         selected_rows = self.table.selectionModel().selectedRows()
         if not selected_rows:
             QMessageBox.warning(

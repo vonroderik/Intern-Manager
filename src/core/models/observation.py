@@ -46,7 +46,7 @@ class Observation:
             f"Observation("
             f"intern_id={self.intern_id}"
             f"observation={self.observation}"
-            f"observation_id={self.observation_id}"
+            f"observation={self.observation_id}"
             f"last_update={self.last_update}"
             f")"
         )

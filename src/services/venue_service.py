@@ -14,6 +14,14 @@ REQUIRED_FIELDS = {
 class VenueService(BaseService[Venue]):
     """
     Service class responsible for business logic related to internship venues.
+
+    This service manages the lifecycle of 'Venue' entities (hospitals, clinics,
+    companies), ensuring that contact information like supervisor email is
+    validated before persistence.
+
+    Attributes:
+        repo (VenueRepository): The repository for venue persistence.
+        REQUIRED_FIELDS (Dict[str, str]): Mapping of required fields for validation.
     """
 
     REQUIRED_FIELDS = REQUIRED_FIELDS
@@ -31,11 +39,17 @@ class VenueService(BaseService[Venue]):
         """
         Validates and adds a new venue to the system.
 
+        Performs field validation and checks the supervisor's email format
+        if provided.
+
         Args:
             venue (Venue): The venue instance to be added.
 
         Returns:
             int: The ID of the newly created venue.
+
+        Raises:
+            ValueError: If required fields are missing or email format is invalid.
         """
         self._validate_required_fields(venue)
 
@@ -44,7 +58,15 @@ class VenueService(BaseService[Venue]):
         return self.repo.save(venue)
 
     def get_by_name(self, name: str) -> Optional[Venue]:
-        """Searches a Venue by name."""
+        """
+        Searches for a Venue by its name.
+
+        Args:
+            name (str): The name (or partial name) to search for.
+
+        Returns:
+            Optional[Venue]: The Venue object if found, or None.
+        """
         return self.repo.get_by_name(name)
 
     def update_venue(self, venue: Venue):
@@ -56,8 +78,15 @@ class VenueService(BaseService[Venue]):
 
         Returns:
             bool: True if the update was successful, False otherwise.
+
+        Raises:
+            ValueError: If the venue object does not have an ID.
         """
         self._ensure_has_id(venue, "venue")
+        self._validate_required_fields(venue)
+
+        if venue.supervisor_email:
+            validate_email_format(str(venue.supervisor_email))
         return self.repo.update(venue)
 
     def delete_venue(self, venue: Venue):

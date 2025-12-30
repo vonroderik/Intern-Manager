@@ -1,21 +1,49 @@
 from data.database import DatabaseConnector
 from core.models.observation import Observation
 from typing import Optional, List
+from sqlite3 import Connection, Cursor
 
 
 class ObservationRepository:
     """
     Repository responsible for persistence and retrieval of Observation entities.
+
+    This class provides an interface to the `observations` table, allowing
+    the management of free-text notes associated with interns.
+
+    Attributes:
+        db (DatabaseConnector): The database connector instance.
+        conn (Connection): Active SQLite connection.
+        cursor (Cursor): Active SQLite cursor.
     """
 
     def __init__(self, db: DatabaseConnector):
+        """
+        Initializes the repository with an active database connection.
+
+        Args:
+            db (DatabaseConnector): An initialized connector with an open connection.
+
+        Raises:
+            RuntimeError: If the connector does not hold a valid connection or cursor.
+        """
         self.db = db
-        self.conn = db.conn
-        self.cursor = db.cursor
+        if db.conn is None or db.cursor is None:
+            raise RuntimeError(
+                "Repository initialized without a valid database connection."
+            )
+        self.conn: Connection = db.conn
+        self.cursor: Cursor = db.cursor
 
     def get_all(self) -> List[Observation]:
         """
         Retrieves all observations stored in the database.
+
+        The results are ordered by the last update timestamp in descending order,
+        showing the most recent notes first.
+
+        Returns:
+            List[Observation]: A list of all recorded observations.
         """
         sql_query = """
         SELECT observation_id, intern_id, observation, last_update
@@ -43,6 +71,12 @@ class ObservationRepository:
     def get_by_id(self, observation_id: int) -> Optional[Observation]:
         """
         Retrieves a observation by its unique database identifier.
+
+        Args:
+            observation_id (int): The unique identifier of the observation.
+
+        Returns:
+            Optional[Observation]: The Observation object if found, otherwise None.
         """
         sql_query = """
         SELECT observation_id, intern_id, observation, last_update
@@ -66,6 +100,16 @@ class ObservationRepository:
     def save(self, observation: Observation) -> int:
         """
         Persists a new Observation entity in the database.
+
+        Args:
+            observation (Observation): The entity to save. Must not have an ID yet.
+
+        Returns:
+            int: The unique identifier (primary key) of the newly created record.
+
+        Raises:
+            ValueError: If the observation object already has an assigned ID.
+            RuntimeError: If the database fails to generate an ID.
         """
         if observation.observation_id is not None:
             raise ValueError(
@@ -95,6 +139,18 @@ class ObservationRepository:
     def update(self, observation: Observation) -> bool:
         """
         Updates an existing Observation record in the database.
+
+        Updates the text content and automatically refreshes the `last_update`
+        timestamp using SQLite's local time function.
+
+        Args:
+            observation (Observation): The entity with updated data. Must have an ID.
+
+        Returns:
+            bool: True if the update was successful, False otherwise.
+
+        Raises:
+            ValueError: If the observation object does not have an ID.
         """
         if observation.observation_id is None:
             raise ValueError("Cannot update an observation without an ID.")
@@ -118,6 +174,15 @@ class ObservationRepository:
     def delete(self, observation: Observation) -> bool:
         """
         Deletes a Observation record from the database.
+
+        Args:
+            observation (Observation): The entity to delete. Must have an ID.
+
+        Returns:
+            bool: True if the deletion was successful, False otherwise.
+
+        Raises:
+            ValueError: If the observation object does not have an ID.
         """
         if observation.observation_id is None:
             raise ValueError("Cannot delete an observation without an ID.")

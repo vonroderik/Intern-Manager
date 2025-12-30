@@ -5,12 +5,21 @@ from services.venue_service import VenueService
 from services.document_service import DocumentService
 from core.models.venue import Venue
 from core.models.intern import Intern
-from core.models.document import Document
 
 
 class ImportService:
     """
     Service responsible for importing internship data from a CSV file.
+
+    This service acts as an orchestrator, parsing raw CSV data and distributing
+    it to the specific domain services (Intern, Venue, Document). It handles
+    complex logic like "Upsert" (Update or Insert) for both venues and interns,
+    and triggers the automatic generation of initial documents.
+
+    Attributes:
+        intern_service (InternService): Service for intern management.
+        venue_service (VenueService): Service for venue management.
+        document_service (DocumentService): Service for document management.
     """
 
     def __init__(
@@ -19,6 +28,14 @@ class ImportService:
         venue_service: VenueService,
         document_service: DocumentService,
     ):
+        """
+        Initializes the ImportService with required domain services.
+
+        Args:
+            intern_service (InternService): Service to handle intern persistence.
+            venue_service (VenueService): Service to handle venue persistence.
+            document_service (DocumentService): Service to generate documents.
+        """
         self.intern_service = intern_service
         self.venue_service = venue_service
         self.document_service = document_service
@@ -26,6 +43,19 @@ class ImportService:
     def read_file(self, filename: str | Path) -> None:
         """
         Reads a CSV file and imports its contents into the system.
+
+        The method performs the following steps:
+        1. Detects file dialect (delimiter) using `csv.Sniffer`.
+        2. Iterates through rows, validating mandatory fields (Name, RA).
+        3. Manages Venues: Checks if the venue exists; creates or updates it.
+        4. Manages Interns: Checks if the intern exists; creates or updates it.
+        5. Triggers `create_initial_documents_batch` for new interns only.
+
+        Args:
+            filename (str | Path): The path to the CSV file to be imported.
+
+        Raises:
+            Exception: Propagates file I/O errors or critical failures during import.
         """
         processed_venues = set()
         processed_interns = set()

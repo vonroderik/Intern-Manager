@@ -12,17 +12,41 @@ REQUIRED_FIELDS = {
 class MeetingService(BaseService[Meeting]):
     """
     Service class responsible for business logic related to supervision meetings.
+
+    This service manages the scheduling and recording of meetings between
+    interns and supervisors, ensuring date formats are standardized for storage.
+
+    Attributes:
+        repo (MeetingRepository): The repository for meeting persistence.
+        REQUIRED_FIELDS (Dict[str, str]): Mapping of required fields for validation.
     """
 
     REQUIRED_FIELDS = REQUIRED_FIELDS
 
     def __init__(self, repo: MeetingRepository):
+        """
+        Initializes the MeetingService with the specified repository.
+
+        Args:
+            repo (MeetingRepository): Repository for meeting persistence.
+        """
         super().__init__(repo)
 
     def add_new_meeting(self, meeting: Meeting):
         """
         Validates date format and adds a new meeting.
-        Expects date in UI format (DD/MM/YYYY) and converts to ISO.
+
+        Attempts to convert the date from UI format (DD/MM/YYYY) to ISO (YYYY-MM-DD).
+        If conversion fails, it silently proceeds with the original string.
+
+        Args:
+            meeting (Meeting): The meeting instance to be added.
+
+        Returns:
+            int: The ID of the newly created meeting.
+
+        Raises:
+            ValueError: If required fields are missing.
         """
         self._validate_required_fields(meeting)
 
@@ -36,8 +60,23 @@ class MeetingService(BaseService[Meeting]):
     def get_meetings_by_intern(self, intern_id: int):
         """
         Retrieves all meetings associated with a specific intern.
+
+        Args:
+            intern_id (int): The unique identifier of the intern.
+
+        Returns:
+            List[Meeting]: A list of Meeting objects for that intern.
         """
         return self.repo.get_by_intern_id(intern_id)
 
     def delete_meeting(self, meeting: Meeting):
+        """
+        Removes a meeting from the system using the base service logic.
+
+        Args:
+            meeting (Meeting): The meeting instance to be deleted.
+
+        Returns:
+            bool: True if the deletion was successful, False otherwise.
+        """
         return self.delete(meeting, "meeting")

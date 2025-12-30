@@ -1,6 +1,7 @@
 from data.database import DatabaseConnector
 from core.models.intern import Intern
 from typing import Optional, List
+from sqlite3 import Connection, Cursor
 
 
 class InternRepository:
@@ -13,9 +14,14 @@ class InternRepository:
 
     Responsibilities:
         - Insert new interns into the database.
-        - Retrieve interns using different query criteria.
+        - Retrieve interns using different query criteria (ID, RA, Name).
         - Update existing intern records.
         - Delete intern records.
+
+    Attributes:
+        db (DatabaseConnector): The database connector instance.
+        conn (Connection): Active SQLite connection.
+        cursor (Cursor): Active SQLite cursor.
     """
 
     def __init__(self, db: DatabaseConnector):
@@ -25,17 +31,24 @@ class InternRepository:
         Args:
             db (DatabaseConnector): Database connector providing an open
                 connection and cursor.
+
+        Raises:
+            RuntimeError: If the connector does not hold a valid connection.
         """
         self.db = db
-        self.conn = db.conn
-        self.cursor = db.cursor
+        if db.conn is None or db.cursor is None:
+            raise RuntimeError(
+                "Repository initialized without a valid database connection."
+            )
+        self.conn: Connection = db.conn
+        self.cursor: Cursor = db.cursor
 
     def get_all(self) -> List[Intern]:
         """
         Retrieves all interns stored in the database.
 
         Returns:
-            List[Intern]: A list of Intern objects ordered alphabetically.
+            List[Intern]: A list of Intern objects ordered alphabetically by name.
         """
         sql_query = """
         SELECT intern_id, name, registration_number, term, email, start_date, end_date, 
@@ -64,7 +77,7 @@ class InternRepository:
 
     def get_by_id(self, intern_id: int) -> Optional[Intern]:
         """
-        Retrieves an intern by its unique database identifier.
+        Retrieves a single intern by its unique database identifier.
 
         Args:
             intern_id (int): Unique identifier of the intern.
@@ -97,7 +110,7 @@ class InternRepository:
 
     def get_by_registration_number(self, registration_number: str) -> Optional[Intern]:
         """
-        Retrieves an intern by registration number (RA).
+        Retrieves an intern by their academic registration number (RA).
 
         Args:
             registration_number (str): Registration number of the intern.
@@ -130,7 +143,9 @@ class InternRepository:
 
     def get_by_name(self, name: str) -> Optional[Intern]:
         """
-        Retrieves the first intern whose name partially matches the given value.
+        Retrieves the first intern whose name partially matches the given query.
+
+        Note: This method returns only the first match found.
 
         Args:
             name (str): Partial or full name of the intern.
@@ -167,10 +182,14 @@ class InternRepository:
         Persists a new Intern entity in the database.
 
         Args:
-            intern (Intern): Intern entity to be persisted.
+            intern (Intern): Intern entity to be persisted. Must not have an ID.
 
         Returns:
-            Optional[int]: The generated database ID, or None if it already has one.
+            Optional[int]: The generated database ID.
+
+        Raises:
+            ValueError: If the intern object already has an ID.
+            RuntimeError: If the database fails to return the new ID.
         """
         if intern.intern_id is not None:
             raise ValueError(
@@ -204,11 +223,16 @@ class InternRepository:
         """
         Updates an existing Intern record.
 
+        Also automatically updates the `last_update` timestamp field.
+
         Args:
-            intern (Intern): Intern entity with updated data.
+            intern (Intern): Intern entity with updated data. Must have an ID.
 
         Returns:
-            bool: True if the update affected at least one row.
+            bool: True if the update affected at least one row, False otherwise.
+
+        Raises:
+            ValueError: If the intern object does not have an ID.
         """
 
         if intern.intern_id is None:
@@ -241,13 +265,16 @@ class InternRepository:
 
     def delete(self, intern: Intern) -> bool:
         """
-        Deletes an Intern record.
+        Permanently deletes an Intern record.
 
         Args:
-            intern (Intern): Intern entity to be deleted.
+            intern (Intern): Intern entity to be deleted. Must have an ID.
 
         Returns:
-            bool: True if the record was deleted.
+            bool: True if the record was successfully deleted.
+
+        Raises:
+            ValueError: If the intern object does not have an ID.
         """
         if intern.intern_id is None:
             raise ValueError("Cannot delete an intern without an ID.")

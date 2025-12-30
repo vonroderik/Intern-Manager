@@ -11,6 +11,14 @@ REQUIRED_FIELDS = {
 class ObservationService(BaseService[Observation]):
     """
     Service class responsible for business logic related to intern observations.
+
+    This service acts as the bridge between the UI and the persistence layer
+    for free-text notes/observations, ensuring all required data is present
+    before saving.
+
+    Attributes:
+        repo (ObservationRepository): The repository for observation persistence.
+        REQUIRED_FIELDS (Dict[str, str]): Mapping of required fields for validation.
     """
 
     REQUIRED_FIELDS = REQUIRED_FIELDS
@@ -33,6 +41,9 @@ class ObservationService(BaseService[Observation]):
 
         Returns:
             int: The ID of the newly created observation.
+
+        Raises:
+            ValueError: If required fields (comment, intern_id) are missing.
         """
         self._validate_required_fields(observation)
         return self.repo.save(observation)
@@ -46,6 +57,9 @@ class ObservationService(BaseService[Observation]):
 
         Returns:
             bool: True if the update was successful, False otherwise.
+
+        Raises:
+            ValueError: If the observation has no ID or fields are missing.
         """
         self._ensure_has_id(observation, "observation")
         self._validate_required_fields(observation)

@@ -31,6 +31,17 @@ from utils.seeder import seed_default_criteria
 
 
 def main():
+    """
+    Main entry point of the application.
+
+    This function orchestrates the entire startup sequence:
+    1. Initializes the Qt Application.
+    2. Establishes the database connection.
+    3. Performs Dependency Injection (Repositories -> Services).
+    4. Seeds default data if the database is empty.
+    5. Checks for and processes any pending CSV imports.
+    6. Launches the main Graphical User Interface (GUI).
+    """
     app = QApplication(sys.argv)
 
     print("\n=== SYSTEM STARTUP ===\n")
@@ -114,6 +125,13 @@ def main():
 def get_csv_path() -> Optional[Path]:
     """
     Locates the CSV import file in the data/imports directory.
+
+    Traverses the directory structure to find the 'data/imports' folder.
+    If multiple CSV files are present, it selects the first one found
+    and issues a warning.
+
+    Returns:
+        Optional[Path]: The path to the CSV file, or None if not found.
     """
     csv_file = None
 

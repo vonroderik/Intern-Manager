@@ -12,8 +12,8 @@ class BaseService(Generic[T]):
     entity-specific validation rules.
 
     Attributes:
-        repo: Repository instance for the specific entity.
-        REQUIRED_FIELDS: Dictionary mapping field names to human-readable names.
+        repo (Any): Repository instance for the specific entity.
+        REQUIRED_FIELDS (Dict[str, str]): Dictionary mapping field names to human-readable names.
     """
 
     REQUIRED_FIELDS: Dict[str, str] = {}
@@ -23,7 +23,7 @@ class BaseService(Generic[T]):
         Initializes the service with a repository.
 
         Args:
-            repo: A repository instance that follows the standard interface.
+            repo (Any): A repository instance that follows the standard interface.
         """
         self.repo = repo
 

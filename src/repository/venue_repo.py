@@ -1,6 +1,7 @@
 from data.database import DatabaseConnector
 from core.models.venue import Venue
 from typing import Optional, List
+from sqlite3 import Connection, Cursor
 
 
 class VenueRepository:
@@ -20,8 +21,12 @@ class VenueRepository:
                 SQLite connection and cursor.
         """
         self.db = db
-        self.conn = db.conn
-        self.cursor = db.cursor
+        if db.conn is None or db.cursor is None:
+            raise RuntimeError(
+                "Repository initialized without a valid database connection."
+            )
+        self.conn: Connection = db.conn
+        self.cursor: Cursor = db.cursor
 
     def get_all(self) -> List[Venue]:
         """

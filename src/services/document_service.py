@@ -11,6 +11,13 @@ REQUIRED_FIELDS = {
 class DocumentService(BaseService[Document]):
     """
     Service class responsible for business logic related to documents.
+
+    This service handles validation, lifecycle management (CRUD), and the
+    automatic generation of required documentation for interns.
+
+    Attributes:
+        repo (DocumentRepository): The repository for document persistence.
+        REQUIRED_FIELDS (Dict[str, str]): Mapping of required fields for validation.
     """
 
     REQUIRED_FIELDS = REQUIRED_FIELDS
@@ -33,6 +40,9 @@ class DocumentService(BaseService[Document]):
 
         Returns:
             int: The ID of the newly created document.
+
+        Raises:
+            ValueError: If validation fails (missing fields).
         """
         self._validate_required_fields(document)
         return self.repo.save(document)
@@ -46,6 +56,9 @@ class DocumentService(BaseService[Document]):
 
         Returns:
             bool: True if the update was successful, False otherwise.
+
+        Raises:
+            ValueError: If the document has no ID or validation fails.
         """
         self._ensure_has_id(document, "document")
         self._validate_required_fields(document)
@@ -64,7 +77,16 @@ class DocumentService(BaseService[Document]):
         return self.delete(document, "document")
 
     def create_initial_documents_batch(self, intern_id: int):
-        """Gera e salva todos os documentos padrão de uma vez."""
+        """
+        Generates and saves the standard set of documents for a new intern.
+
+        This method creates a predefined list of documents (e.g., Contract,
+        Attendance Sheet, Field Diary) and persists them in a single batch
+        transaction to ensure atomicity.
+
+        Args:
+            intern_id (int): The identifier of the intern receiving the documents.
+        """
         default_docs_names = [
             "Contrato de Estágio",
             "Ficha de Frequência",

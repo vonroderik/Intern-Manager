@@ -20,10 +20,14 @@ from services.grade_service import GradeService
 
 class SmartGradeInput(QDoubleSpinBox):
     """
-    Um SpinBox educado que:
-    1. Entende ponto como vírgula.
-    2. Seleciona tudo ao clicar (para digitar por cima fácil).
-    3. Remove as setas feias (opcional).
+    A customized QDoubleSpinBox with enhanced UX for grade entry.
+
+    Features:
+    - Auto-selects text upon receiving focus to facilitate overwriting.
+    - Automatically converts '.' to ',' to support numpad usage in locales
+      that use commas as decimal separators.
+    - Hides standard increment/decrement buttons for a cleaner interface.
+    - Aligns text to the right.
     """
 
     def __init__(self, parent=None):
@@ -32,12 +36,20 @@ class SmartGradeInput(QDoubleSpinBox):
         self.setAlignment(Qt.AlignmentFlag.AlignRight)
 
     def focusInEvent(self, event):
-        """Ao ganhar foco (clique ou Tab), seleciona todo o texto."""
+        """
+        Selects all text when the widget gains focus (via click or Tab).
+        Uses a singleShot timer to ensure selection happens after Qt's internal processing.
+        """
         super().focusInEvent(event)
         QTimer.singleShot(0, self.selectAll)
 
     def keyPressEvent(self, event: QKeyEvent):
-        """Troca Ponto por Vírgula na marra."""
+        """
+        Intercepts key presses to enforce specific input behaviors.
+
+        Specifically, converts the period (.) key into a comma (,) to prevent
+        validation errors in locales where comma is the decimal separator.
+        """
         if event.text() == ".":
             new_event = QKeyEvent(
                 QKeyEvent.Type.KeyPress,
@@ -51,6 +63,20 @@ class SmartGradeInput(QDoubleSpinBox):
 
 
 class GradeDialog(QDialog):
+    """
+    Dialog window for entering and editing intern grades.
+
+    This dialog dynamically generates input fields based on the currently
+    active evaluation criteria. It calculates the total score in real-time
+    and handles persistence via the GradeService.
+
+    Attributes:
+        intern (Intern): The intern being evaluated.
+        criteria_service (EvaluationCriteriaService): Service to fetch criteria.
+        grade_service (GradeService): Service to fetch and save grades.
+        inputs (Dict[int, SmartGradeInput]): Mapping of criteria_id to input widgets.
+    """
+
     def __init__(
         self,
         parent,
@@ -107,6 +133,12 @@ class GradeDialog(QDialog):
         self.populate_fields()
 
     def populate_fields(self):
+        """
+        Fetches active criteria and existing grades to build the form dynamically.
+
+        For each criterion, a SmartGradeInput is created. If a grade already
+        exists for that criterion, the input is pre-filled.
+        """
         try:
             criteria_list = self.criteria_service.list_active_criteria()
             existing_grades = self.grade_service.get_grades_by_intern(
@@ -149,6 +181,12 @@ class GradeDialog(QDialog):
             self.reject()
 
     def calculate_total(self):
+        """
+        Sums the values of all inputs and updates the total label.
+
+        Changes the label color to Green (Pass) or Red (Fail) based on a
+        threshold of 7.0.
+        """
         total = sum(spinner.value() for spinner in self.inputs.values())
         self.lbl_total.setText(f"Nota Final: {total:.2f}")
 
@@ -162,6 +200,12 @@ class GradeDialog(QDialog):
             )
 
     def save_grades(self):
+        """
+        Collects data from all inputs and persists them using the GradeService.
+
+        Constructs a list of Grade objects and sends them for batch processing.
+        Provides user feedback via QMessageBox upon success or failure.
+        """
         grades_to_save = []
 
         for c_id, spinner in self.inputs.items():

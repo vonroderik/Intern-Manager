@@ -4,8 +4,16 @@ from pathlib import Path
 
 def get_project_root() -> Path:
     """
-    Retorna a raiz absoluta do projeto.
-    Detecta se está rodando como script (.py) ou executável congelado (.exe).
+    Determines the absolute root directory of the project.
+
+    This utility ensures path compatibility across development (script-based)
+    and production (executable-based) environments.
+
+    - If running as a frozen executable (e.g., PyInstaller), returns the executable's directory.
+    - If running from source, calculates the root based on this file's location.
+
+    Returns:
+        Path: The absolute path object pointing to the project root.
     """
     if getattr(sys, "frozen", False):
         return Path(sys.executable).parent
