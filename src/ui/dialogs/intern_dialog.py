@@ -6,30 +6,27 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QVBoxLayout,
     QDateEdit,
-    QComboBox,  # Adicionado
+    QComboBox,
+    QMessageBox,  # Importante para xingar o usuário
 )
 from PySide6.QtCore import QDate
 from core.models.intern import Intern
-from services.venue_service import VenueService  # Adicionado
+from services.venue_service import VenueService
+from utils.validations import validate_date_range  # <--- A estrela do show
 
 
 class InternDialog(QDialog):
     """
     Dialog window for creating or editing an Intern record.
-    Includes Venue selection via ComboBox.
+    Includes Venue selection and Logic Validation.
     """
 
     def __init__(
-        self, parent, venue_service: VenueService, intern: Optional[Intern] = None
+        self,
+        parent,
+        venue_service: VenueService,
+        intern: Optional[Intern] = None
     ):
-        """
-        Initializes the dialog.
-
-        Args:
-            parent: Parent widget.
-            venue_service: Service to fetch available venues.
-            intern: Intern object to edit (None for create).
-        """
         super().__init__(parent)
         self.intern = intern
         self.venue_service = venue_service
@@ -38,29 +35,23 @@ class InternDialog(QDialog):
         self.setMinimumWidth(400)
 
         self._setup_ui()
-
-        # Carrega os locais na combobox
         self.load_venues()
 
-        # Se for edição, preenche os campos
         if self.intern:
             self.load_data()
 
     def _setup_ui(self):
-        """Configures the visual elements."""
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
 
         self.form_layout = QFormLayout()
 
-        # Input Widgets
         self.txt_name = QLineEdit()
         self.txt_ra = QLineEdit()
         self.txt_email = QLineEdit()
         self.txt_term = QLineEdit()
         self.combo_venue = QComboBox()
 
-        # Date Widgets
         self.date_start = QDateEdit()
         self.date_start.setCalendarPopup(True)
         self.date_start.setDisplayFormat("dd/MM/yyyy")
@@ -71,12 +62,11 @@ class InternDialog(QDialog):
         self.date_end.setDisplayFormat("dd/MM/yyyy")
         self.date_end.setDate(QDate.currentDate().addMonths(6))
 
-        # Adding rows to form
         self.form_layout.addRow("Nome Completo:", self.txt_name)
         self.form_layout.addRow("RA (Matrícula):", self.txt_ra)
         self.form_layout.addRow("E-mail:", self.txt_email)
         self.form_layout.addRow("Semestre:", self.txt_term)
-        self.form_layout.addRow("Local de Estágio:", self.combo_venue)  # Nova linha
+        self.form_layout.addRow("Local de Estágio:", self.combo_venue)
         self.form_layout.addRow("Início do Estágio:", self.date_start)
         self.form_layout.addRow("Previsão de Fim:", self.date_end)
 
@@ -88,18 +78,16 @@ class InternDialog(QDialog):
             | QDialogButtonBox.StandardButton.Cancel
         )
         self.button_box = QDialogButtonBox(buttons)
-        self.button_box.accepted.connect(self.accept)
+        
+        # MUDANÇA CRÍTICA: Conectamos ao método customizado validate_and_save, não direto ao accept
+        self.button_box.accepted.connect(self.validate_and_save) 
         self.button_box.rejected.connect(self.reject)
-
+        
         self.main_layout.addWidget(self.button_box)
 
     def load_venues(self):
-        """
-        Fetches venues from the database and populates the ComboBox.
-        """
         self.combo_venue.clear()
         self.combo_venue.addItem("Selecione um local...", None)
-
         try:
             venues = self.venue_service.get_all()
             for v in venues:
@@ -108,10 +96,6 @@ class InternDialog(QDialog):
             print(f"Erro ao carregar locais: {e}")
 
     def load_data(self):
-        """
-        Populates the form fields with data from the provided Intern object.
-        """
-
         if self.intern is None:
             return
 
@@ -126,26 +110,47 @@ class InternDialog(QDialog):
             )
 
         if self.intern.end_date:
-            self.date_end.setDate(QDate.fromString(self.intern.end_date, "yyyy-MM-dd"))
+            self.date_end.setDate(
+                QDate.fromString(self.intern.end_date, "yyyy-MM-dd")
+            )
 
-        # Selecionar o Local correto na ComboBox
-        if hasattr(self.intern, "venue_id") and self.intern.venue_id:
+        if hasattr(self.intern, 'venue_id') and self.intern.venue_id:
             index = self.combo_venue.findData(self.intern.venue_id)
             if index >= 0:
                 self.combo_venue.setCurrentIndex(index)
 
-        # Trava o RA na edição
         self.txt_ra.setReadOnly(True)
         self.txt_ra.setToolTip("O RA não pode ser alterado após a criação.")
 
-    def get_data(self) -> Intern:
+    def validate_and_save(self):
         """
-        Retrieves user input and returns an Intern object.
-        Includes the selected venue_id.
+        Valida os dados antes de fechar o diálogo.
+        Impede o fechamento se as datas estiverem incoerentes.
         """
-        current_id = self.intern.intern_id if self.intern else None
+        # 1. Validação de Campos Obrigatórios (Básico)
+        if not self.txt_name.text().strip():
+            QMessageBox.warning(self, "Erro", "O nome do aluno é obrigatório.")
+            return
+        
+        if not self.txt_ra.text().strip():
+            QMessageBox.warning(self, "Erro", "O RA é obrigatório.")
+            return
 
-        # Pega o ID armazenado no item selecionado da combobox
+        # 2. Validação Lógica de Datas (Usando sua lib)
+        start_str = self.date_start.date().toString("dd/MM/yyyy")
+        end_str = self.date_end.date().toString("dd/MM/yyyy")
+
+        try:
+            validate_date_range(start_str, end_str)
+        except ValueError as e:
+            QMessageBox.warning(self, "Datas Inválidas", str(e))
+            return # Aborta o salvamento
+
+        # Se passou por tudo, aceita e fecha
+        self.accept()
+
+    def get_data(self) -> Intern:
+        current_id = self.intern.intern_id if self.intern else None
         selected_venue_id = self.combo_venue.currentData()
 
         return Intern(
@@ -156,5 +161,5 @@ class InternDialog(QDialog):
             term=self.txt_term.text().strip(),
             start_date=self.date_start.date().toString("yyyy-MM-dd"),
             end_date=self.date_end.date().toString("yyyy-MM-dd"),
-            venue_id=selected_venue_id,
+            venue_id=selected_venue_id
         )

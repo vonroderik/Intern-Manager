@@ -25,6 +25,7 @@ from services.evaluation_criteria_service import EvaluationCriteriaService
 from services.grade_service import GradeService
 from services.import_service import ImportService
 from services.meeting_service import MeetingService
+from services.report_service import ReportService
 
 # Utils
 from utils.seeder import seed_default_criteria
@@ -67,6 +68,7 @@ def main():
         repo_grade = GradeRepository(db)
         repo_document = DocumentRepository(db)
         repo_meeting = MeetingRepository(db)
+        report_service = ReportService()
 
         # Services
         v_service = VenueService(repo_venue)
@@ -76,8 +78,9 @@ def main():
         m_service = MeetingService(repo_meeting)
         criteria_service = EvaluationCriteriaService(repo_criteria)
 
-        # Grade Service
+        # Grade & Report Service
         grade_service = GradeService(repo=repo_grade, criteria_repo=repo_criteria)
+        report_service = ReportService()
 
         # Import Service
         imp_service = ImportService(
@@ -120,6 +123,8 @@ def main():
         venue_service=v_service,
         document_service=d_service,
         meeting_service=m_service,
+        report_service=report_service,
+        import_service=imp_service,
     )
 
     window.show()

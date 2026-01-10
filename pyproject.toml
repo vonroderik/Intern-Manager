@@ -1,12 +1,24 @@
 [project]
 name = "intern_manager"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "A comprehensive desktop application for managing academic internships, evaluations, documents, and venue allocations."
 readme = "README.md"
 requires-python = ">=3.13"
+authors = [
+    {name = "Rodrigo Noronha de Mello", email = "mellornm@gmail.com"},
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Administration",
+    "Framework :: PySide6",
+]
 dependencies = [
     "pyside6>=6.10.1",
     "ruff>=0.14.9",
 ]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
