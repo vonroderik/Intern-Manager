@@ -69,7 +69,7 @@ class MeetingService(BaseService[Meeting]):
         """
         return self.repo.get_by_intern_id(intern_id)
 
-    def delete_meeting(self, meeting: Meeting):
+    def delete_meeting(self, meeting_id: int):
         """
         Removes a meeting from the system using the base service logic.
 
@@ -79,4 +79,4 @@ class MeetingService(BaseService[Meeting]):
         Returns:
             bool: True if the deletion was successful, False otherwise.
         """
-        return self.delete(meeting, "meeting")
+        return self.repo.delete(meeting_id)

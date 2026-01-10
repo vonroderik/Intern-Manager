@@ -1,6 +1,7 @@
 from typing import Optional
 from dataclasses import dataclass
 
+
 @dataclass
 class Grade:
     """
@@ -26,4 +27,3 @@ class Grade:
     value: float
     grade_id: Optional[int] = None
     last_update: Optional[str] = None
-

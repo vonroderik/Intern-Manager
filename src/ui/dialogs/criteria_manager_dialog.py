@@ -1,24 +1,30 @@
-
-
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, 
-    QTableWidgetItem, QPushButton, QHeaderView, 
-    QAbstractItemView, QMessageBox
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QTableWidget,
+    QTableWidgetItem,
+    QPushButton,
+    QHeaderView,
+    QAbstractItemView,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt
 from services.evaluation_criteria_service import EvaluationCriteriaService
 from ui.dialogs.criteria_dialog import CriteriaDialog
 
+
 class CriteriaManagerDialog(QDialog):
     """
     Dialogo para gerenciar (Listar, Criar, Editar, Excluir) critérios de avaliação.
     """
+
     def __init__(self, parent, service: EvaluationCriteriaService):
         super().__init__(parent)
         self.service = service
         self.setWindowTitle("Gerenciar Critérios de Avaliação")
         self.resize(600, 400)
-        
+
         self.setup_ui()
         self.load_data()
 
@@ -29,13 +35,15 @@ class CriteriaManagerDialog(QDialog):
         self.table = QTableWidget()
         self.table.setColumnCount(3)
         self.table.setHorizontalHeaderLabels(["ID", "Nome do Critério", "Peso"])
-        
+
         # Configuração visual da tabela
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(
+            1, QHeaderView.ResizeMode.Stretch
+        )
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        
+
         # Ao dar dois cliques, abre edição
         self.table.doubleClicked.connect(self.edit_selected)
 
@@ -49,7 +57,9 @@ class CriteriaManagerDialog(QDialog):
         self.btn_del = QPushButton("🗑️ Excluir")
 
         # Estilo rápido para diferenciar
-        self.btn_new.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
+        self.btn_new.setStyleSheet(
+            "background-color: #4CAF50; color: white; font-weight: bold;"
+        )
         self.btn_del.setStyleSheet("color: #d9534f; border: 1px solid #d9534f;")
 
         self.layout_btns.addWidget(self.btn_new)
@@ -71,14 +81,14 @@ class CriteriaManagerDialog(QDialog):
 
         for row, item in enumerate(criteria_list):
             self.table.insertRow(row)
-            
+
             # ID
             cell_id = QTableWidgetItem(str(item.criteria_id))
             cell_id.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            
+
             # Nome
             cell_name = QTableWidgetItem(item.name)
-            
+
             # Peso
             cell_weight = QTableWidgetItem(f"{item.weight:.1f}")
             cell_weight.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -97,12 +107,12 @@ class CriteriaManagerDialog(QDialog):
 
     def create_new(self):
         """Abre o dialog de edição vazio."""
-        dialog = CriteriaDialog(self) # Sem passar objeto, cria novo
+        dialog = CriteriaDialog(self)  # Sem passar objeto, cria novo
         if dialog.exec():
             new_criteria = dialog.get_data()
             try:
                 self.service.add_new_criteria(new_criteria)
-                self.load_data() # Refresh
+                self.load_data()  # Refresh
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Erro ao criar: {e}")
 
@@ -113,7 +123,6 @@ class CriteriaManagerDialog(QDialog):
             QMessageBox.warning(self, "Atenção", "Selecione um critério para editar.")
             return
 
-        
         all_criteria = self.service.list_active_criteria()
         target = next((c for c in all_criteria if c.criteria_id == c_id), None)
 
@@ -133,15 +142,16 @@ class CriteriaManagerDialog(QDialog):
             return
 
         confirm = QMessageBox.question(
-            self, "Confirmar", 
+            self,
+            "Confirmar",
             "Tem certeza? Isso pode afetar notas já lançadas!",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
-        
+
         if confirm == QMessageBox.StandardButton.Yes:
             all_criteria = self.service.list_active_criteria()
             target = next((c for c in all_criteria if c.criteria_id == c_id), None)
-            
+
             if target:
                 try:
                     self.service.delete_criteria(target)

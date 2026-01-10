@@ -1,6 +1,7 @@
 from typing import Optional
 from dataclasses import dataclass
 
+
 @dataclass
 class Observation:
     """
@@ -24,4 +25,3 @@ class Observation:
     observation: str
     observation_id: Optional[int] = None
     last_update: Optional[str] = None
-

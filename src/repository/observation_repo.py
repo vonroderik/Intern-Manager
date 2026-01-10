@@ -98,27 +98,27 @@ class ObservationRepository:
         )
 
     def get_by_intern_id(self, intern_id: int) -> List[Observation]:
-            """
-            Retrieves all observations for a specific intern.
-            """
-            sql_query = """
+        """
+        Retrieves all observations for a specific intern.
+        """
+        sql_query = """
             SELECT observation_id, intern_id, observation, last_update
             FROM observations
             WHERE intern_id = ?
             ORDER BY last_update DESC
             """
-            self.cursor.execute(sql_query, (intern_id,))
-            results = self.cursor.fetchall()
+        self.cursor.execute(sql_query, (intern_id,))
+        results = self.cursor.fetchall()
 
-            return [
-                Observation(
-                    observation_id=row["observation_id"],
-                    intern_id=row["intern_id"],
-                    observation=row["observation"],
-                    last_update=row["last_update"],
-                )
-                for row in results
-            ]
+        return [
+            Observation(
+                observation_id=row["observation_id"],
+                intern_id=row["intern_id"],
+                observation=row["observation"],
+                last_update=row["last_update"],
+            )
+            for row in results
+        ]
 
     def save(self, observation: Observation) -> int:
         """

@@ -124,7 +124,7 @@ class MeetingRepository:
             raise RuntimeError("Database failed to generate an ID for the new meeting.")
         return self.cursor.lastrowid
 
-    def delete(self, meeting: Meeting) -> bool:
+    def delete(self, meeting_id: int) -> bool:
         """
         Permanently deletes a Meeting record.
 
@@ -137,11 +137,12 @@ class MeetingRepository:
         Raises:
             ValueError: If the meeting object does not have an ID.
         """
-        if meeting.meeting_id is None:
-            raise ValueError("Cannot delete a meeting without an ID")
+
+        if not meeting_id:
+            raise ValueError("Cannot delete a meeting without a valid ID")
 
         sql_query = "DELETE FROM meetings WHERE meeting_id = ?"
 
-        self.cursor.execute(sql_query, (meeting.meeting_id,))
+        self.cursor.execute(sql_query, (meeting_id,))
         self.conn.commit()
         return self.cursor.rowcount > 0

@@ -1,6 +1,7 @@
 from typing import Optional
 from dataclasses import dataclass
 
+
 @dataclass
 class EvaluationCriteria:
     """
@@ -25,4 +26,3 @@ class EvaluationCriteria:
     description: str = ""
     weight: float = 1.0
     criteria_id: Optional[int] = None
-

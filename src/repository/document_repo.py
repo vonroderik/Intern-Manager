@@ -49,7 +49,7 @@ class DocumentRepository:
             if no documents are found.
         """
         sql_query = """
-        SELECT document_id, intern_id, name, is_completed
+        SELECT document_id, intern_id, document_name, is_completed
         FROM documents
         WHERE intern_id = ?
         """
@@ -60,7 +60,7 @@ class DocumentRepository:
             Document(
                 document_id=row["document_id"],
                 intern_id=row["intern_id"],
-                document_name=row["name"],
+                document_name=row["document_name"],
                 is_completed=bool(row["is_completed"]),
             )
             for row in results
@@ -77,7 +77,7 @@ class DocumentRepository:
             Optional[Document]: The Document object if found, otherwise None.
         """
         sql_query = """
-        SELECT document_id, intern_id, name, is_completed
+        SELECT document_id, intern_id, document_name, is_completed
         FROM documents
         WHERE document_id = ?
         """
@@ -90,7 +90,7 @@ class DocumentRepository:
         return Document(
             document_id=row["document_id"],
             intern_id=row["intern_id"],
-            document_name=row["name"],
+            document_name=row["document_name"],
             is_completed=bool(row["is_completed"]),
         )
 
@@ -112,7 +112,7 @@ class DocumentRepository:
             raise ValueError("Cannot save a document that already has an ID.")
 
         sql_query = """
-        INSERT INTO documents (intern_id, name, is_completed)
+        INSERT INTO documents (intern_id, document_name, is_completed)
         VALUES (?, ?, ?)
         """
         data = (document.intern_id, document.document_name, document.is_completed)
@@ -143,7 +143,7 @@ class DocumentRepository:
 
         sql_query = """
         UPDATE documents SET
-            name = ?,
+            document_name = ?,
             is_completed = ?
         WHERE document_id = ?
         """
@@ -188,7 +188,7 @@ class DocumentRepository:
         Raises:
             Exception: Propagates any database error after performing a rollback.
         """
-        query = "INSERT INTO documents (intern_id, name, is_completed) VALUES (?, ?, ?)"
+        query = "INSERT INTO documents (intern_id, document_name, is_completed) VALUES (?, ?, ?)"
 
         data = [
             (doc.intern_id, doc.document_name, doc.is_completed) for doc in documents

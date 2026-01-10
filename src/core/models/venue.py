@@ -1,6 +1,7 @@
 from typing import Optional
 from dataclasses import dataclass
 
+
 @dataclass
 class Venue:
     """
@@ -28,4 +29,3 @@ class Venue:
     supervisor_name: Optional[str] = None
     supervisor_email: Optional[str] = None
     supervisor_phone: Optional[str] = None
-

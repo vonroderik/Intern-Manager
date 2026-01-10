@@ -1,21 +1,30 @@
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QListWidget, QListWidgetItem, 
-    QLabel, QPushButton, QTextEdit, QMessageBox, QWidget, QHBoxLayout
+    QDialog,
+    QVBoxLayout,
+    QListWidget,
+    QListWidgetItem,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QMessageBox,
+    QWidget,
+    QHBoxLayout,
 )
 from PySide6.QtCore import Qt
 from core.models.intern import Intern
 from core.models.observation import Observation
 from services.observation_service import ObservationService
 
+
 class ObservationDialog(QDialog):
     def __init__(self, parent, intern: Intern, service: ObservationService):
         super().__init__(parent)
         self.intern = intern
         self.service = service
-        
+
         self.setWindowTitle(f"Observações: {self.intern.name}")
         self.resize(500, 600)
-        
+
         self._setup_ui()
         self.load_data()
 
@@ -30,7 +39,9 @@ class ObservationDialog(QDialog):
 
         # Botão deletar item selecionado
         self.btn_del = QPushButton("🗑️ Apagar Selecionada")
-        self.btn_del.setStyleSheet("color: #d9534f; border: 1px solid #ccc; padding: 5px;")
+        self.btn_del.setStyleSheet(
+            "color: #d9534f; border: 1px solid #ccc; padding: 5px;"
+        )
         self.btn_del.clicked.connect(self.delete_selected)
         layout.addWidget(self.btn_del)
 
@@ -42,9 +53,11 @@ class ObservationDialog(QDialog):
 
         # --- Nova Observação ---
         layout.addWidget(QLabel("Nova anotação:"))
-        
+
         self.txt_new = QTextEdit()
-        self.txt_new.setPlaceholderText("Escreva aqui (ex: Esqueceu o jaleco pela 3ª vez...)")
+        self.txt_new.setPlaceholderText(
+            "Escreva aqui (ex: Esqueceu o jaleco pela 3ª vez...)"
+        )
         self.txt_new.setMaximumHeight(100)
         layout.addWidget(self.txt_new)
 
@@ -53,8 +66,10 @@ class ObservationDialog(QDialog):
         self.btn_save = QPushButton("💾 Salvar")
         self.btn_close = QPushButton("Fechar")
 
-        self.btn_save.setStyleSheet("background-color: #0078D7; color: white; font-weight: bold; padding: 8px;")
-        
+        self.btn_save.setStyleSheet(
+            "background-color: #0078D7; color: white; font-weight: bold; padding: 8px;"
+        )
+
         self.btn_save.clicked.connect(self.save_observation)
         self.btn_close.clicked.connect(self.accept)
 
@@ -65,7 +80,7 @@ class ObservationDialog(QDialog):
 
     def load_data(self):
         self.list_widget.clear()
-        
+
         # CORREÇÃO 1: Verificação explícita do ID para o Pylance não chorar
         if self.intern.intern_id is None:
             self.list_widget.addItem("Erro: Estagiário não salvo no banco (sem ID).")
@@ -77,18 +92,20 @@ class ObservationDialog(QDialog):
         for obs in obs_list:
             date_display = obs.last_update if obs.last_update else "Recente"
             text = f"[{date_display}]\n{obs.observation}"
-            
+
             item = QListWidgetItem(text)
-            
+
             # CORREÇÃO 2: Caminho correto do Enum no PySide6 (Qt.ItemDataRole.UserRole)
-            item.setData(Qt.ItemDataRole.UserRole, obs) 
-            
+            item.setData(Qt.ItemDataRole.UserRole, obs)
+
             self.list_widget.addItem(item)
 
     def save_observation(self):
         # CORREÇÃO 1 (Replay): Garantindo que o ID existe antes de salvar
         if self.intern.intern_id is None:
-            QMessageBox.warning(self, "Erro", "Não é possível salvar observações para um aluno sem ID.")
+            QMessageBox.warning(
+                self, "Erro", "Não é possível salvar observações para um aluno sem ID."
+            )
             return
 
         content = self.txt_new.toPlainText().strip()
@@ -96,8 +113,8 @@ class ObservationDialog(QDialog):
             return
 
         new_obs = Observation(
-            intern_id=self.intern.intern_id, # Agora o Pylance sabe que aqui é um int seguro
-            observation=content
+            intern_id=self.intern.intern_id,  # Agora o Pylance sabe que aqui é um int seguro
+            observation=content,
         )
 
         try:
@@ -114,16 +131,18 @@ class ObservationDialog(QDialog):
 
         # CORREÇÃO 2 (Replay): Usando o caminho completo do Enum para recuperar o objeto
         obs_obj = item.data(Qt.ItemDataRole.UserRole)
-        
+
         # Validando se recuperou um objeto Observation de verdade (segurança extra)
         if not isinstance(obs_obj, Observation):
             return
-        
+
         confirm = QMessageBox.question(
-            self, "Confirmar", "Tem certeza que deseja apagar essa anotação?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            self,
+            "Confirmar",
+            "Tem certeza que deseja apagar essa anotação?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
-        
+
         if confirm == QMessageBox.StandardButton.Yes:
             try:
                 self.service.delete_observation(obs_obj)

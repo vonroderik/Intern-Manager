@@ -1,6 +1,7 @@
 from typing import Optional
 from dataclasses import dataclass
 
+
 @dataclass
 class Meeting:
     """
@@ -20,4 +21,3 @@ class Meeting:
     meeting_date: str
     is_intern_present: bool
     meeting_id: Optional[int] = None
-

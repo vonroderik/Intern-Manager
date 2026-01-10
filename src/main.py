@@ -14,6 +14,7 @@ from repository.document_repo import DocumentRepository
 from repository.observation_repo import ObservationRepository
 from repository.evaluation_criteria_repo import EvaluationCriteriaRepository
 from repository.grade_repo import GradeRepository
+from repository.meeting_repo import MeetingRepository
 
 # Services
 from services.venue_service import VenueService
@@ -23,6 +24,7 @@ from services.observation_service import ObservationService
 from services.evaluation_criteria_service import EvaluationCriteriaService
 from services.grade_service import GradeService
 from services.import_service import ImportService
+from services.meeting_service import MeetingService
 
 # Utils
 from utils.seeder import seed_default_criteria
@@ -63,12 +65,15 @@ def main():
         repo_obs = ObservationRepository(db)
         repo_criteria = EvaluationCriteriaRepository(db)
         repo_grade = GradeRepository(db)
+        repo_document = DocumentRepository(db)
+        repo_meeting = MeetingRepository(db)
 
         # Services
         v_service = VenueService(repo_venue)
         i_service = InternService(repo_intern)
         d_service = DocumentService(repo_doc)
         obs_service = ObservationService(repo_obs)
+        m_service = MeetingService(repo_meeting)
         criteria_service = EvaluationCriteriaService(repo_criteria)
 
         # Grade Service
@@ -112,6 +117,9 @@ def main():
         criteria_service=criteria_service,
         grade_service=grade_service,
         observation_service=obs_service,
+        venue_service=v_service,
+        document_service=d_service,
+        meeting_service=m_service,
     )
 
     window.show()
