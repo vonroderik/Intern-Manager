@@ -27,8 +27,6 @@ class ReportDialog(QDialog):
         self.grade_service = grade_service
         self.criteria_service = criteria_service
         
-        # CORREÇÃO PYLANCE: Renomeado de self.layout para self.main_layout
-        # 'self.layout' conflitava com o método nativo layout() do QDialog
         self.main_layout = QVBoxLayout(self)
         self._setup_ui()
         self.load_data()
@@ -38,7 +36,6 @@ class ReportDialog(QDialog):
         info_layout = QVBoxLayout()
         name_label = QLabel(f"Estagiário: {self.intern.name}")
         
-        # CORREÇÃO PYLANCE: QFont.Weight.Bold
         name_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         info_layout.addWidget(name_label)
         
@@ -47,11 +44,9 @@ class ReportDialog(QDialog):
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["Critério", "Peso Máx", "Nota Obtida", "Situação"])
         
- # Certifique-se de importar isso lá em cima
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus) # Remove o foco visual (opcional)
-        self.table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection) # Opcional: usuário não pode nem selecionar
-        # CORREÇÃO PYLANCE: QHeaderView.ResizeMode.Stretch
+        self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.table.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection) 
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         
         self.main_layout.addLayout(info_layout)
@@ -60,7 +55,6 @@ class ReportDialog(QDialog):
         # Rodapé com o Total
         self.total_label = QLabel("Nota Final: 0.0 / 10.0")
         
-        # CORREÇÃO PYLANCE: QFont.Weight.Bold e Qt.AlignmentFlag.AlignCenter
         self.total_label.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         self.total_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.main_layout.addWidget(self.total_label)
@@ -71,7 +65,6 @@ class ReportDialog(QDialog):
         self.main_layout.addWidget(btn_close)
 
     def load_data(self):
-        # CORREÇÃO PYLANCE: Garantir que ID existe antes de chamar o serviço
         if self.intern.intern_id is None:
             self.total_label.setText("Erro: Aluno sem ID")
             return

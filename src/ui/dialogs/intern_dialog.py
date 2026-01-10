@@ -122,9 +122,8 @@ class InternDialog(QDialog):
                 intern_id=current_id,
                 name=self.txt_name.text().strip(),
                 registration_number=self.txt_ra.text().strip(),
-                email=self.txt_email.text().strip() or None, # Converte string vazia para None
+                email=self.txt_email.text().strip() or None,
                 term=self.txt_term.text().strip(),
                 start_date=self.date_start.date().toString("yyyy-MM-dd"),
                 end_date=self.date_end.date().toString("yyyy-MM-dd"),
-                # Adicione working_hours/days se tiver os campos na tela
                 )

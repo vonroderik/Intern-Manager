@@ -58,7 +58,6 @@ class DatabaseConnector:
                 f"CRITICAL: Arquivo SQL não encontrado em: {SQL_PATH}"
             )
 
-        # Pylance check: Garante que cursor existe antes de usar
         if not self.cursor or not self.conn:
             raise RuntimeError("Database connection not established.")
 

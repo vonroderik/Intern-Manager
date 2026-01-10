@@ -1,6 +1,7 @@
 from typing import Optional
+from dataclasses import dataclass
 
-
+@dataclass
 class EvaluationCriteria:
     """
     Domain model representing a specific assessment criteria.
@@ -20,32 +21,8 @@ class EvaluationCriteria:
             Defaults to 1.0.
     """
 
-    def __init__(
-        self,
-        name: str,
-        description: str = "",
-        weight: float = 1.0,
-        criteria_id: Optional[int] = None,
-    ):
-        """
-        Initializes an EvaluationCriteria instance.
+    name: str
+    description: str = ""
+    weight: float = 1.0
+    criteria_id: Optional[int] = None
 
-        Args:
-            name (str): The name of the evaluation criteria.
-            description (str): Optional description/instructions. Defaults to empty string.
-            weight (float): The mathematical weight for this criteria. Defaults to 1.0.
-            criteria_id (Optional[int]): Database identifier. None if not persisted.
-        """
-        self.name = name
-        self.description = description
-        self.weight = weight
-        self.criteria_id = criteria_id
-
-    def __repr__(self) -> str:
-        return (
-            f"EvaluationCriteria("
-            f"id={self.criteria_id}, "
-            f"name='{self.name}', "
-            f"weight={self.weight}"
-            f")"
-        )

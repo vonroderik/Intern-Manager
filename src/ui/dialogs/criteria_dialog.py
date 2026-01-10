@@ -36,7 +36,6 @@ class CriteriaDialog(QDialog):
 
         layout.addLayout(form)
 
-        # CORREÇÃO PYLANCE: Uso de StandardButton para PySide6
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
         )
@@ -45,7 +44,6 @@ class CriteriaDialog(QDialog):
         layout.addWidget(buttons)
 
     def _load_data(self):
-        # A checagem if self.criteria garante ao Pylance que não é None aqui
         if not self.criteria:
             return
             

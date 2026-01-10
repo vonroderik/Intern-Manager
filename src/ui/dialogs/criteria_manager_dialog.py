@@ -1,4 +1,4 @@
-# ui/dialogs/criteria_manager_dialog.py
+
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, 
@@ -113,9 +113,6 @@ class CriteriaManagerDialog(QDialog):
             QMessageBox.warning(self, "Atenção", "Selecione um critério para editar.")
             return
 
-        # Busca o objeto completo (poderia otimizar pegando da lista em memória, mas get_by_id é seguro)
-        # Nota: Seu repo tem get_by_id, mas o service talvez não tenha exposto diretamente. 
-        # Vamos assumir que você adiciona 'get_by_id' no service ou usamos a lista:
         
         all_criteria = self.service.list_active_criteria()
         target = next((c for c in all_criteria if c.criteria_id == c_id), None)
@@ -142,8 +139,6 @@ class CriteriaManagerDialog(QDialog):
         )
         
         if confirm == QMessageBox.StandardButton.Yes:
-            # Aqui precisamos do objeto para deletar, pois seu método delete pede o objeto
-            # Ou altere o service para aceitar ID. Vou usar o objeto:
             all_criteria = self.service.list_active_criteria()
             target = next((c for c in all_criteria if c.criteria_id == c_id), None)
             

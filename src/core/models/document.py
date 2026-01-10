@@ -1,6 +1,7 @@
 from typing import Optional
+from dataclasses import dataclass
 
-
+@dataclass
 class Document:
     """
     Domain model representing a document associated with an intern.
@@ -19,37 +20,8 @@ class Document:
             Typically uses 0 (not completed) or 1 (completed).
     """
 
-    def __init__(
-        self,
-        intern_id: int,
-        document_name: str,
-        is_completed: bool,
-        last_update: Optional[str] = None,
-        document_id: Optional[int] = None,
-    ):
-        """
-        Initializes a Document instance.
-
-        Args:
-            intern_id (int): Identifier of the associated intern.
-            document_name (str): Name or description of the document.
-            is_completed (int): Completion status (0 = not completed, 1 = completed).
-            document_id (Optional[int]): Database identifier. None if not persisted.
-        """
-
-        self.intern_id = intern_id
-        self.document_name = document_name
-        self.is_completed = 1 if is_completed else 0
-        self.last_update = last_update
-        self.document_id = document_id
-
-    def __repr__(self) -> str:
-        return (
-            f"Document("
-            f"intern_id={self.intern_id}"
-            f"document_name={self.document_name}"
-            f"is_completed={self.is_completed}"
-            f"last_update={self.last_update}"
-            f"document_id={self.document_id}"
-            f")"
-        )
+    intern_id: int
+    document_name: str
+    is_completed: bool
+    last_update: Optional[str] = None
+    document_id: Optional[int] = None

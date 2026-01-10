@@ -5,9 +5,7 @@ from typing import Optional
 from PySide6.QtWidgets import QApplication
 from ui.main_window import MainWindow
 
-
 from data.database import DatabaseConnector
-
 
 # Repositories
 from repository.venue_repo import VenueRepository
@@ -113,6 +111,7 @@ def main():
         intern_service=i_service,
         criteria_service=criteria_service,
         grade_service=grade_service,
+        observation_service=obs_service,
     )
 
     window.show()
