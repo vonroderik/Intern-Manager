@@ -29,7 +29,7 @@ class MeetingDialog(QDialog):
         self.intern = intern
         self.service = service
 
-        self.setWindowTitle(f"Supervisões: {self.intern.name}")
+        self.setWindowTitle(f"Reuniões: {self.intern.name}")
         self.resize(500, 400)
 
         self._setup_ui()
@@ -102,7 +102,7 @@ class MeetingDialog(QDialog):
                 d = QDate.fromString(date_str, "yyyy-MM-dd")
                 if d.isValid():
                     date_str = d.toString("dd/MM/yyyy")
-            except:
+            except Exception:
                 pass
 
             self.table.setItem(row, 1, QTableWidgetItem(date_str))

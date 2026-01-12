@@ -54,7 +54,7 @@ class MeetingRepository:
 
         return [
             Meeting(
-                meeting_id=row["meeting_jd"],
+                meeting_id=row["meeting_id"],
                 intern_id=row["intern_id"],
                 meeting_date=row["meeting_date"],
                 is_intern_present=bool(row["is_intern_present"]),

@@ -114,6 +114,12 @@ def main():
 
     print("LAUNCHING GUI...")
 
+    # Initializes documents for existing interns
+    all_interns = i_service.get_all_interns()
+    for intern in all_interns:
+        if intern.intern_id:
+            d_service.create_initial_documents_batch(intern.intern_id)
+
     window = MainWindow(
         intern_service=i_service,
         criteria_service=criteria_service,

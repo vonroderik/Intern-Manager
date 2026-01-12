@@ -17,7 +17,6 @@ from core.models.intern import Intern
 from services.grade_service import GradeService
 from services.evaluation_criteria_service import EvaluationCriteriaService
 
-# Import do novo serviço
 from services.report_service import ReportService
 
 
@@ -32,7 +31,7 @@ class ReportDialog(QDialog):
         intern: Intern,
         grade_service: GradeService,
         criteria_service: EvaluationCriteriaService,
-        report_service: ReportService,  # <--- Injeção de Dependência aqui
+        report_service: ReportService,
     ):
         super().__init__(parent)
         self.setWindowTitle(f"Boletim: {intern.name}")
