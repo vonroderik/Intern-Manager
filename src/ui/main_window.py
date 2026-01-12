@@ -1,6 +1,5 @@
 import shutil
 from datetime import datetime
-from pathlib import Path
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -16,10 +15,10 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
     QFrame,
     QLineEdit,
-    QFileDialog
+    QFileDialog,
 )
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QAction
+from PySide6.QtGui import QAction
 
 # Config
 from config import DB_PATH
@@ -42,7 +41,6 @@ from core.models.intern import Intern
 from ui.dialogs.intern_dialog import InternDialog
 from ui.dialogs.grade_dialog import GradeDialog
 from ui.dialogs.report_dialog import ReportDialog
-from ui.dialogs.criteria_dialog import CriteriaDialog
 from ui.dialogs.observation_dialog import ObservationDialog
 from ui.dialogs.criteria_manager_dialog import CriteriaManagerDialog
 from ui.dialogs.venue_manager_dialog import VenueManagerDialog
@@ -99,7 +97,7 @@ class MainWindow(QMainWindow):
         """
         # --- 0. Menu Superior (Arquivo) ---
         self.create_menu_bar()
-        
+
         # --- 1. Topo: Título + Busca ---
         header_layout = QHBoxLayout()
 
@@ -107,7 +105,7 @@ class MainWindow(QMainWindow):
         self.lbl_titulo.setStyleSheet(
             "font-size: 28px; font-weight: bold; color: #333; margin: 10px 0;"
         )
-        
+
         # --- A BARRA DE BUSCA ---
         self.txt_search = QLineEdit()
         self.txt_search.setPlaceholderText("🔍 Buscar por Nome ou RA...")
@@ -178,14 +176,14 @@ class MainWindow(QMainWindow):
 
         # --- 2. Barra de Ferramentas (Actions Layout) ---
         actions_layout = QHBoxLayout()
-        
+
         # Grupo A: Gestão Principal
         self.btn_add = QPushButton("➕ Novo Aluno")
         self.btn_add.setStyleSheet(btn_style_primary)
-        
+
         self.btn_edit = QPushButton("✏️ Editar")
         self.btn_edit.setStyleSheet(btn_style_base)
-        
+
         self.btn_delete = QPushButton("🗑️ Excluir")
         self.btn_delete.setStyleSheet(btn_style_danger)
 
@@ -193,7 +191,7 @@ class MainWindow(QMainWindow):
         self.btn_grades = QPushButton("📊 Notas")
         self.btn_report = QPushButton("📄 Boletim")
         self.btn_criteria = QPushButton("⚙️ Critérios")
-        
+
         for btn in [self.btn_grades, self.btn_report, self.btn_criteria]:
             btn.setStyleSheet(btn_style_base)
 
@@ -202,7 +200,7 @@ class MainWindow(QMainWindow):
         self.btn_venues = QPushButton("🏥 Locais")
         self.btn_docs = QPushButton("📋 Docs")
         self.btn_meetings = QPushButton("📅 Supervisão")
-        
+
         for btn in [self.btn_obs, self.btn_venues, self.btn_docs, self.btn_meetings]:
             btn.setStyleSheet(btn_style_base)
 
@@ -210,16 +208,16 @@ class MainWindow(QMainWindow):
         actions_layout.addWidget(self.btn_add)
         actions_layout.addWidget(self.btn_edit)
         actions_layout.addWidget(self.btn_delete)
-        
+
         line1 = QFrame()
         line1.setFrameShape(QFrame.Shape.VLine)
         line1.setFrameShadow(QFrame.Shadow.Sunken)
         actions_layout.addWidget(line1)
-        
+
         actions_layout.addWidget(self.btn_grades)
         actions_layout.addWidget(self.btn_report)
         actions_layout.addWidget(self.btn_criteria)
-        
+
         line2 = QFrame()
         line2.setFrameShape(QFrame.Shape.VLine)
         line2.setFrameShadow(QFrame.Shadow.Sunken)
@@ -229,8 +227,8 @@ class MainWindow(QMainWindow):
         actions_layout.addWidget(self.btn_docs)
         actions_layout.addWidget(self.btn_meetings)
         actions_layout.addWidget(self.btn_obs)
-        
-        actions_layout.addStretch() 
+
+        actions_layout.addStretch()
 
         self.main_layout.addLayout(actions_layout)
 
@@ -273,11 +271,11 @@ class MainWindow(QMainWindow):
         self.btn_add.clicked.connect(self.open_add_dialog)
         self.btn_edit.clicked.connect(self.open_edit_dialog)
         self.btn_delete.clicked.connect(self.delete_intern)
-        
+
         self.btn_grades.clicked.connect(self.open_grades_dialog)
         self.btn_report.clicked.connect(self.open_report)
         self.btn_criteria.clicked.connect(self.open_criteria_manager)
-        
+
         self.btn_venues.clicked.connect(self.open_venue_manager)
         self.btn_obs.clicked.connect(self.open_observations)
         self.btn_docs.clicked.connect(self.open_documents)
@@ -290,24 +288,24 @@ class MainWindow(QMainWindow):
     def create_menu_bar(self):
         """Cria a barra de menu nativa no topo da janela."""
         menu_bar = self.menuBar()
-        
+
         # Menu Arquivo
         file_menu = menu_bar.addMenu("Arquivo")
-        
+
         # Ação: Importar CSV
         action_import = QAction("📂 Importar CSV...", self)
         action_import.setShortcut("Ctrl+I")
         action_import.triggered.connect(self.import_csv_dialog)
         file_menu.addAction(action_import)
-        
+
         # Ação: Backup
         action_backup = QAction("💾 Fazer Backup do Banco...", self)
         action_backup.setShortcut("Ctrl+B")
         action_backup.triggered.connect(self.backup_database)
         file_menu.addAction(action_backup)
-        
+
         file_menu.addSeparator()
-        
+
         # Ação: Sair
         action_exit = QAction("Sair", self)
         action_exit.triggered.connect(self.close)
@@ -317,20 +315,21 @@ class MainWindow(QMainWindow):
         """Cria uma cópia segura do arquivo SQLite."""
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
         default_name = f"backup_interns_{timestamp}.db"
-        
+
         file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Salvar Backup",
-            default_name,
-            "SQLite Database (*.db)"
+            self, "Salvar Backup", default_name, "SQLite Database (*.db)"
         )
-        
+
         if file_path:
             try:
                 shutil.copy(DB_PATH, file_path)
-                QMessageBox.information(self, "Sucesso", f"Backup salvo com sucesso em:\n{file_path}")
+                QMessageBox.information(
+                    self, "Sucesso", f"Backup salvo com sucesso em:\n{file_path}"
+                )
             except Exception as e:
-                QMessageBox.critical(self, "Erro Fatal", f"Não foi possível criar o backup:\n{e}")
+                QMessageBox.critical(
+                    self, "Erro Fatal", f"Não foi possível criar o backup:\n{e}"
+                )
 
     def import_csv_dialog(self):
         """Abre janela para selecionar CSV e processa a importação."""
@@ -338,16 +337,22 @@ class MainWindow(QMainWindow):
             self,
             "Selecionar Arquivo de Importação",
             "",
-            "Arquivos CSV (*.csv);;Todos os Arquivos (*)"
+            "Arquivos CSV (*.csv);;Todos os Arquivos (*)",
         )
-        
+
         if file_path:
             try:
                 self.import_service.read_file(file_path)
-                self.load_data() # Recarrega a tabela
-                QMessageBox.information(self, "Importação Concluída", "Os dados foram importados e atualizados.")
+                self.load_data()  # Recarrega a tabela
+                QMessageBox.information(
+                    self,
+                    "Importação Concluída",
+                    "Os dados foram importados e atualizados.",
+                )
             except Exception as e:
-                QMessageBox.critical(self, "Erro na Importação", f"Falha ao ler o arquivo:\n{e}")
+                QMessageBox.critical(
+                    self, "Erro na Importação", f"Falha ao ler o arquivo:\n{e}"
+                )
 
     # --- MÉTODOS EXISTENTES ---
 
@@ -365,8 +370,8 @@ class MainWindow(QMainWindow):
             cell_id = QTableWidgetItem(str(intern.intern_id))
             cell_name = QTableWidgetItem(str(intern.name or ""))
             cell_ra = QTableWidgetItem(str(intern.registration_number or ""))
-            
-            status_text = intern.status if hasattr(intern, 'status') else "Ativo"
+
+            status_text = intern.status if hasattr(intern, "status") else "Ativo"
             cell_status = QTableWidgetItem(status_text)
 
             cell_id.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -386,14 +391,14 @@ class MainWindow(QMainWindow):
         Hides rows that do not match the search text.
         """
         search_text = text.lower().strip()
-        
+
         for row in range(self.table.rowCount()):
             item_name = self.table.item(row, 1)
             item_ra = self.table.item(row, 2)
-            
+
             name_val = item_name.text().lower() if item_name else ""
             ra_val = item_ra.text().lower() if item_ra else ""
-            
+
             if search_text in name_val or search_text in ra_val:
                 self.table.setRowHidden(row, False)
             else:
@@ -431,13 +436,16 @@ class MainWindow(QMainWindow):
                 new_intern = dialog.get_data()
                 self.service.add_new_intern(new_intern)
                 self.load_data()
-                QMessageBox.information(self, "Sucesso", "Aluno cadastrado com sucesso!")
+                QMessageBox.information(
+                    self, "Sucesso", "Aluno cadastrado com sucesso!"
+                )
             except Exception as e:
                 QMessageBox.warning(self, "Erro", f"Não foi possível salvar: {e}")
 
     def open_edit_dialog(self):
         intern_obj = self.get_selected_intern()
-        if not intern_obj: return
+        if not intern_obj:
+            return
 
         dialog = InternDialog(self, self.venue_service, intern=intern_obj)
         if dialog.exec():
@@ -459,7 +467,8 @@ class MainWindow(QMainWindow):
 
     def delete_intern(self):
         intern_obj = self.get_selected_intern()
-        if not intern_obj: return
+        if not intern_obj:
+            return
 
         confirm = QMessageBox.question(
             self,
@@ -477,21 +486,19 @@ class MainWindow(QMainWindow):
 
     def open_grades_dialog(self):
         intern_obj = self.get_selected_intern()
-        if not intern_obj: return
+        if not intern_obj:
+            return
         GradeDialog(self, intern_obj, self.criteria_service, self.grade_service).exec()
 
     def open_report(self):
-            intern = self.get_selected_intern()
-            if not intern: return
+        intern = self.get_selected_intern()
+        if not intern:
+            return
 
-            dialog = ReportDialog(
-                self, 
-                intern, 
-                self.grade_service, 
-                self.criteria_service,
-                self.report_service
-            )
-            dialog.exec()
+        dialog = ReportDialog(
+            self, intern, self.grade_service, self.criteria_service, self.report_service
+        )
+        dialog.exec()
 
     def open_venue_manager(self):
         VenueManagerDialog(self, self.venue_service).exec()
@@ -501,15 +508,18 @@ class MainWindow(QMainWindow):
 
     def open_observations(self):
         intern = self.get_selected_intern()
-        if not intern: return
+        if not intern:
+            return
         ObservationDialog(self, intern, self.obs_service).exec()
 
     def open_documents(self):
         intern = self.get_selected_intern()
-        if not intern: return
+        if not intern:
+            return
         DocumentDialog(self, intern, self.doc_service).exec()
 
     def open_meetings(self):
         intern = self.get_selected_intern()
-        if not intern: return
+        if not intern:
+            return
         MeetingDialog(self, intern, self.meeting_service).exec()

@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QMessageBox,
     QWidget,
-    QLineEdit,
 )
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QKeyEvent

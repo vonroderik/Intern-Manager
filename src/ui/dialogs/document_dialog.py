@@ -7,8 +7,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QHeaderView,
     QAbstractItemView,
-    QMessageBox,
-    QCheckBox,
     QInputDialog,
 )
 from PySide6.QtCore import Qt

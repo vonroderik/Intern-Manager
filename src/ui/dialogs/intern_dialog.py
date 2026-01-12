@@ -22,10 +22,7 @@ class InternDialog(QDialog):
     """
 
     def __init__(
-        self,
-        parent,
-        venue_service: VenueService,
-        intern: Optional[Intern] = None
+        self, parent, venue_service: VenueService, intern: Optional[Intern] = None
     ):
         super().__init__(parent)
         self.intern = intern
@@ -78,11 +75,11 @@ class InternDialog(QDialog):
             | QDialogButtonBox.StandardButton.Cancel
         )
         self.button_box = QDialogButtonBox(buttons)
-        
+
         # MUDANÇA CRÍTICA: Conectamos ao método customizado validate_and_save, não direto ao accept
-        self.button_box.accepted.connect(self.validate_and_save) 
+        self.button_box.accepted.connect(self.validate_and_save)
         self.button_box.rejected.connect(self.reject)
-        
+
         self.main_layout.addWidget(self.button_box)
 
     def load_venues(self):
@@ -110,11 +107,9 @@ class InternDialog(QDialog):
             )
 
         if self.intern.end_date:
-            self.date_end.setDate(
-                QDate.fromString(self.intern.end_date, "yyyy-MM-dd")
-            )
+            self.date_end.setDate(QDate.fromString(self.intern.end_date, "yyyy-MM-dd"))
 
-        if hasattr(self.intern, 'venue_id') and self.intern.venue_id:
+        if hasattr(self.intern, "venue_id") and self.intern.venue_id:
             index = self.combo_venue.findData(self.intern.venue_id)
             if index >= 0:
                 self.combo_venue.setCurrentIndex(index)
@@ -131,7 +126,7 @@ class InternDialog(QDialog):
         if not self.txt_name.text().strip():
             QMessageBox.warning(self, "Erro", "O nome do aluno é obrigatório.")
             return
-        
+
         if not self.txt_ra.text().strip():
             QMessageBox.warning(self, "Erro", "O RA é obrigatório.")
             return
@@ -144,7 +139,7 @@ class InternDialog(QDialog):
             validate_date_range(start_str, end_str)
         except ValueError as e:
             QMessageBox.warning(self, "Datas Inválidas", str(e))
-            return # Aborta o salvamento
+            return  # Aborta o salvamento
 
         # Se passou por tudo, aceita e fecha
         self.accept()
@@ -161,5 +156,5 @@ class InternDialog(QDialog):
             term=self.txt_term.text().strip(),
             start_date=self.date_start.date().toString("yyyy-MM-dd"),
             end_date=self.date_end.date().toString("yyyy-MM-dd"),
-            venue_id=selected_venue_id
+            venue_id=selected_venue_id,
         )

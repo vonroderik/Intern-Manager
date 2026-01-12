@@ -1,9 +1,10 @@
 from datetime import datetime
-from PySide6.QtGui import QTextDocument, QPageSize # <--- Adicionado QPageSize
+from PySide6.QtGui import QTextDocument, QPageSize  # <--- Adicionado QPageSize
 from PySide6.QtPrintSupport import QPrinter
 from core.models.intern import Intern
 from core.models.grade import Grade
 from core.models.evaluation_criteria import EvaluationCriteria
+
 
 class ReportService:
     """
@@ -12,26 +13,28 @@ class ReportService:
     """
 
     def generate_pdf(
-        self, 
-        filepath: str, 
-        intern: Intern, 
-        criteria_list: list[EvaluationCriteria], 
-        grades: list[Grade]
+        self,
+        filepath: str,
+        intern: Intern,
+        criteria_list: list[EvaluationCriteria],
+        grades: list[Grade],
     ):
         """
         Gera um boletim em PDF baseado nos dados fornecidos.
         Usa HTML/CSS para estilização.
         """
-        
+
         # 1. Preparar os dados (Matemática básica)
         # Filtramos grades que não tem criteria_id para evitar chaves None no dicionário
-        grades_map = {g.criteria_id: g.value for g in grades if g.criteria_id is not None}
-        
+        grades_map = {
+            g.criteria_id: g.value for g in grades if g.criteria_id is not None
+        }
+
         total_score = 0.0
         max_score = 0.0
-        
+
         rows_html = ""
-        
+
         for c in criteria_list:
             # CORREÇÃO PYLANCE 1:
             # Verificamos se o critério tem ID antes de usar como chave
@@ -41,10 +44,10 @@ class ReportService:
             score = grades_map.get(c.criteria_id, 0.0)
             total_score += score
             max_score += c.weight
-            
+
             # Estilização condicional da linha
             color = "green" if score >= (c.weight * 0.7) else "#D32F2F"
-            
+
             rows_html += f"""
             <tr>
                 <td>{c.name}</td>
@@ -56,7 +59,7 @@ class ReportService:
 
         status = "APROVADO" if total_score >= 7.0 else "EM ANÁLISE"
         status_color = "green" if total_score >= 7.0 else "red"
-        
+
         date_str = datetime.now().strftime("%d/%m/%Y às %H:%M")
 
         # 2. O Template HTML (Beleza interior)
@@ -116,9 +119,9 @@ class ReportService:
         printer = QPrinter(QPrinter.PrinterMode.HighResolution)
         printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
         printer.setOutputFileName(filepath)
-        
+
         # CORREÇÃO PYLANCE 2:
         # A4 agora vive em QPageSize.PageSizeId.A4 no PySide6
         printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-        
+
         doc.print_(printer)

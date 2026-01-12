@@ -66,7 +66,6 @@ def main():
         repo_obs = ObservationRepository(db)
         repo_criteria = EvaluationCriteriaRepository(db)
         repo_grade = GradeRepository(db)
-        repo_document = DocumentRepository(db)
         repo_meeting = MeetingRepository(db)
         report_service = ReportService()
 
