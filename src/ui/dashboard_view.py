@@ -136,8 +136,10 @@ class DashboardView(QWidget):
         # Limpa alertas antigos
         while self.alert_layout.count():
             item = self.alert_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item:
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
 
         # 1. Alerta de Alunos Fantasmas (Nunca supervisionados)
         unsupervised = [i for i in interns if i.intern_id not in supervised_ids]

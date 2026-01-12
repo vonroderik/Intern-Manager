@@ -1,8 +1,6 @@
 # Python-generated files
 __pycache__/
 *.py[oc]
-build/
-dist/
 wheels/
 *.egg-info
 
@@ -25,6 +23,14 @@ wheels/
 # Word
 *.docx
 
+# Annotations & Additionals
+additionals/
+
 # Exe
+build/
+dist/
 *.spec
+*.ico
+
+
 
