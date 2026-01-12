@@ -5,6 +5,7 @@ from typing import Optional
 from PySide6.QtWidgets import QApplication
 from ui.main_window import MainWindow
 
+
 from data.database import DatabaseConnector
 
 # Repositories

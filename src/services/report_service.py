@@ -1,5 +1,6 @@
 from datetime import datetime
-from PySide6.QtGui import QTextDocument, QPageSize  # <--- Adicionado QPageSize
+from PySide6.QtGui import QTextDocument, QPageSize
+from PySide6.QtCore import QSettings
 from PySide6.QtPrintSupport import QPrinter
 from core.models.intern import Intern
 from core.models.grade import Grade
@@ -24,8 +25,6 @@ class ReportService:
         Usa HTML/CSS para estilização.
         """
 
-        # 1. Preparar os dados (Matemática básica)
-        # Filtramos grades que não tem criteria_id para evitar chaves None no dicionário
         grades_map = {
             g.criteria_id: g.value for g in grades if g.criteria_id is not None
         }
@@ -36,8 +35,6 @@ class ReportService:
         rows_html = ""
 
         for c in criteria_list:
-            # CORREÇÃO PYLANCE 1:
-            # Verificamos se o critério tem ID antes de usar como chave
             if c.criteria_id is None:
                 continue
 
@@ -60,59 +57,70 @@ class ReportService:
         status = "APROVADO" if total_score >= 7.0 else "EM ANÁLISE"
         status_color = "green" if total_score >= 7.0 else "red"
 
+        settings = QSettings("MyOrganization", "InternManager2026")
+        institution = settings.value(
+            "institution_name", "INSTITUIÇÃO DE ENSINO SUPERIOR"
+        )
+        coordinator = settings.value("coordinator_name", "Coordenação de Estágios")
+        city = settings.value("city_state", "")
+
         date_str = datetime.now().strftime("%d/%m/%Y às %H:%M")
 
-        # 2. O Template HTML (Beleza interior)
         html_content = f"""
-        <html>
-        <head>
-            <style>
-                body {{ font-family: sans-serif; padding: 20px; }}
-                h1 {{ color: #0078D7; }}
-                .header {{ margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 10px; }}
-                table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-                th {{ background-color: #f2f2f2; padding: 10px; border: 1px solid #ddd; }}
-                td {{ padding: 8px; border: 1px solid #ddd; }}
-                .total {{ font-size: 18px; font-weight: bold; text-align: right; margin-top: 20px; }}
-                .footer {{ margin-top: 50px; font-size: 10px; color: gray; text-align: center; }}
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>Boletim de Avaliação de Estágio</h1>
-                <p><strong>Estagiário:</strong> {intern.name}</p>
-                <p><strong>RA:</strong> {intern.registration_number} | <strong>Semestre:</strong> {intern.term}</p>
-                <p><strong>Data de Emissão:</strong> {date_str}</p>
-            </div>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: sans-serif; padding: 40px; }}
+                    h1 {{ color: #2c3e50; font-size: 24px; text-align: center; margin-bottom: 5px; }}
+                    h2 {{ color: #7f8c8d; font-size: 16px; text-align: center; margin-top: 0; margin-bottom: 30px; }}
+                    .meta-box {{ border: 1px solid #ddd; padding: 15px; background-color: #f9f9f9; margin-bottom: 20px; }}
+                    table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+                    th {{ background-color: #0078D7; color: white; padding: 10px; border: 1px solid #005a9e; }}
+                    td {{ padding: 8px; border: 1px solid #ddd; }}
+                    .total-box {{ text-align: right; margin-top: 20px; font-size: 18px; }}
+                    .footer {{ margin-top: 80px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #ccc; padding-top: 10px; }}
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>{institution}</h1>
+                    <h2>Boletim de Avaliação de Estágio</h2>
+                </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th style="text-align: left;">Critério Avaliado</th>
-                        <th>Peso Máx</th>
-                        <th>Nota Obtida</th>
-                        <th>Situação</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows_html}
-                </tbody>
-            </table>
+                <div class="meta-box">
+                    <p><strong>Estagiário(a):</strong> {intern.name}</p>
+                    <p><strong>RA:</strong> {intern.registration_number} &nbsp;|&nbsp; <strong>Semestre:</strong> {intern.term}</p>
+                    <p><strong>Emissão:</strong> {date_str} &nbsp;|&nbsp; <strong>Local:</strong> {city}</p>
+                </div>
 
-            <div class="total">
-                <p>Nota Final: {total_score:.1f} / {max_score:.1f}</p>
-                <p style="color: {status_color};">SITUAÇÃO: {status}</p>
-            </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Critério Avaliado</th>
+                            <th style="width: 80px;">Peso</th>
+                            <th style="width: 80px;">Nota</th>
+                            <th style="width: 100px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows_html}
+                    </tbody>
+                </table>
 
-            <div class="footer">
-                Documento gerado automaticamente pelo Sistema Intern Manager 2026.
-                <br>Verifique a autenticidade com o supervisor responsável.
-            </div>
-        </body>
-        </html>
-        """
+                <div class="total-box">
+                    <p><strong>Nota Final:</strong> {total_score:.1f} / {max_score:.1f}</p>
+                    <p style="color: {status_color};"><strong>SITUAÇÃO: {status}</strong></p>
+                </div>
 
-        # 3. Renderização (A Mágica)
+                <div class="footer">
+                    <p>___________________________________________________</p>
+                    <p>{coordinator}<br>Supervisor(a) de Estágios</p>
+                    <p><small>Documento gerado eletronicamente pelo Intern Manager 2026.</small></p>
+                </div>
+            </body>
+            </html>
+            """
+
         doc = QTextDocument()
         doc.setHtml(html_content)
 
@@ -120,8 +128,6 @@ class ReportService:
         printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
         printer.setOutputFileName(filepath)
 
-        # CORREÇÃO PYLANCE 2:
-        # A4 agora vive em QPageSize.PageSizeId.A4 no PySide6
         printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
 
         doc.print_(printer)

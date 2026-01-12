@@ -51,6 +51,7 @@ from ui.dialogs.criteria_manager_dialog import CriteriaManagerDialog
 from ui.dialogs.venue_manager_dialog import VenueManagerDialog
 from ui.dialogs.document_dialog import DocumentDialog
 from ui.dialogs.meeting_dialog import MeetingDialog
+from ui.dialogs.settings_dialog import SettingsDialog
 
 
 class MainWindow(QMainWindow):
@@ -251,9 +252,13 @@ class MainWindow(QMainWindow):
         file_menu.addAction(act_backup)
 
         file_menu.addSeparator()
-        act_exit = QAction("Sair", self)
-        act_exit.triggered.connect(self.close)
-        file_menu.addAction(act_exit)
+
+        # --- MENU CONFIGURAÇÕES ---
+        act_settings = QAction("⚙️ Configurações...", self)
+        act_settings.triggered.connect(self.open_settings)
+        file_menu.addAction(act_settings)
+
+
 
         # --- MENU AJUDA ---
         help_menu = menu_bar.addMenu("Ajuda")
@@ -263,6 +268,13 @@ class MainWindow(QMainWindow):
         act_open_help.triggered.connect(self.open_help)
 
         help_menu.addAction(act_open_help)
+
+        file_menu.addSeparator()
+
+        # --- SAIR ---
+        act_exit = QAction("Sair", self)
+        act_exit.triggered.connect(self.close)
+        file_menu.addAction(act_exit)
 
     def on_tab_changed(self, index):
         if index == 0:
@@ -416,6 +428,9 @@ class MainWindow(QMainWindow):
         i = self.get_selected_intern()
         if i:
             MeetingDialog(self, i, self.meeting_service).exec()
+
+    def open_settings(self):
+        SettingsDialog(self).exec()
 
     def backup_database(self):
         path, _ = QFileDialog.getSaveFileName(
