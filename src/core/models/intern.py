@@ -56,6 +56,7 @@ class Intern:
 
             if end < today:
                 return "Concluído"
+
             return "Ativo"
         except ValueError:
             return "Ativo"

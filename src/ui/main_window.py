@@ -153,7 +153,9 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels(["ID", "Nome", "RA", "Status"])
         self.table.setStyleSheet("""
             QHeaderView::section { background-color: #f8f9fa; padding: 6px; border: 1px solid #dee2e6; font-weight: bold; }
-            QTableWidget { gridline-color: #e9ecef; }
+            QTableWidget { gridline-color: #e9ecef;
+            selection-background-color: #607D8B; /* Cor de fundo da seleção */
+            selection-color: white; }
             QTableWidget::item { padding: 5px; }
         """)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -275,12 +277,26 @@ class MainWindow(QMainWindow):
         self.table.setRowCount(0)
         for row, intern in enumerate(interns):
             self.table.insertRow(row)
-            self.table.setItem(row, 0, QTableWidgetItem(str(intern.intern_id)))
-            self.table.setItem(row, 1, QTableWidgetItem(intern.name))
-            self.table.setItem(row, 2, QTableWidgetItem(intern.registration_number))
 
-            cell_status = QTableWidgetItem("Ativo")
+            # Coluna 0: ID (Forçando string)
+            self.table.setItem(row, 0, QTableWidgetItem(str(intern.intern_id)))
+
+            # Coluna 1: Nome (Tratando None como vazio)
+            self.table.setItem(row, 1, QTableWidgetItem(str(intern.name or "")))
+
+            # Coluna 2: RA (O culpado)
+            # AQUI: Adicionei str() e tratei nulos.
+            # Se o RA for int 12345, vira "12345". Se for None, vira "".
+            ra_display = str(intern.registration_number or "")
+            self.table.setItem(row, 2, QTableWidgetItem(ra_display))
+
+            real_status = intern.status
+            # Coluna 3: Status
+            cell_status = QTableWidgetItem(real_status)
             cell_status.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            if real_status == "Concluído":
+                cell_status.setForeground(Qt.GlobalColor.blue)
             self.table.setItem(row, 3, cell_status)
 
         if self.txt_search.text():

@@ -21,3 +21,10 @@ wheels/
 # Ruff
 *.ruff_cache
 *.ruff
+
+# Word
+*.docx
+
+# Exe
+*.spec
+
