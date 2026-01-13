@@ -1,5 +1,4 @@
 import os
-import locale
 from datetime import datetime
 from PySide6.QtGui import QTextDocument, QPageSize, QPageLayout, QImage
 from PySide6.QtPrintSupport import QPrinter
@@ -14,8 +13,6 @@ from core.models.meeting import Meeting
 from core.models.observation import Observation
 
 
-
-
 class ReportService:
     """
     Serviço de Geração de Relatórios (PDF).
@@ -23,30 +20,28 @@ class ReportService:
     """
 
     def _get_image_base64(self, path):
-            """Lê a imagem do disco e converte para Base64 para embutir no HTML."""
-            if not path or not os.path.exists(path):
-                return ""
-            
-            image = QImage(path)
-            if image.isNull(): return ""
+        """Lê a imagem do disco e converte para Base64 para embutir no HTML."""
+        if not path or not os.path.exists(path):
+            return ""
 
-            # Redimensionar se for muito grande
-            if image.height() > 100:
-                image = image.scaledToHeight(100)
+        image = QImage(path)
+        if image.isNull():
+            return ""
 
-            ba = QByteArray()
-            buffer = QBuffer(ba)
-            buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-            
-            # 1. Pylance reclama de string, mas o Runtime precisa de string ("PNG").
-            # Adicionamos o 'type: ignore' para o editor ficar quieto.
-            image.save(buffer, "PNG") # type: ignore
-            
-            # 2. A SOLUÇÃO DEFINITIVA PARA O BASE64:
-            # .toBase64() -> Retorna QByteArray com os dados codificados
-            # .toStdString() -> Converte direto para string Python (str)
-            # NÃO use bytes(...) nem .decode(...) aqui.
-            return f"data:image/png;base64,{ba.toBase64().toStdString()}"
+        # Redimensionar se for muito grande
+        if image.height() > 120:
+            image = image.scaledToHeight(120)
+
+        ba = QByteArray()
+        buffer = QBuffer(ba)
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+
+        # Runtime precisa de "PNG" (str), Pylance quer bytes.
+        # Usamos str + ignore para funcionar E não dar erro no editor.
+        image.save(buffer, "PNG")  # type: ignore
+
+        # Conversão direta de Qt C++ para Python String
+        return f"data:image/png;base64,{ba.toBase64().toStdString()}"
 
     def generate_pdf(
         self,
@@ -59,7 +54,7 @@ class ReportService:
         meetings: list[Meeting],
         observations: list[Observation],
     ):
-        # --- 1. Carregar Configurações (User Prefs) ---
+        # --- 1. Carregar Configurações ---
         settings = QSettings("MyOrganization", "InternManager2026")
 
         inst_name = settings.value("institution_name", "Instituição de Ensino")
@@ -72,8 +67,8 @@ class ReportService:
         if logo_path:
             b64 = self._get_image_base64(logo_path)
             if b64:
-                # Flutua a esquerda, margem na direita
-                logo_html = f'<img src="{b64}" style="max-height: 80px; float: left; margin-right: 20px;">'
+                # Centralizado, block
+                logo_html = f'<img src="{b64}" class="logo-img">'
 
         # Cabeçalho Dinâmico
         header_subtext = ""
@@ -97,7 +92,6 @@ class ReportService:
             total_score += val
             max_score += c.weight
 
-            # Formatação condicional da nota
             color = "#2E7D32" if val >= (c.weight * 0.7) else "#C62828"
             grades_html_rows += f"""
             <tr>
@@ -133,15 +127,13 @@ class ReportService:
         # Observações
         obs_html = ""
         if observations:
-            obs_html = "<h3>Histórico de Observações</h3><ul>"
+            obs_html = "<ul>"
             for o in observations:
                 data_obs = o.last_update if o.last_update else "S/D"
                 obs_html += f"<li style='margin-bottom: 5px;'><b>[{data_obs}]:</b> {o.observation}</li>"
             obs_html += "</ul>"
         else:
-            obs_html = (
-                "<p style='color:#777;'><i>Nenhuma observação registrada.</i></p>"
-            )
+            obs_html = "<p style='color:#777; margin-left: 10px;'><i>Nenhuma observação registrada.</i></p>"
 
         # Dados do Local
         if venue:
@@ -156,8 +148,6 @@ class ReportService:
             venue_html = "<p style='color:red; font-style:italic;'>Local de estágio não vinculado.</p>"
 
         # Datas
-
-        locale.setlocale(locale.LC_TIME, "pt_BR") # Define local para Brasil
         date_emission = datetime.now().strftime("%d/%m/%Y às %H:%M")
         start_fmt = (
             datetime.strptime(intern.start_date, "%Y-%m-%d").strftime("%d/%m/%Y")
@@ -180,47 +170,162 @@ class ReportService:
         html = f"""
         <html>
         <head>
-            <meta charset="utf-8">
-            <style>
-                body {{ font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10pt; color: #333; line-height: 1.4; }}
-                h1 {{ color: #003366; font-size: 18pt; margin: 0; padding-bottom: 5px; }}
-                h2 {{ color: #003366; font-size: 12pt; border-bottom: 2px solid #003366; padding-bottom: 3px; margin-top: 15px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }}
-                h3 {{ color: #555; font-size: 11pt; margin-top: 10px; margin-bottom: 5px; }}
-                
-                .header-container {{ overflow: hidden; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 15px; }}
-                .header-text {{ overflow: hidden; }}
-                .sub-header {{ font-size: 9pt; color: #555; margin-top: 2px; }}
+        <meta charset="utf-8">
+        <style>
+        body {{
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #222;
+            line-height: 1.4;
+        }}
 
-                .info-box {{ background-color: #f9f9f9; padding: 10px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 10px; }}
-                .info-table {{ width: 100%; border-collapse: collapse; }}
-                .info-table th {{ text-align: left; width: 100px; color: #444; font-weight: bold; vertical-align: top; }}
-                .info-table td {{ padding-bottom: 3px; vertical-align: top; }}
+        .header {{
+            text-align: center;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }}
 
-                table.grid {{ width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 9pt; }}
-                table.grid th {{ background-color: #f0f0f0; color: #333; padding: 6px; border: 1px solid #ccc; text-align: left; }}
-                table.grid td {{ padding: 6px; border: 1px solid #ddd; }}
-                
-                .text-center {{ text-align: center; }}
-                
-                .summary-box {{ float: right; width: 200px; padding: 10px; border: 2px solid #ddd; text-align: center; margin-top: 10px; background-color: #fff; }}
-                .final-grade {{ font-size: 18pt; font-weight: bold; display: block; margin: 5px 0; }}
-                
-                .footer {{ position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 8pt; color: #aaa; border-top: 1px solid #eee; padding-top: 5px; }}
-            </style>
+        .logo-img {{
+            height: 80px;
+            margin-bottom: 8px;
+        }}
+
+        .header-title {{
+            font-size: 18pt;
+            font-weight: bold;
+            color: #003366;
+        }}
+
+        .header-sub {{
+            font-size: 9.5pt;
+            color: #555;
+        }}
+
+        h2 {{
+            font-size: 12pt;
+            color: #003366;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 4px;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }}
+
+        .info-box {{
+            border: 1px solid #ddd;
+            padding: 8px;
+            margin-bottom: 10px;
+        }}
+
+        .info-table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+
+        .info-table th {{
+            text-align: left;
+            width: 120px;
+            font-weight: bold;
+            padding: 4px 6px 4px 0;
+        }}
+
+        .info-table td {{
+            padding: 4px 0;
+        }}
+
+        .grid {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }}
+
+        .grid th {{
+            background: #eaeaea;
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: left;
+        }}
+
+        .grid td {{
+            border: 1px solid #000;
+            padding: 6px;
+        }}
+
+        .text-center {{
+            text-align: center;
+        }}
+
+        .two-col {{
+            width: 100%;
+        }}
+
+        .left {{
+            width: 48%;
+            float: left;
+        }}
+
+        .right {{
+            width: 48%;
+            float: right;
+        }}
+
+        .clear {{
+            clear: both;
+        }}
+
+        .summary {{
+            border: 2px solid #ccc;
+            width: 220px;
+            float: right;
+            text-align: center;
+            padding: 8px;
+            margin-top: 10px;
+        }}
+
+        .final-grade {{
+            font-size: 20pt;
+            font-weight: bold;
+            color: {status_color};
+        }}
+
+        .signature {{
+            text-align: center;
+            margin-top: 40px;
+        }}
+
+        .signature-line {{
+            width: 350px;
+            border-top: 1px solid #000;
+            margin: 0 auto;
+        }}
+
+        .footer {{
+            margin-top: 30px;
+            font-size: 8.5pt;
+            text-align: center;
+            color: #777;
+        }}
+
+        .page-break {{
+            page-break-before: always;
+        }}
+        </style>
         </head>
-        <body>
-            <div class="header-container">
-                {logo_html}
-                <div class="header-text">
-                    <h1>{inst_name}</h1>
-                    <div class="sub-header">
-                        {header_subtext}
-                        <b>Sistema de Gerenciamento de Estágios</b>
-                    </div>
-                </div>
-            </div>
 
-            <div style="width: 49%; float: left;">
+        <body>
+
+        <div class="header">
+            {logo_html}
+            <div class="header-title">{inst_name}</div>
+            <div class="header-sub">
+                {header_subtext}<br>
+                Sistema de Gerenciamento de Estágios
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="left">
                 <h2>Identificação do Aluno</h2>
                 <div class="info-box">
                     <table class="info-table">
@@ -231,66 +336,70 @@ class ReportService:
                     </table>
                 </div>
             </div>
-            <div style="width: 49%; float: right;">
+
+            <div class="right">
                 <h2>Local de Estágio</h2>
                 <div class="info-box">
                     {venue_html}
                 </div>
             </div>
-            <div style="clear: both;"></div>
+        </div>
 
-            <h2>Avaliação Acadêmica</h2>
-            <table class="grid">
-                <thead>
-                    <tr>
-                        <th>Critério Avaliativo</th>
-                        <th width="80" class="text-center">Peso</th>
-                        <th width="80" class="text-center">Nota</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {grades_html_rows}
-                </tbody>
-            </table>
-            
-            <div style="overflow: hidden; margin-top: 10px;">
-                <div class="summary-box">
-                    <span style="font-size: 9pt; color: #666;">MÉDIA FINAL</span>
-                    <span class="final-grade" style="color: {status_color}">{total_score:.1f}</span>
-                    <span style="font-size: 10pt; font-weight: bold; color: {status_color}">{status_text}</span>
-                </div>
-                <div style="float: left; width: 60%;">
-                     <h3>Frequência</h3>
-                     <p>De <b>{total_meetings}</b> reuniões supervisionadas, o aluno compareceu a <b>{present_meetings}</b>.</p>
-                     <p>Percentual de Presença: <b>{freq_percent:.1f}%</b></p>
-                </div>
+        <div class="clear"></div>
+
+        <h2>Avaliação Acadêmica</h2>
+        <table class="grid">
+        <thead>
+        <tr>
+            <th>Critério Avaliativo</th>
+            <th width="80" class="text-center">Peso</th>
+            <th width="80" class="text-center">Nota</th>
+        </tr>
+        </thead>
+        <tbody>
+        {grades_html_rows}
+        </tbody>
+        </table>
+
+        <div style="margin-top:10px;">
+            <div class="summary">
+                <div style="font-size:9pt;">MÉDIA FINAL</div>
+                <div class="final-grade">{total_score:.1f}</div>
+                <div style="font-weight:bold; color:{status_color};">{status_text}</div>
             </div>
 
-            <div style="page-break-inside: avoid;">
-                <h2>Status Documental</h2>
-                <p>Pendências atuais: <b>{pending_docs}</b> documentos.</p>
-                <table class="grid" style="width: 100%;">
-                    <thead><tr><th style="text-align:left;">Documento</th><th width="120" class="text-center">Situação</th></tr></thead>
-                    <tbody>{docs_rows}</tbody>
-                </table>
-            </div>
+            <h3>Frequência</h3>
+            <p>De <b>{total_meetings}</b> reuniões supervisionadas, o aluno compareceu a <b>{present_meetings}</b>.</p>
+            <p>Percentual de Presença: <b>{freq_percent:.1f}%</b></p>
+        </div>
 
-            <div style="page-break-inside: avoid;">
-                <h2>Observações do Supervisor</h2>
-                {obs_html}
-            </div>
+        <div class="page-break">
+        <h2>Status Documental</h2>
+        <p>Pendências atuais: <b>{pending_docs}</b> documento(s).</p>
 
-            <br><br>
-            <div style="text-align: center; margin-top: 30px;">
-                <p>{local_data_sig}</p>
-                <br><br>
-                <div style="border-top: 1px solid #000; width: 300px; margin: 0 auto;"></div>
-                <p style="font-size: 9pt;">Assinatura do Responsável</p>
-            </div>
+        <table class="grid">
+        <thead>
+        <tr><th>Documento</th><th width="150" class="text-center">Situação</th></tr>
+        </thead>
+        <tbody>
+        {docs_rows}
+        </tbody>
+        </table>
+        </div>
 
-            <div class="footer">
-                Relatório gerado eletronicamente em {date_emission} via Intern Manager 2026.
-            </div>
+        <h2>Observações do Supervisor</h2>
+        {obs_html}
+
+        <div class="signature">
+            <p>{local_data_sig}</p>
+            <div class="signature-line"></div>
+            <p style="font-size:9pt;">Assinatura do Responsável</p>
+        </div>
+
+        <div class="footer">
+        Relatório gerado eletronicamente em {date_emission} via Intern Manager 2026.
+        </div>
+
         </body>
         </html>
         """

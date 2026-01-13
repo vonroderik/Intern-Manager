@@ -60,8 +60,8 @@ class SettingsDialog(QDialog):
         # -----------------------------
 
         form.addRow("Instituição:", self.txt_institution)
-        form.addRow("Coordenação:", self.txt_supervisor)
-        form.addRow("Cidade/UF:", self.txt_city)
+        form.addRow("Supervisor:", self.txt_supervisor)
+        form.addRow("Campus:", self.txt_city)
         form.addRow("Logomarca:", logo_layout)
 
         group.setLayout(form)

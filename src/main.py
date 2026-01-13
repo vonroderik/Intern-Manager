@@ -31,6 +31,9 @@ from services.report_service import ReportService
 # Utils
 from utils.seeder import seed_default_criteria
 
+# Config
+from config import DB_DIR
+
 
 def main():
     """
@@ -151,35 +154,20 @@ def get_csv_path() -> Optional[Path]:
     Returns:
         Optional[Path]: The path to the CSV file, or None if not found.
     """
-    csv_file = None
-
-    try:
-        current_file = Path(__file__).resolve()
-        project_root = current_file.parent.parent
-        imports_dir = project_root / "data" / "imports"
-
-        if not imports_dir.exists():
-            project_root = current_file.parent.parent.parent
-            imports_dir = project_root / "data" / "imports"
-
-            if not imports_dir.exists():
-                return None
-
-        csv_files = list(imports_dir.glob("*.csv"))
-
-        if not csv_files:
-            return None
-
-        if len(csv_files) > 1:
-            print(f"WARNING: Multiple CSV files found. Using {csv_files[0].name}")
-
-        csv_file = csv_files[0]
-
-    except Exception as e:
-        print(f"Failed to locate CSV file. Details: {e}")
+    imports_dir = DB_DIR / "imports"
+        
+    if not imports_dir.exists():
         return None
 
-    return csv_file
+    csv_files = list(imports_dir.glob("*.csv"))
+
+    if not csv_files:
+        return None
+
+    if len(csv_files) > 1:
+        print(f"WARNING: Múltiplos CSVs encontrados. Usando {csv_files[0].name}")
+
+    return csv_files[0]
 
 
 if __name__ == "__main__":

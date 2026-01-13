@@ -278,8 +278,9 @@ class MainWindow(QMainWindow):
 
     def _setup_table(self, layout):
         self.table = QTableWidget()
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["ID", "Nome", "RA", "Status"])
+        self.table.setColumnCount(5)
+        self.table.setHorizontalHeaderLabels(["ID", "Nome", "Local", "RA", "Status"])
+        self.table.setColumnHidden(0, True)
         self.table.setStyleSheet("""
             QHeaderView::section { background-color: #f8f9fa; padding: 6px; border: 1px solid #dee2e6; font-weight: bold; }
             QTableWidget { 
@@ -296,6 +297,7 @@ class MainWindow(QMainWindow):
 
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
 
         self.table.doubleClicked.connect(self.open_edit_dialog)
         layout.addWidget(self.table)
@@ -316,6 +318,8 @@ class MainWindow(QMainWindow):
 
     def load_data(self):
         interns = self.service.get_all_interns()
+        all_venues = self.venue_service.get_all()
+        venue_map = {v.venue_id: v.venue_name for v in all_venues}
         self.table.setRowCount(0)
         for row, intern in enumerate(interns):
             self.table.insertRow(row)
@@ -324,9 +328,16 @@ class MainWindow(QMainWindow):
             self.table.setItem(row, 0, QTableWidgetItem(str(intern.intern_id)))
             # Nome
             self.table.setItem(row, 1, QTableWidgetItem(str(intern.name or "")))
+            # Local
+            venue_name = "-"
+            if intern.venue_id:
+                # Busca no dicionário pelo ID.
+                venue_name = venue_map.get(intern.venue_id, "-")
+
+            self.table.setItem(row, 2, QTableWidgetItem(venue_name))
             # RA
             ra_display = str(intern.registration_number or "")
-            self.table.setItem(row, 2, QTableWidgetItem(ra_display))
+            self.table.setItem(row, 3, QTableWidgetItem(ra_display))
             # Status
             real_status = intern.status
             cell_status = QTableWidgetItem(real_status)
@@ -335,7 +346,7 @@ class MainWindow(QMainWindow):
             if real_status == "Concluído":
                 cell_status.setForeground(Qt.GlobalColor.blue)
 
-            self.table.setItem(row, 3, cell_status)
+            self.table.setItem(row, 4, cell_status)
 
         if self.txt_search.text():
             self.filter_table(self.txt_search.text())
@@ -436,7 +447,6 @@ class MainWindow(QMainWindow):
     def open_report(self):
         i = self.get_selected_intern()
         if i:
-
             ReportDialog(
                 self,
                 intern=i,
