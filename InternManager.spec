@@ -48,7 +48,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=icon_path, 
 )
 
 coll = COLLECT(
@@ -65,6 +64,5 @@ if sys.platform == 'darwin':
     app = BUNDLE(
         coll,
         name='InternManager.app',
-        icon=icon_path, # Usa o mesmo path que definimos lá em cima
         bundle_identifier='com.biomedico.internmanager'
     )
