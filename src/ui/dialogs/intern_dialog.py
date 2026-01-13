@@ -52,15 +52,15 @@ class InternDialog(QDialog):
 
         # Venue Selection (Com botão Quick Add)
         self.combo_venue = QComboBox()
-        
+
         self.venue_container = QHBoxLayout()
         self.venue_container.addWidget(self.combo_venue)
-        
+
         self.btn_add_venue = QPushButton("➕")
         self.btn_add_venue.setFixedWidth(30)
         self.btn_add_venue.setToolTip("Cadastrar novo local agora")
         self.btn_add_venue.clicked.connect(self.quick_add_venue)
-        
+
         self.venue_container.addWidget(self.btn_add_venue)
 
         # Dates
@@ -89,7 +89,8 @@ class InternDialog(QDialog):
 
         # Buttons
         self.buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
         )
         self.buttons.accepted.connect(self.save_data)
         self.buttons.rejected.connect(self.reject)
@@ -99,12 +100,12 @@ class InternDialog(QDialog):
         """Carrega lista de locais do banco."""
         current_data = self.combo_venue.currentData()
         self.combo_venue.clear()
-        
+
         self.combo_venue.addItem("--- Selecione ---", None)
         venues = self.venue_service.get_all()
         for v in venues:
             self.combo_venue.addItem(v.venue_name, v.venue_id)
-            
+
         if current_data:
             index = self.combo_venue.findData(current_data)
             if index >= 0:
@@ -112,46 +113,48 @@ class InternDialog(QDialog):
 
     def quick_add_venue(self):
         """Abre o diálogo de local, salva e atualiza o combo."""
-        dialog = VenueDialog(self) 
+        dialog = VenueDialog(self)
         if dialog.exec():
             try:
                 new_venue_data = dialog.get_data()
-                
+
                 # CORREÇÃO 1: O método correto no seu service é 'add_new_venue', não 'create'
                 new_id = self.venue_service.add_new_venue(new_venue_data)
-                
+
                 self.load_venues()
-                
+
                 index = self.combo_venue.findData(new_id)
                 if index >= 0:
                     self.combo_venue.setCurrentIndex(index)
-                    
+
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Erro ao adicionar local: {e}")
 
     def load_data(self):
-            """Preenche campos na edição."""
-            if not self.intern:
-                return
+        """Preenche campos na edição."""
+        if not self.intern:
+            return
 
-            # Garante que seja string, mesmo que venha None ou Int do banco
-            self.txt_name.setText(str(self.intern.name or ""))
-            
-            # AQUI ERA O ERRO: Adicionamos str() em volta
-            self.txt_ra.setText(str(self.intern.registration_number or ""))
-            
-            self.txt_email.setText(self.intern.email or "")
-            self.combo_term.setCurrentText(self.intern.term)
+        # Garante que seja string, mesmo que venha None ou Int do banco
+        self.txt_name.setText(str(self.intern.name or ""))
 
-            if self.intern.venue_id:
-                idx = self.combo_venue.findData(self.intern.venue_id)
-                if idx >= 0:
-                    self.combo_venue.setCurrentIndex(idx)
+        # AQUI ERA O ERRO: Adicionamos str() em volta
+        self.txt_ra.setText(str(self.intern.registration_number or ""))
 
-            if self.intern.start_date:
-                self.date_start.setDate(QDate.fromString(self.intern.start_date, "yyyy-MM-dd"))
-            if self.intern.end_date:
-                self.date_end.setDate(QDate.fromString(self.intern.end_date, "yyyy-MM-dd"))
+        self.txt_email.setText(self.intern.email or "")
+        self.combo_term.setCurrentText(self.intern.term)
+
+        if self.intern.venue_id:
+            idx = self.combo_venue.findData(self.intern.venue_id)
+            if idx >= 0:
+                self.combo_venue.setCurrentIndex(idx)
+
+        if self.intern.start_date:
+            self.date_start.setDate(
+                QDate.fromString(self.intern.start_date, "yyyy-MM-dd")
+            )
+        if self.intern.end_date:
+            self.date_end.setDate(QDate.fromString(self.intern.end_date, "yyyy-MM-dd"))
 
     def save_data(self):
         """
@@ -189,5 +192,5 @@ class InternDialog(QDialog):
             venue_id=selected_venue_id,
             term=self.combo_term.currentText(),
             start_date=self.date_start.date().toString("yyyy-MM-dd"),
-            end_date=self.date_end.date().toString("yyyy-MM-dd")
+            end_date=self.date_end.date().toString("yyyy-MM-dd"),
         )

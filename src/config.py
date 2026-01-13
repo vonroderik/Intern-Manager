@@ -2,6 +2,7 @@ import sys
 import os
 from pathlib import Path
 
+
 def get_app_paths():
     """
     Define os caminhos de execução e de dados do usuário.
@@ -9,9 +10,8 @@ def get_app_paths():
     """
     # 1. Local do código/resources? (READ-ONLY)
     if getattr(sys, "frozen", False):
-
-        if hasattr(sys, '_MEIPASS'):
-            app_root = Path(sys._MEIPASS) # type:ignore
+        if hasattr(sys, "_MEIPASS"):
+            app_root = Path(sys._MEIPASS)  # type:ignore
         else:
             app_root = Path(sys.executable).parent
     else:
@@ -20,13 +20,13 @@ def get_app_paths():
 
     # 2. Local do banco de dados (WRITABLE)
     if getattr(sys, "frozen", False):
-
-        base_path = os.getenv('APPDATA') or os.path.expanduser("~")
+        base_path = os.getenv("APPDATA") or os.path.expanduser("~")
         user_data_root = Path(base_path) / "InternManager"
     else:
         user_data_root = app_root / "data"
 
     return app_root, user_data_root
+
 
 # --- Configuração Global ---
 APP_ROOT, USER_DATA_ROOT = get_app_paths()
@@ -41,7 +41,7 @@ DB_PATH = DB_DIR / "interns.db"
 
 # --- Debug Crítico ---
 
-#if getattr(sys, "frozen", False):
+# if getattr(sys, "frozen", False):
 #    print(f"DEBUG: Rodando Congelado (Frozen)")
 #    print(f"DEBUG: App Root (_internal): {APP_ROOT}")
 #    print(f"DEBUG: Resources esperados: {RESOURCES_DIR}")

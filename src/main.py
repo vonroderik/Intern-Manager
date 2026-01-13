@@ -155,7 +155,7 @@ def get_csv_path() -> Optional[Path]:
         Optional[Path]: The path to the CSV file, or None if not found.
     """
     imports_dir = DB_DIR / "imports"
-        
+
     if not imports_dir.exists():
         return None
 
