@@ -29,7 +29,6 @@ additionals/
 # Exe
 build/
 dist/
-*.spec
 *.ico
 
 
