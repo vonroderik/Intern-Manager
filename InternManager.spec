@@ -60,3 +60,11 @@ coll = COLLECT(
     upx_exclude=[],
     name='InternManager',
 )
+
+if sys.platform == 'darwin':
+    app = BUNDLE(
+        coll,
+        name='InternManager.app',
+        icon=icon_path, # Usa o mesmo path que definimos lá em cima
+        bundle_identifier='com.biomedico.internmanager'
+    )
