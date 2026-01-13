@@ -3,41 +3,41 @@ name: Build Mac App
 on:
   push:
     tags:
-      - 'v*' # Dispara apenas quando você criar uma tag (ex: v1.0)
-  workflow_dispatch: # Permite disparar manualmente clicando num botão
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12' # Mesma versão que você usa
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
 
-    - name: Build with PyInstaller
-      # --windowed: sem console preto
-      # --noconfirm: sobrescreve pastas output antigas
-      run: |
-        pyinstaller --name "InternManager" --windowed --noconfirm --add-data "resources:resources" src/main.py
+      - name: Build with PyInstaller
 
-    - name: Zip the App
-      # O Mac gera um .app que é uma pasta. Precisamos zipar para upload.
-      run: |
-        cd dist
-        zip -r InternManager_Mac.zip InternManager.app
+        run: |
+          pyinstaller InternManager.spec --noconfirm --clean
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: InternManager-Mac
-        path: dist/InternManager_Mac.zip
+      - name: Zip the Application
+
+        run: |
+          cd dist
+          zip -r InternManager_Mac.zip InternManager.app
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: InternManager-Mac-Build
+          path: dist/InternManager_Mac.zip
