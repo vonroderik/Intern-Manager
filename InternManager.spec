@@ -16,7 +16,7 @@ if not os.path.exists(resources_path):
 # --------------------------------------
 
 a = Analysis(
-    ['src\\main.py'],
+    [os.path.join('src', 'main.py')],
     pathex=[PROJ_BASE],
     binaries=[],
     datas=[
