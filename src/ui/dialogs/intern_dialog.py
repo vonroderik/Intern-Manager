@@ -74,11 +74,11 @@ class InternDialog(QDialog):
 
         # Term
         self.combo_term = QComboBox()
-        terms = [f"{y}/{s}" for y in range(2024, 2030) for s in [1, 2]]
+        terms = [f"{y}/{s}" for y in range(2025, 2030) for s in [1, 2]]
         self.combo_term.addItems(terms)
 
         self.form_layout.addRow("Nome Completo:", self.txt_name)
-        self.form_layout.addRow("RA (Matrícula):", self.txt_ra)
+        self.form_layout.addRow("RA:", self.txt_ra)
         self.form_layout.addRow("E-mail:", self.txt_email)
         self.form_layout.addRow("Local de Estágio:", self.venue_container)
         self.form_layout.addRow("Semestre:", self.combo_term)
