@@ -17,6 +17,8 @@ class DocumentService(BaseService[Document]):
 
     def add_new_document(self, document: Document):
         self._validate_required_fields(document)
+        if not document.status:
+            document.status = "Pendente"
         return self.repo.save(document)
 
     def update_document(self, document: Document):
@@ -26,6 +28,9 @@ class DocumentService(BaseService[Document]):
 
     def delete_document(self, document: Document):
         return self.delete(document, "document")
+
+    def get_document_by_id(self, doc_id: int) -> Document:
+        return self.repo.get_by_id(doc_id)
 
     def create_initial_documents_batch(self, intern_id: int):
         """
@@ -40,7 +45,12 @@ class DocumentService(BaseService[Document]):
 
         for name in DEFAULT_DOCUMENTS_LIST:
             docs_to_create.append(
-                Document(intern_id=intern_id, document_name=name, is_completed=False)
+                Document(
+                    intern_id=intern_id,
+                    document_name=name,
+                    status="Pendente",
+                    feedback=None,
+                )
             )
 
         self.repo.create_batch(docs_to_create)

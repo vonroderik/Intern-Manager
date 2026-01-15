@@ -1,27 +1,22 @@
-import sys
-import os
+# src/ui/main_window.py
 import shutil
 from datetime import datetime
 
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTabWidget,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
     QPushButton, QLabel, QTableWidget, QTableWidgetItem, QHeaderView,
-    QAbstractItemView, QLineEdit, QFrame, QGraphicsDropShadowEffect,
-    QSizePolicy, QMessageBox, QFileDialog
+    QAbstractItemView, QLineEdit, QFrame, QMessageBox, QFileDialog,
+    QStackedWidget, QListWidget, QListWidgetItem
 )
-from PySide6.QtCore import Qt, QSize, QUrl
-from PySide6.QtGui import QColor, QDesktopServices, QAction
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QColor, QAction
 
-# --- BIBLIOTECA DE ÍCONES ---
 import qtawesome as qta
-
-# Config
 from config import DB_PATH
 
-# Models
+# Models & Services
 from core.models.intern import Intern
-
-# Services (Tipagem para o Python não reclamar)
+# ... (Mantenha seus imports de Services aqui) ...
 from services.intern_service import InternService
 from services.document_service import DocumentService
 from services.meeting_service import MeetingService
@@ -33,6 +28,7 @@ from services.observation_service import ObservationService
 from services.report_service import ReportService
 
 # Dialogs
+# ... (Mantenha seus imports de Dialogs aqui) ...
 from ui.dialogs.intern_dialog import InternDialog
 from ui.dialogs.document_dialog import DocumentDialog
 from ui.dialogs.venue_manager_dialog import VenueManagerDialog
@@ -43,192 +39,10 @@ from ui.dialogs.observation_dialog import ObservationDialog
 from ui.dialogs.report_dialog import ReportDialog
 from ui.dialogs.settings_dialog import SettingsDialog
 
-# --- PALETA DE CORES MODERNA ---
-COLORS = {
-    "primary": "#005A9E",    # Azul corporativo
-    "primary_hover": "#004C87",
-    "secondary": "#6C757D",  # Cinza neutro
-    "success": "#107C10",    # Verde
-    "warning": "#FFC107",    # Amarelo
-    "danger": "#D13438",     # Vermelho
-    "dark": "#323130",       # Texto escuro
-    "medium": "#605E5C",     # Texto médio
-    "light": "#F3F2F1",      # Fundo claro
-    "white": "#FFFFFF",
-    "border": "#E1DFDD"
-}
-
-# --- ESTILOS GERAIS ---
-STYLESHEET = f"""
-    QMainWindow {{
-        background-color: {COLORS["white"]};
-    }}
-    QTabWidget::pane {{
-        border: 1px solid {COLORS["border"]};
-        border-top: 2px solid {COLORS["primary"]};
-        background-color: {COLORS["white"]};
-    }}
-    QTabBar::tab {{
-        background: {COLORS["light"]};
-        color: {COLORS["medium"]};
-        padding: 10px 15px;
-        border-top-left-radius: 4px;
-        border-top-right-radius: 4px;
-        margin-right: 2px;
-    }}
-    QTabBar::tab:selected {{
-        background: {COLORS["white"]};
-        color: {COLORS["primary"]};
-        font-weight: bold;
-    }}
-    QTableWidget {{
-        border: 1px solid {COLORS["border"]};
-        gridline-color: {COLORS["light"]};
-        selection-background-color: {COLORS["primary"]};
-        selection-color: {COLORS["white"]};
-    }}
-    QHeaderView::section {{
-        background-color: {COLORS["light"]};
-        color: {COLORS["dark"]};
-        padding: 6px;
-        border: none;
-        border-bottom: 2px solid {COLORS["border"]};
-        font-weight: bold;
-    }}
-    QLineEdit, QComboBox {{
-        border: 1px solid {COLORS["border"]};
-        padding: 6px;
-        border-radius: 4px;
-        color: {COLORS["dark"]};
-    }}
-    QLineEdit:focus {{
-        border: 2px solid {COLORS["primary"]};
-    }}
-"""
-
-class MetricCard(QFrame):
-    """Card Visual para o Dashboard."""
-    def __init__(self, title, value, icon_name, color_key="primary"):
-        super().__init__()
-        self.setStyleSheet(f"""
-            MetricCard {{
-                background-color: {COLORS["white"]};
-                border-radius: 8px;
-                border: 1px solid {COLORS["border"]};
-            }}
-        """)
-        
-        # Sombra
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(15)
-        shadow.setXOffset(0)
-        shadow.setYOffset(2)
-        shadow.setColor(QColor(0, 0, 0, 30))
-        self.setGraphicsEffect(shadow)
-
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
-
-        # Ícone
-        lbl_icon = QLabel()
-        icon = qta.icon(icon_name, color=COLORS[color_key])
-        lbl_icon.setPixmap(icon.pixmap(QSize(48, 48)))
-        layout.addWidget(lbl_icon)
-
-        # Textos
-        text_layout = QVBoxLayout()
-        text_layout.setSpacing(5)
-        
-        lbl_title = QLabel(title.upper())
-        lbl_title.setStyleSheet(f"color: {COLORS['medium']}; font-size: 12px; font-weight: bold;")
-        
-        lbl_value = QLabel(str(value))
-        lbl_value.setStyleSheet(f"color: {COLORS['dark']}; font-size: 28px; font-weight: 900;")
-        
-        text_layout.addWidget(lbl_title)
-        text_layout.addWidget(lbl_value)
-        layout.addLayout(text_layout)
-        layout.addStretch()
-
-class DashboardView(QWidget):
-    """Aba de Dashboard (Refatorada)."""
-    def __init__(self, intern_service, doc_service, meeting_service, venue_service):
-        super().__init__()
-        self.i_service = intern_service
-        self.d_service = doc_service
-        self.m_service = meeting_service
-        self.v_service = venue_service
-        self._setup_ui()
-        self.refresh_data() # Mantendo nome original
-
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(20)
-
-        # Cabeçalho
-        header = QHBoxLayout()
-        title = QLabel("Visão Geral do Semestre")
-        title.setStyleSheet(f"font-size: 22px; font-weight: bold; color: {COLORS['dark']};")
-        
-        btn_refresh = QPushButton("Atualizar")
-        btn_refresh.setIcon(qta.icon('fa5s.sync-alt', color="white"))
-        btn_refresh.setStyleSheet(f"background-color: {COLORS['secondary']}; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold;")
-        btn_refresh.clicked.connect(self.refresh_data)
-
-        header.addWidget(title)
-        header.addStretch()
-        header.addWidget(btn_refresh)
-        layout.addLayout(header)
-
-        # Cards
-        cards_layout = QHBoxLayout()
-        self.card_total = MetricCard("Total Alunos", "0", 'fa5s.user-graduate', 'primary')
-        self.card_docs = MetricCard("Docs Pendentes", "0", 'fa5s.file-contract', 'danger')
-        self.card_meetings = MetricCard("Reuniões (Mês)", "0", 'fa5s.calendar-check', 'success')
-        self.card_venues = MetricCard("Locais Ativos", "0", 'fa5s.hospital', 'warning')
-
-        cards_layout.addWidget(self.card_total)
-        cards_layout.addWidget(self.card_docs)
-        cards_layout.addWidget(self.card_meetings)
-        cards_layout.addWidget(self.card_venues)
-        layout.addLayout(cards_layout)
-
-        # Área Inferior (Exemplo de lista rápida)
-        layout.addStretch()
-
-    def refresh_data(self):
-        """Recarrega os números usando os Services."""
-        # 1. Total Alunos
-        interns = self.i_service.get_all_interns()
-        self._update_card(self.card_total, str(len(interns)))
-
-        # 2. Locais
-        venues = self.v_service.get_all()
-        self._update_card(self.card_venues, str(len(venues)))
-
-        # 3. Docs Pendentes
-        pending = self.d_service.count_total_pending()
-        self._update_card(self.card_docs, str(pending))
-
-        # 4. Reuniões (Mês Atual)
-        all_meetings = self.m_service.repo.get_all()
-        now = datetime.now()
-        count_month = sum(
-            1 for m in all_meetings 
-            if datetime.strptime(m.meeting_date, "%Y-%m-%d").month == now.month
-        )
-        self._update_card(self.card_meetings, str(count_month))
-
-    def _update_card(self, card, value):
-        # Navega na hierarquia do layout para achar o QLabel do valor
-        # Layout -> Layout de Texto -> Label Valor (item 1)
-        try:
-            label = card.layout().itemAt(1).layout().itemAt(1).widget()
-            label.setText(str(value))
-        except:
-            pass
+# Novos Componentes
+from ui.styles import COLORS
+from ui.dashboard_view import DashboardView
+from ui.delegates import StatusDelegate
 
 class MainWindow(QMainWindow):
     def __init__(
@@ -244,8 +58,6 @@ class MainWindow(QMainWindow):
         import_service: ImportService,
     ):
         super().__init__()
-
-        # Injeção de Dependências
         self.service = intern_service
         self.criteria_service = criteria_service
         self.grade_service = grade_service
@@ -257,146 +69,244 @@ class MainWindow(QMainWindow):
         self.import_service = import_service
 
         self.setWindowTitle("InternManager Pro 2026")
-        self.setMinimumSize(1100, 700)
+        self.setMinimumSize(1200, 760)
         self.setWindowIcon(qta.icon('fa5s.notes-medical', color=COLORS["primary"]))
-        self.setStyleSheet(STYLESHEET)
+        
+        # Estilo Global da Window
+        self.setStyleSheet(f"""
+            QMainWindow {{ background-color: {COLORS['light']}; }}
+            QTableWidget {{ 
+                background-color: {COLORS['white']}; 
+                border-radius: 8px; 
+                border: 1px solid {COLORS['border']};
+                gridline-color: transparent;
+            }}
+            QHeaderView::section {{
+                background-color: {COLORS['white']};
+                color: {COLORS['medium']};
+                padding: 10px;
+                border: none;
+                border-bottom: 2px solid {COLORS['light']};
+                font-weight: bold;
+                text-transform: uppercase;
+            }}
+            QLineEdit {{
+                background-color: {COLORS['white']};
+                border: 1px solid {COLORS['border']};
+                padding: 8px;
+                border-radius: 4px;
+            }}
+        """)
 
         self._setup_ui()
         self.load_data()
 
     def _setup_ui(self):
-        # Menu
-        self._create_menu_bar()
-
-        # Corpo
+        # Container Principal (Horizontal: Sidebar + Conteúdo)
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        # Abas
-        self.tabs = QTabWidget()
-        self.tabs.setIconSize(QSize(20, 20))
+        # 1. Sidebar
+        self._setup_sidebar(main_layout)
 
-        # Aba 1: Dashboard
-        self.tab_dashboard = DashboardView(
+        # 2. Conteúdo (Stack)
+        self.content_stack = QStackedWidget()
+        main_layout.addWidget(self.content_stack)
+
+        # --- Páginas da Stack ---
+        
+        # Página 0: Dashboard
+        self.page_dashboard = DashboardView(
             self.service, self.doc_service, self.meeting_service, self.venue_service
         )
-        self.tabs.addTab(self.tab_dashboard, qta.icon('fa5s.chart-line', color=COLORS["primary"]), "Visão Geral")
+        self.content_stack.addWidget(self.page_dashboard)
 
-        # Aba 2: Lista
-        self.tab_list = QWidget()
-        self._setup_list_tab()
-        self.tabs.addTab(self.tab_list, qta.icon('fa5s.users', color=COLORS["primary"]), "Gerenciar Estagiários")
-        
-        # Eventos
-        self.tabs.currentChanged.connect(self.on_tab_changed)
-        main_layout.addWidget(self.tabs)
+        # Página 1: Alunos (Lista)
+        self.page_list = QWidget()
+        self._setup_list_page()
+        self.content_stack.addWidget(self.page_list)
 
-    def _create_menu_bar(self):
-        menu = self.menuBar()
+        # Conectar Sidebar -> Stack
+        self.sidebar_list.currentRowChanged.connect(self.on_sidebar_changed)
         
-        # Arquivo
-        file_menu = menu.addMenu("Arquivo")
-        
-        act_import = QAction(qta.icon('fa5s.file-import', color="black"), "Importar CSV...", self)
-        act_import.triggered.connect(self.import_csv_dialog)
-        file_menu.addAction(act_import)
+        # Seleciona primeira página
+        self.sidebar_list.setCurrentRow(0)
 
-        act_backup = QAction(qta.icon('fa5s.save', color="black"), "Fazer Backup...", self)
-        act_backup.triggered.connect(self.backup_database)
-        file_menu.addAction(act_backup)
+    def _setup_sidebar(self, parent_layout):
+        sidebar_frame = QFrame()
+        sidebar_frame.setFixedWidth(240)
+        sidebar_frame.setStyleSheet(f"""
+            QFrame {{ background-color: {COLORS['sidebar_bg']}; border: none; }}
+            QLabel {{ color: {COLORS['sidebar_text']}; }}
+        """)
         
-        file_menu.addSeparator()
-        
-        act_settings = QAction(qta.icon('fa5s.cog', color="black"), "Configurações", self)
-        act_settings.triggered.connect(self.open_settings)
-        file_menu.addAction(act_settings)
+        slayout = QVBoxLayout(sidebar_frame)
+        slayout.setContentsMargins(0, 0, 0, 20)
+        slayout.setSpacing(10)
 
-    def _setup_list_tab(self):
-        layout = QVBoxLayout(self.tab_list)
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
-
-        # Topo: Busca e Novo
-        top_bar = QHBoxLayout()
-        self.txt_search = QLineEdit()
-        self.txt_search.setPlaceholderText("🔍 Buscar por nome ou RA...")
-        self.txt_search.setFixedWidth(350)
-        self.txt_search.textChanged.connect(self.filter_table)
+        # Logo / Título App
+        app_title = QLabel("InternManager")
+        app_title.setStyleSheet("font-size: 18px; font-weight: 900; padding: 20px 20px 5px 20px;")
+        app_subtitle = QLabel("Pro 2026")
+        app_subtitle.setStyleSheet(f"font-size: 12px; font-weight: normal; color: {COLORS['secondary']}; padding: 0 20px 20px 20px;")
         
-        self.btn_add = QPushButton("Novo Aluno")
+        slayout.addWidget(app_title)
+        slayout.addWidget(app_subtitle)
+
+        # Lista de Navegação
+        self.sidebar_list = QListWidget()
+        self.sidebar_list.setFrameShape(QFrame.Shape.NoFrame)
+        self.sidebar_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.sidebar_list.setStyleSheet(f"""
+            QListWidget {{ background-color: transparent; outline: none; }}
+            QListWidget::item {{
+                color: {COLORS['sidebar_text']};
+                padding: 12px 20px;
+                border-left: 4px solid transparent;
+            }}
+            QListWidget::item:selected {{
+                background-color: #2D2C2B;
+                border-left: 4px solid {COLORS['primary']};
+                color: {COLORS['white']};
+                font-weight: bold;
+            }}
+            QListWidget::item:hover {{
+                background-color: #2D2C2B;
+            }}
+        """)
+
+        # Itens do Menu
+        item_dash = QListWidgetItem(qta.icon('fa5s.chart-pie', color="white"), " Dashboard")
+        item_list = QListWidgetItem(qta.icon('fa5s.user-graduate', color="white"), " Alunos")
+        item_venues = QListWidgetItem(qta.icon('fa5s.hospital', color="white"), " Locais")
+        item_criteria = QListWidgetItem(qta.icon('fa5s.tasks', color="white"), " Critérios")
+
+        self.sidebar_list.addItem(item_dash)
+        self.sidebar_list.addItem(item_list)
+        self.sidebar_list.addItem(item_venues)
+        self.sidebar_list.addItem(item_criteria)
+        
+        slayout.addWidget(self.sidebar_list)
+        slayout.addStretch()
+
+        # Botões de Rodapé da Sidebar
+        btn_settings = QPushButton(" Configurações")
+        btn_settings.setIcon(qta.icon('fa5s.cog', color=COLORS['secondary']))
+        btn_settings.setStyleSheet(f"text-align: left; padding: 15px 20px; background: transparent; color: {COLORS['secondary']}; border: none;")
+        btn_settings.clicked.connect(self.open_settings)
+        slayout.addWidget(btn_settings)
+
+        parent_layout.addWidget(sidebar_frame)
+
+    def _setup_list_page(self):
+        layout = QVBoxLayout(self.page_list)
+        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setSpacing(20)
+
+        # Header da Página
+        header = QHBoxLayout()
+        lbl = QLabel("Gerenciar Alunos")
+        lbl.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {COLORS['dark']};")
+        header.addWidget(lbl)
+        header.addStretch()
+        
+        self.btn_add = QPushButton(" Novo Aluno")
         self.btn_add.setIcon(qta.icon('fa5s.plus', color="white"))
-        self.btn_add.setStyleSheet(f"background-color: {COLORS['primary']}; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;")
+        self.btn_add.setStyleSheet(f"background-color: {COLORS['primary']}; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold;")
         self.btn_add.clicked.connect(self.open_add_dialog)
+        header.addWidget(self.btn_add)
+        layout.addLayout(header)
 
-        top_bar.addWidget(self.txt_search)
-        top_bar.addStretch()
-        top_bar.addWidget(self.btn_add)
-        layout.addLayout(top_bar)
+        # Barra de Ações (Busca)
+        actions = QHBoxLayout()
+        self.txt_search = QLineEdit()
+        self.txt_search.setPlaceholderText("🔍 Buscar por nome, RA ou local...")
+        self.txt_search.setFixedWidth(400)
+        self.txt_search.textChanged.connect(self.filter_table)
+        actions.addWidget(self.txt_search)
+        
+        actions.addStretch()
+        
+        # Botões de Import/Export
+        btn_import = QPushButton("Importar CSV")
+        btn_import.setIcon(qta.icon('fa5s.file-import', color=COLORS['dark']))
+        btn_import.clicked.connect(self.import_csv_dialog)
+        actions.addWidget(btn_import)
+        
+        layout.addLayout(actions)
 
         # Tabela
         self.table = QTableWidget()
         self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["ID", "Nome Completo", "Local", "RA", "Status"])
-        self.table.setColumnHidden(0, True)
+        self.table.setHorizontalHeaderLabels(["ID", "Nome Completo", "Local de Estágio", "RA", "Status"])
+        self.table.setColumnHidden(0, True) # ID Escondido
+        
+        # Configurações Tabela
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.table.setAlternatingRowColors(True)
+        self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
-        self.table.setStyleSheet(f"alternate-background-color: {COLORS['light']};")
-        self.table.doubleClicked.connect(self.open_edit_dialog)
+        self.table.setRowHeight(0, 50) # Altura padrão linha
         
+        # Aplica o Delegate (Pílulas) na coluna Status (índice 4)
+        self.table.setItemDelegateForColumn(4, StatusDelegate(self.table))
+        
+        self.table.doubleClicked.connect(self.open_edit_dialog)
         layout.addWidget(self.table)
 
-        # Botões de Ação Inferiores
-        actions_layout = QHBoxLayout()
+        # Botões de Ação na Seleção
+        self._setup_action_buttons(layout)
+
+
+    def _setup_action_buttons(self, parent_layout):
+        container = QFrame()
+        container.setStyleSheet(f"background-color: {COLORS['white']}; border-radius: 8px; border: 1px solid {COLORS['border']};")
+        layout = QHBoxLayout(container)
+        layout.setContentsMargins(10, 10, 10, 10)
         
-        # Helper para criar botões secundários
-        def create_sec_btn(text, icon_name, color_key="primary", callback=None):
+        def add_btn(text, icon, func, color="primary"):
             btn = QPushButton(text)
-            btn.setIcon(qta.icon(icon_name, color=COLORS[color_key]))
+            btn.setIcon(qta.icon(icon, color=COLORS['dark']))
             btn.setStyleSheet(f"""
-                QPushButton {{ background-color: {COLORS["white"]}; color: {COLORS["dark"]}; border: 1px solid {COLORS["border"]}; padding: 8px 12px; border-radius: 4px; }}
-                QPushButton:hover {{ background-color: {COLORS["light"]}; border-color: {COLORS[color_key]}; }}
+                QPushButton {{ background: transparent; border: none; padding: 8px 15px; color: {COLORS['dark']}; font-weight: 600; text-align: left; }}
+                QPushButton:hover {{ background-color: {COLORS['light']}; border-radius: 4px; }}
             """)
-            if callback: btn.clicked.connect(callback)
+            btn.clicked.connect(func)
+            layout.addWidget(btn)
             return btn
 
-        # Grupo 1: Edição
-        actions_layout.addWidget(create_sec_btn("Editar", 'fa5s.pen', 'primary', self.open_edit_dialog))
-        actions_layout.addWidget(create_sec_btn("Excluir", 'fa5s.trash', 'danger', self.delete_intern))
+        # Grupo Principal
+        add_btn("Editar", 'fa5s.pen', self.open_edit_dialog)
         
-        actions_layout.addWidget(self._create_v_line())
+        # Separador visual (opcional)
+        line = QFrame(); line.setFrameShape(QFrame.Shape.VLine); line.setStyleSheet(f"color: {COLORS['border']}")
+        layout.addWidget(line)
+
+        # Acadêmico
+        add_btn("Notas", 'fa5s.star', self.open_grades_dialog)
+        add_btn("Boletim", 'fa5s.file-pdf', self.open_report)      # <--- VOLTOU
+        add_btn("Observações", 'fa5s.eye', self.open_observations) # <--- VOLTOU
         
-        # Grupo 2: Acadêmico
-        actions_layout.addWidget(create_sec_btn("Notas", 'fa5s.chart-bar', 'primary', self.open_grades_dialog))
-        actions_layout.addWidget(create_sec_btn("Boletim", 'fa5s.file-pdf', 'danger', self.open_report))
-        actions_layout.addWidget(create_sec_btn("Critérios", 'fa5s.tasks', 'medium', self.open_criteria_manager))
-
-        actions_layout.addWidget(self._create_v_line())
+        # Gestão
+        add_btn("Documentos", 'fa5s.folder-open', self.open_documents)
+        add_btn("Reuniões", 'fa5s.calendar-alt', self.open_meetings)
         
-        # Grupo 3: Gestão
-        actions_layout.addWidget(create_sec_btn("Documentos", 'fa5s.folder', 'warning', self.open_documents))
-        actions_layout.addWidget(create_sec_btn("Reuniões", 'fa5s.calendar', 'success', self.open_meetings))
-        actions_layout.addWidget(create_sec_btn("Locais", 'fa5s.hospital', 'success', self.open_venue_manager))
+        layout.addStretch()
+        
+        btn_del = QPushButton("Excluir")
+        btn_del.setIcon(qta.icon('fa5s.trash-alt', color=COLORS['danger']))
+        btn_del.setStyleSheet(f"color: {COLORS['danger']}; background: transparent; border: none; font-weight: bold;")
+        btn_del.clicked.connect(self.delete_intern)
+        layout.addWidget(btn_del)
 
-        actions_layout.addStretch()
-        layout.addLayout(actions_layout)
+        parent_layout.addWidget(container)
 
-    def _create_v_line(self):
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.VLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        line.setStyleSheet(f"color: {COLORS['border']}")
-        return line
-
-    def on_tab_changed(self, index):
-        if index == 0: self.tab_dashboard.refresh_data()
-        elif index == 1: self.load_data()
-
-    # --- LÓGICA DE DADOS (Restaurada da original) ---
+    # --- LÓGICA DE DADOS (Mantida Igual) ---
     def load_data(self):
         interns = self.service.get_all_interns()
         all_venues = self.venue_service.get_all()
@@ -405,13 +315,14 @@ class MainWindow(QMainWindow):
         self.table.setRowCount(0)
         for row, intern in enumerate(interns):
             self.table.insertRow(row)
+            self.table.setRowHeight(row, 50)
             
             # ID
             self.table.setItem(row, 0, QTableWidgetItem(str(intern.intern_id)))
             
-            # Nome com ícone
+            # Nome
             item_name = QTableWidgetItem(intern.name)
-            item_name.setIcon(qta.icon('fa5s.user', color=COLORS["secondary"]))
+            item_name.setFont(self._get_bold_font())
             self.table.setItem(row, 1, item_name)
             
             # Local
@@ -419,32 +330,32 @@ class MainWindow(QMainWindow):
             self.table.setItem(row, 2, QTableWidgetItem(venue_name))
             
             # RA
-            self.table.setItem(row, 3, QTableWidgetItem(intern.registration_number or ""))
+            self.table.setItem(row, 3, QTableWidgetItem(intern.registration_number or "-"))
             
-            # Status Colorido
-            status = intern.status
-            item_status = QTableWidgetItem(status)
-            item_status.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            
-            if status == "Concluído":
-                item_status.setForeground(QColor(COLORS["success"]))
-                item_status.setIcon(qta.icon('fa5s.check', color=COLORS["success"]))
-            
-            self.table.setItem(row, 4, item_status)
+            # Status (Texto simples aqui, o Delegate desenha a pílula)
+            self.table.setItem(row, 4, QTableWidgetItem(intern.status))
 
         if self.txt_search.text():
             self.filter_table(self.txt_search.text())
+
+    def _get_bold_font(self):
+        f = self.font()
+        f.setBold(True)
+        return f
+
 
     def filter_table(self, text):
         search_text = text.lower().strip()
         for row in range(self.table.rowCount()):
             item_name = self.table.item(row, 1)
-            item_ra = self.table.item(row, 3) # RA agora é coluna 3
+            item_ra = self.table.item(row, 3)
+            item_venue = self.table.item(row, 2)
             
-            name_val = item_name.text().lower() if item_name else ""
-            ra_val = item_ra.text().lower() if item_ra else ""
+            match = False
+            if item_name and search_text in item_name.text().lower(): match = True
+            if item_ra and search_text in item_ra.text().lower(): match = True
+            if item_venue and search_text in item_venue.text().lower(): match = True
             
-            match = search_text in name_val or search_text in ra_val
             self.table.setRowHidden(row, not match)
 
     def get_selected_intern(self):
@@ -453,25 +364,26 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Atenção", "Selecione um aluno na tabela.")
             return None
         
+        # CORREÇÃO 3: Verificação de segurança
         item_id = self.table.item(rows[0].row(), 0)
-        if not item_id: return None
-        
+        if not item_id: 
+            return None
+            
         return self.service.get_by_id(int(item_id.text()))
 
-    # --- DIALOGS (Restaurados da original) ---
+    # --- Wrappers para Dialogs (Ajuste onde chamava refresh) ---
     def open_add_dialog(self):
         d = InternDialog(self, self.venue_service)
         if d.exec():
             try:
                 new_intern = d.get_data()
                 new_id = self.service.add_new_intern(new_intern)
-                if new_id:
-                    self.doc_service.create_initial_documents_batch(new_id)
+                if new_id: self.doc_service.create_initial_documents_batch(new_id)
                 self.load_data()
-                self.tab_dashboard.refresh_data()
+                self.page_dashboard.refresh_data()
                 QMessageBox.information(self, "Sucesso", "Aluno cadastrado!")
             except Exception as e:
-                QMessageBox.warning(self, "Erro", f"Erro ao salvar: {e}")
+                QMessageBox.warning(self, "Erro", f"Erro: {e}")
 
     def open_edit_dialog(self):
         i = self.get_selected_intern()
@@ -480,14 +392,19 @@ class MainWindow(QMainWindow):
         if d.exec():
             try:
                 new_data = d.get_data()
+                
                 # Atualizando objeto
                 i.name = new_data.name
                 i.venue_id = new_data.venue_id
                 i.registration_number = new_data.registration_number
                 i.email = new_data.email
                 i.term = new_data.term
+                # As datas controlam o status automaticamente
                 i.start_date = new_data.start_date
                 i.end_date = new_data.end_date
+                
+                # CORREÇÃO 1: REMOVIDO 'i.status = new_data.status'
+                # O status é read-only (calculado via @property) no seu modelo Intern.
                 
                 self.service.update_intern(i)
                 self.load_data()
@@ -497,50 +414,39 @@ class MainWindow(QMainWindow):
     def delete_intern(self):
         i = self.get_selected_intern()
         if not i: return
-        confirm = QMessageBox.question(self, "Excluir", f"Apagar {i.name}?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        
+        # CORREÇÃO 2: Enum StandardButton correto
+        confirm = QMessageBox.question(
+            self, 
+            "Excluir", 
+            f"Apagar {i.name}?", 
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
         if confirm == QMessageBox.StandardButton.Yes:
             self.service.delete_intern(i)
             self.load_data()
-            self.tab_dashboard.refresh_data()
+            self.page_dashboard.refresh_data()
 
-    # Outros Dialogs simples
+    # Outros métodos de abertura de dialogs
     def open_grades_dialog(self):
         i = self.get_selected_intern()
         if i: GradeDialog(self, i, self.criteria_service, self.grade_service).exec()
-
-    def open_report(self):
-        i = self.get_selected_intern()
-        if i: ReportDialog(self, i, self.grade_service, self.criteria_service, self.report_service, self.venue_service, self.doc_service, self.meeting_service, self.obs_service).exec()
-
-    def open_venue_manager(self):
-        VenueManagerDialog(self, self.venue_service).exec()
-
-    def open_criteria_manager(self):
-        CriteriaManagerDialog(self, self.criteria_service).exec()
-
-    def open_observations(self):
-        i = self.get_selected_intern()
-        if i: ObservationDialog(self, i, self.obs_service).exec()
-
+    
     def open_documents(self):
         i = self.get_selected_intern()
-        if i: DocumentDialog(self, i, self.doc_service).exec()
-        self.tab_dashboard.refresh_data()
+        if i: 
+            DocumentDialog(self, i, self.doc_service).exec()
+            self.page_dashboard.refresh_data()
 
     def open_meetings(self):
         i = self.get_selected_intern()
-        if i: MeetingDialog(self, i, self.meeting_service).exec()
-        self.tab_dashboard.refresh_data()
+        if i: 
+            MeetingDialog(self, i, self.meeting_service).exec()
+            self.page_dashboard.refresh_data()
 
     def open_settings(self):
         SettingsDialog(self).exec()
-
-    def backup_database(self):
-        filename = f"backup_interns_{datetime.now():%Y-%m-%d_%H%M}.db"
-        path, _ = QFileDialog.getSaveFileName(self, "Backup", filename, "SQLite DB (*.db)")
-        if path:
-            shutil.copy(DB_PATH, path)
-            QMessageBox.information(self, "Backup", "Sucesso!")
 
     def import_csv_dialog(self):
         path, _ = QFileDialog.getOpenFileName(self, "Importar CSV", "", "CSV (*.csv)")
@@ -548,7 +454,64 @@ class MainWindow(QMainWindow):
             try:
                 self.import_service.read_file(path)
                 self.load_data()
-                self.tab_dashboard.refresh_data()
+                self.page_dashboard.refresh_data()
                 QMessageBox.information(self, "Sucesso", "Importação concluída.")
             except Exception as e:
                 QMessageBox.critical(self, "Erro", str(e))
+
+
+# --- Métodos Restaurados/Confirmados ---
+
+    def open_venue_manager(self):
+        VenueManagerDialog(self, self.venue_service).exec()
+        # Se afetar contagem do dashboard, atualiza
+        self.page_dashboard.refresh_data()
+
+    def open_criteria_manager(self):
+        CriteriaManagerDialog(self, self.criteria_service).exec()
+
+    def open_report(self):
+        i = self.get_selected_intern()
+        # Precisa passar todos os services que o ReportDialog exige
+        if i: 
+            ReportDialog(
+                self, i, self.grade_service, self.criteria_service, 
+                self.report_service, self.venue_service, 
+                self.doc_service, self.meeting_service, self.obs_service
+            ).exec()
+
+    def open_observations(self):
+        i = self.get_selected_intern()
+        if i: ObservationDialog(self, i, self.obs_service).exec()
+
+
+    def on_sidebar_changed(self, row):
+            """Gerencia a navegação da Sidebar."""
+            
+            # Se for um item que apenas abre um Dialog (sem página própria na stack)
+            if row == 2: # Item 2 = Locais
+                self.open_venue_manager()
+                # Truque visual: Mantém a seleção na página atual (ex: Alunos) 
+                # em vez de ficar preso no item "Locais"
+                self.sidebar_list.blockSignals(True)
+                self.sidebar_list.setCurrentRow(self.content_stack.currentIndex())
+                self.sidebar_list.blockSignals(False)
+                return
+                
+            if row == 3: # Item 3 = Critérios
+                self.open_criteria_manager()
+                self.sidebar_list.blockSignals(True)
+                self.sidebar_list.setCurrentRow(self.content_stack.currentIndex())
+                self.sidebar_list.blockSignals(False)
+                return
+
+            # Navegação padrão (Dashboard ou Lista de Alunos)
+            # Verifica se a página existe antes de mudar
+            if row < self.content_stack.count():
+                self.content_stack.setCurrentIndex(row)
+                
+                # Atualiza dados ao trocar
+                if row == 0:
+                    self.page_dashboard.refresh_data()
+                elif row == 1:
+                    self.load_data()

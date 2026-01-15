@@ -1,114 +1,93 @@
 from datetime import datetime
 from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QFrame,
-    QScrollArea,
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+    QPushButton, QFrame, QScrollArea
 )
-from PySide6.QtCore import Qt
-from ui.components.stat_card import StatCard
+# CORREÇÃO 1: QSize adicionado
+from PySide6.QtCore import Qt, QSize
+import qtawesome as qta
 
-# Services
-from services.intern_service import InternService
-from services.document_service import DocumentService
-from services.meeting_service import MeetingService
-from services.venue_service import VenueService
-
+from ui.styles import COLORS
+# Certifique-se de que existe um __init__.py em src/ui/components/
+from ui.components.metric_card import MetricCard
 
 class DashboardView(QWidget):
-    def __init__(
-        self,
-        intern_service: InternService,
-        doc_service: DocumentService,
-        meeting_service: MeetingService,
-        venue_service: VenueService,
-    ):
+    def __init__(self, intern_service, doc_service, meeting_service, venue_service):
         super().__init__()
         self.i_service = intern_service
         self.d_service = doc_service
         self.m_service = meeting_service
         self.v_service = venue_service
-
+        
         self._setup_ui()
         self.refresh_data()
 
     def _setup_ui(self):
-        main_layout = QVBoxLayout(self)
+        # ... (código anterior mantido até a parte dos alertas) ...
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(25)
 
-        # Título
-        lbl_title = QLabel("Visão Geral")
-        lbl_title.setStyleSheet(
-            "font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px;"
-        )
-        main_layout.addWidget(lbl_title)
+        # Header
+        header = QHBoxLayout()
+        title_box = QVBoxLayout()
+        title = QLabel("Visão Geral do Semestre")
+        title.setStyleSheet(f"font-size: 26px; font-weight: 800; color: {COLORS['dark']};")
+        subtitle = QLabel("Monitore o progresso e pendências dos alunos.")
+        subtitle.setStyleSheet(f"font-size: 14px; color: {COLORS['medium']};")
+        
+        title_box.addWidget(title)
+        title_box.addWidget(subtitle)
+        
+        btn_refresh = QPushButton(" Atualizar Dados")
+        btn_refresh.setIcon(qta.icon('fa5s.sync-alt', color="white"))
+        btn_refresh.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_refresh.setStyleSheet(f"background-color: {COLORS['primary']}; color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; border: none;")
+        btn_refresh.clicked.connect(self.refresh_data)
 
-        # --- Área de Cards (KPIs) ---
+        header.addLayout(title_box)
+        header.addStretch()
+        header.addWidget(btn_refresh)
+        layout.addLayout(header)
+
+        # Cards
         cards_layout = QHBoxLayout()
-        cards_layout.setSpacing(20)
-        cards_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
-        self.card_total = StatCard("Estagiários Ativos", "0", "#0078D7", "👥")
-        self.card_docs = StatCard("Documentos Pendentes", "0", "#D32F2F", "⚠️")
-        # MUDANÇA 1: Título do card agora especifica "Mês Atual"
-        self.card_meetings = StatCard("Reuniões (Mês)", "0", "#2E7D32", "📅")
-        self.card_venues = StatCard("Locais de Estágio", "0", "#E65100", "🏥")
+        self.card_total = MetricCard("Total Alunos", "0", 'fa5s.user-graduate', 'primary')
+        self.card_docs = MetricCard("Docs Pendentes", "0", 'fa5s.file-contract', 'danger')
+        self.card_meetings = MetricCard("Reuniões (Mês)", "0", 'fa5s.calendar-check', 'success')
+        self.card_venues = MetricCard("Locais Ativos", "0", 'fa5s.hospital', 'warning')
 
         cards_layout.addWidget(self.card_total)
         cards_layout.addWidget(self.card_docs)
         cards_layout.addWidget(self.card_meetings)
         cards_layout.addWidget(self.card_venues)
+        layout.addLayout(cards_layout)
 
-        main_layout.addLayout(cards_layout)
+        # Alertas
+        lbl_alerts = QLabel("📢 Atenção Necessária")
+        lbl_alerts.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {COLORS['dark']}; margin-top: 10px;")
+        layout.addWidget(lbl_alerts)
 
-        # --- Área de Detalhes / Alertas ---
-        main_layout.addSpacing(30)
-
-        lbl_alerts = QLabel("📢 Alertas e Pendências")
-        lbl_alerts.setStyleSheet("font-size: 18px; font-weight: bold; color: #555;")
-        main_layout.addWidget(lbl_alerts)
-
-        # Scroll Area para os alertas não estourarem a tela
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet("background-color: transparent;")
 
-        self.alert_frame = QFrame()
-        self.alert_frame.setStyleSheet("""
-            QFrame { background-color: transparent; }
-            .WarningBox { 
-                background-color: #FFF3CD; 
-                border: 1px solid #FFEEBA; 
-                border-radius: 5px; 
-                padding: 10px; margin-bottom: 5px;
-            }
-            .InfoBox {
-                background-color: #D1ECF1;
-                border: 1px solid #BEE5EB;
-                border-radius: 5px;
-                padding: 10px; margin-bottom: 5px;
-            }
-        """)
-        self.alert_layout = QVBoxLayout(self.alert_frame)
+        self.alert_container = QWidget()
+        self.alert_container.setStyleSheet("background-color: transparent;")
+        self.alert_layout = QVBoxLayout(self.alert_container)
         self.alert_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.alert_layout.setSpacing(10)
 
-        scroll.setWidget(self.alert_frame)
-        main_layout.addWidget(scroll)
+        scroll.setWidget(self.alert_container)
+        layout.addWidget(scroll)
 
     def refresh_data(self):
-        """Recalcula os números do dashboard com lógica de negócio real."""
-
         interns = self.i_service.get_all_interns()
-        self.card_total.update_value(str(len(interns)))
-
         venues = self.v_service.get_all()
-        self.card_venues.update_value(str(len(venues)))
-
-        # --- Lógica de Supervisão Inteligente ---
+        pending_docs = self.d_service.count_total_pending()
         all_meetings = self.m_service.repo.get_all()
 
-        # Filtra: Quantas foram este mês?
         now = datetime.now()
         meetings_this_month = 0
         supervised_ids = set()
@@ -116,63 +95,63 @@ class DashboardView(QWidget):
         for m in all_meetings:
             supervised_ids.add(m.intern_id)
             try:
-                # Converte string ISO YYYY-MM-DD para data
                 m_date = datetime.strptime(m.meeting_date, "%Y-%m-%d")
                 if m_date.month == now.month and m_date.year == now.year:
                     meetings_this_month += 1
-            except ValueError:
-                pass  # Ignora datas mal formatadas
+            except:
+                pass
 
-        self.card_meetings.update_value(str(meetings_this_month))
+        self.card_total.set_value(len(interns))
+        self.card_venues.set_value(len(venues))
+        self.card_docs.set_value(pending_docs)
+        self.card_meetings.set_value(meetings_this_month)
 
-        # Contagem de Docs
-        pending_docs = self.d_service.count_total_pending()
-        self.card_docs.update_value(str(pending_docs))
-
-        # Gera Alertas
         self._generate_alerts(interns, supervised_ids)
 
     def _generate_alerts(self, interns, supervised_ids):
-        # Limpa alertas antigos
         while self.alert_layout.count():
             item = self.alert_layout.takeAt(0)
-            if item:
-                widget = item.widget()
-                if widget:
-                    widget.deleteLater()
+            # CORREÇÃO 2: Verificação segura para evitar erro em 'None'
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
 
-        # 1. Alerta de Alunos Fantasmas (Nunca supervisionados)
+        def add_alert_widget(text, type="warning"):
+            frame = QFrame()
+            if type == "warning":
+                bg, border, icon, text_col = "#FFF4CE", "#FFD700", "fa5s.exclamation-triangle", "#664d03"
+            elif type == "danger":
+                bg, border, icon, text_col = "#F8D7DA", "#F5C6CB", "fa5s.times-circle", "#721c24"
+            else:
+                bg, border, icon, text_col = "#D1E7DD", "#BADBCC", "fa5s.check-circle", "#0f5132"
+
+            frame.setStyleSheet(f"QFrame {{ background-color: {bg}; border: 1px solid {border}; border-radius: 6px; }}")
+            fl = QHBoxLayout(frame)
+            fl.setContentsMargins(15, 10, 15, 10)
+            
+            # CORREÇÃO 1: Uso de QSize corrigido aqui
+            lbl_icon = QLabel()
+            lbl_icon.setPixmap(qta.icon(icon, color=text_col).pixmap(QSize(20, 20)))
+            
+            lbl_text = QLabel(text)
+            lbl_text.setWordWrap(True)
+            lbl_text.setStyleSheet(f"color: {text_col}; font-weight: 500; border: none;")
+            
+            fl.addWidget(lbl_icon)
+            fl.addWidget(lbl_text, 1)
+            self.alert_layout.addWidget(frame)
+
         unsupervised = [i for i in interns if i.intern_id not in supervised_ids]
-
         if unsupervised:
-            # Cria um card de alerta agrupado
-            names = ", ".join(
-                [i.name.split()[0] for i in unsupervised[:10]]
-            )  # Pega só o primeiro nome dos 5 primeiros
-            remaining = len(unsupervised) - 10
-            msg = f"⚠️ <b>{len(unsupervised)} Alunos nunca foram supervisionados!</b><br>Fique de olho em: {names}"
-            if remaining > 0:
-                msg += f" e mais {remaining}..."
+            names = ", ".join([i.name.split()[0] for i in unsupervised[:5]])
+            rest = len(unsupervised) - 5
+            msg = f"<b>{len(unsupervised)} Alunos nunca foram supervisionados!</b><br>Verifique: {names}"
+            if rest > 0: msg += f" e mais {rest}..."
+            add_alert_widget(msg, "warning")
 
-            lbl = QLabel(msg)
-            lbl.setProperty("class", "WarningBox")  # Para pegar o CSS
-            lbl.setTextFormat(Qt.TextFormat.RichText)
-            lbl.setWordWrap(True)
-            self.alert_layout.addWidget(lbl)
-
-        # 2. Alerta de RA
         no_ra = [i for i in interns if not i.registration_number]
         if no_ra:
-            lbl = QLabel(
-                f"⚠️ Existem {len(no_ra)} alunos sem matrícula (RA) cadastrada."
-            )
-            lbl.setProperty("class", "WarningBox")
-            self.alert_layout.addWidget(lbl)
+            add_alert_widget(f"Existem <b>{len(no_ra)} alunos</b> sem matrícula (RA).", "danger")
 
-        # 3. Mensagem de Bom trabalho se tudo estiver limpo
         if not unsupervised and not no_ra and interns:
-            lbl = QLabel(
-                "✅ Tudo em dia! Todos os alunos ativos já participaram das reuniões."
-            )
-            lbl.setProperty("class", "InfoBox")
-            self.alert_layout.addWidget(lbl)
+            add_alert_widget("Tudo em dia! Todos os alunos ativos estão sendo supervisionados.", "success")

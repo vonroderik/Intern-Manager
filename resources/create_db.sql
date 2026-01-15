@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS documents (
     document_id INTEGER PRIMARY KEY AUTOINCREMENT,
     intern_id INTEGER NOT NULL,
     document_name TEXT NOT NULL,
-    is_completed INTEGER NOT NULL CHECK (is_completed IN (0, 1)),
+    status TEXT DEFAULT 'Pendente',
+    feedback TEXT,
     last_update TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')),
     FOREIGN KEY (intern_id) REFERENCES interns(intern_id) ON DELETE CASCADE
 );

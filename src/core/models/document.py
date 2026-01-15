@@ -17,12 +17,13 @@ class Document:
             document has not yet been persisted.
         intern_id (int): Identifier of the intern to whom this document belongs.
         document_name (str): Name or description of the document.
-        is_completed (int): Completion status of the document.
-            Typically uses 0 (not completed) or 1 (completed).
+        status (Optional[str]): Completion status of the document.
+        feedback Optional[str]: Feedback provided to the intern.
     """
 
     intern_id: int
     document_name: str
-    is_completed: bool
+    status: Optional[str] = None
+    feedback: Optional[str] = None
     last_update: Optional[str] = None
     document_id: Optional[int] = None

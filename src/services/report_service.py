@@ -115,7 +115,7 @@ class ReportService:
         docs_rows = ""
         pending_docs = 0
         for d in documents:
-            if d.is_completed:
+            if d.status:
                 st = "<span style='color:#2E7D32; font-weight:bold'>Entregue</span>"
             else:
                 st = "<span style='color:#C62828; font-weight:bold'>Pendente</span>"
