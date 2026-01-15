@@ -38,18 +38,18 @@ class MeetingDialog(QDialog):
 
         # Estilo Global
         self.setStyleSheet(f"""
-                    QDialog {{ background-color: {COLORS['light']}; }}
+                    QDialog {{ background-color: {COLORS["light"]}; }}
                     
                     QTableWidget {{ 
-                        background-color: {COLORS['white']}; 
+                        background-color: {COLORS["white"]}; 
                         border-radius: 8px; 
-                        border: 1px solid {COLORS['border']};
+                        border: 1px solid {COLORS["border"]};
                         gridline-color: transparent;
                         outline: none;
                         
                         /* Força a propriedade do widget Qt */
                         selection-background-color: #E3F2FD;
-                        selection-color: {COLORS['dark']};
+                        selection-color: {COLORS["dark"]};
                     }}
                     
                     /* Estados específicos para garantir a cor */
@@ -57,34 +57,34 @@ class MeetingDialog(QDialog):
                     QTableWidget::item:selected:focus,
                     QTableWidget::item:selected:active {{
                         background-color: #E3F2FD; /* Azul Bebê */
-                        color: {COLORS['dark']};   /* Texto Escuro */
+                        color: {COLORS["dark"]};   /* Texto Escuro */
                         border: none;
                     }}
                     
                     QTableWidget::item:hover {{
                         background-color: #F5F5F5;
-                        color: {COLORS['dark']};
+                        color: {COLORS["dark"]};
                     }}
 
                     QHeaderView::section {{
-                        background-color: {COLORS['white']};
-                        color: {COLORS['medium']};
+                        background-color: {COLORS["white"]};
+                        color: {COLORS["medium"]};
                         padding: 8px;
                         border: none;
-                        border-bottom: 2px solid {COLORS['light']};
+                        border-bottom: 2px solid {COLORS["light"]};
                         font-weight: bold;
                     }}
                     
                     QDateEdit {{
-                        background-color: {COLORS['white']};
-                        border: 1px solid {COLORS['border']};
+                        background-color: {COLORS["white"]};
+                        border: 1px solid {COLORS["border"]};
                         border-radius: 4px;
                         padding: 6px;
                         min-height: 25px;
                     }}
                     QDateEdit::drop-down {{ width: 20px; border: none; }}
                     
-                    QCheckBox {{ spacing: 8px; font-size: 13px; color: {COLORS['dark']}; }}
+                    QCheckBox {{ spacing: 8px; font-size: 13px; color: {COLORS["dark"]}; }}
                 """)
 
         self._setup_ui()

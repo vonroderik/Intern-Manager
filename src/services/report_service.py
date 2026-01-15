@@ -146,19 +146,23 @@ class ReportService:
 
         # Datas (Mantendo lógica original)
         date_emission = datetime.now().strftime("%d/%m/%Y às %H:%M")
-        
+
         # Mantendo exatamente como você pediu, sem alterações na lógica
         if intern.start_date:
             try:
-                start_fmt = datetime.strptime(intern.start_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+                start_fmt = datetime.strptime(intern.start_date, "%Y-%m-%d").strftime(
+                    "%d/%m/%Y"
+                )
             except ValueError:
-                start_fmt = intern.start_date # Fallback se o dado estiver 'sujo'
+                start_fmt = intern.start_date  # Fallback se o dado estiver 'sujo'
         else:
             start_fmt = "-"
 
         if intern.end_date:
             try:
-                end_fmt = datetime.strptime(intern.end_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+                end_fmt = datetime.strptime(intern.end_date, "%Y-%m-%d").strftime(
+                    "%d/%m/%Y"
+                )
             except ValueError:
                 end_fmt = intern.end_date
         else:

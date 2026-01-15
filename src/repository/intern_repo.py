@@ -3,14 +3,17 @@ from core.models.intern import Intern
 from typing import Optional, List
 from sqlite3 import Connection, Cursor, Row
 
+
 class InternRepository:
     def __init__(self, db: DatabaseConnector):
         self.db = db
         if db.conn is None or db.cursor is None:
-            raise RuntimeError("Repository initialized without a valid database connection.")
+            raise RuntimeError(
+                "Repository initialized without a valid database connection."
+            )
         self.conn: Connection = db.conn
         self.cursor: Cursor = db.cursor
-        
+
         # GARANTIA: Força o modo de dicionário para não dependermos da ordem das colunas
         self.conn.row_factory = Row
 
@@ -26,7 +29,7 @@ class InternRepository:
             end_date=row["end_date"],
             working_days=row["working_days"],
             working_hours=row["working_hours"],
-            venue_id=row["venue_id"]
+            venue_id=row["venue_id"],
         )
 
     def get_all(self) -> List[Intern]:
@@ -69,7 +72,7 @@ class InternRepository:
         ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
-        
+
         data = (
             intern.name,
             intern.registration_number,
@@ -77,9 +80,9 @@ class InternRepository:
             intern.email,
             intern.start_date,
             intern.end_date,
-            intern.working_days,   # Confirme que isso é Dias
+            intern.working_days,  # Confirme que isso é Dias
             intern.working_hours,  # Confirme que isso é Horas
-            intern.venue_id
+            intern.venue_id,
         )
 
         self.cursor.execute(sql_query, data)
@@ -120,11 +123,11 @@ class InternRepository:
     def delete(self, intern: Intern) -> bool:
         if intern.intern_id is None:
             raise ValueError("Cannot delete an intern without an ID.")
-        
+
         # Deletar dependências (Documents, Meetings, Grades, Observations)
         # O SQLite faria isso sozinho se ON DELETE CASCADE estiver ativo e PRAGMA foreign_keys = ON
         # Mas por segurança, podemos deletar explicitamente ou confiar no CASCADE do seu create_db.sql
-        
+
         sql_query = "DELETE FROM interns WHERE intern_id = ?"
         self.cursor.execute(sql_query, (intern.intern_id,))
         self.conn.commit()
