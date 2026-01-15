@@ -7,5 +7,4 @@ DEFAULT_DOCUMENTS_LIST = [
     "Projeto de Intervenção",
     "Avaliação do Supervisor Local - Física",
     "Avaliação do Supervisor Local - Carreiras",
-    "Relatório Final",
 ]

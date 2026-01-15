@@ -1,41 +1,89 @@
+"""
+Application Configuration and Path Management.
+
+This module is responsible for defining and managing critical file system paths
+for the application. It dynamically determines paths for resources and user data,
+ensuring compatibility with both development mode and a "frozen" executable
+created by PyInstaller.
+
+Attributes:
+    APP_ROOT (Path): The root directory for read-only application resources.
+                     In development, this is the 'src' directory. In a frozen
+                     app, it points to the temporary `_MEIPASS` folder.
+    USER_DATA_ROOT (Path): The root directory for writable user data.
+                           In development, this is the 'data' directory inside
+                           the project. In a frozen app, it points to a
+                           dedicated 'InternManager' folder in the user's
+                           `APPDATA` or home directory.
+    RESOURCES_DIR (Path): The location of static, read-only resources like
+                          SQL scripts or images.
+    SQL_PATH (Path): The full path to the database schema creation script.
+    DB_DIR (Path): The directory where the SQLite database is stored.
+                   This is an alias for USER_DATA_ROOT.
+    DB_PATH (Path): The full path to the SQLite database file (`interns.db`).
+"""
 import sys
 import os
 from pathlib import Path
 
 
-def get_app_paths():
+def get_app_paths() -> tuple[Path, Path]:
     """
-    Define os caminhos de execução e de dados do usuário.
-    Compatível com PyInstaller moderno (pasta _internal).
+    Determines the execution and user data paths for the application.
+
+    This function provides compatibility for running the app in both development
+    mode and as a frozen executable (e.g., via PyInstaller).
+
+    - **Application Root (`app_root`)**: In a frozen app, this points to the
+      temporary folder (`_MEIPASS`) where bundled resources are unpacked.
+      In development mode, it points to the project's 'src' directory.
+      This path should be considered READ-ONLY.
+
+    - **User Data Root (`user_data_root`)**: In a frozen app, this points to a
+      writable directory (e.g., `%APPDATA%\\InternManager` on Windows) to store
+      user-specific data like the database. In development mode, it points
+      to the `data` folder within the project structure. This path is WRITABLE.
+
+    Returns:
+        A tuple containing two Path objects: (`app_root`, `user_data_root`).
     """
-    # 1. Local do código/resources? (READ-ONLY)
+    # 1. Determine the read-only path for code/resources.
     if getattr(sys, "frozen", False):
+        # Running as a bundled executable (e.g., PyInstaller).
         if hasattr(sys, "_MEIPASS"):
+            # Standard PyInstaller one-file bundle.
             app_root = Path(sys._MEIPASS)  # type:ignore
         else:
+            # Fallback for other bundling methods or one-folder bundle.
             app_root = Path(sys.executable).parent
     else:
-        # Modo Desenvolvimento
+        # Running in a normal development environment.
+        # Resolves to the 'src' directory.
         app_root = Path(__file__).resolve().parent.parent
 
-    # 2. Local do banco de dados (WRITABLE)
+    # 2. Determine the writable path for the user database.
     if getattr(sys, "frozen", False):
+        # For a packaged app, store data in a standard user location.
         base_path = os.getenv("APPDATA") or os.path.expanduser("~")
         user_data_root = Path(base_path) / "InternManager"
     else:
+        # For development, use a local 'data' directory for convenience.
         user_data_root = app_root / "data"
 
     return app_root, user_data_root
 
 
-# --- Configuração Global ---
+# --- Global Configuration ---
+# Unpack the paths for global use across the application.
 APP_ROOT, USER_DATA_ROOT = get_app_paths()
 
-# Recursos estáticos (SQL, Imagens) - Ficam dentro de _internal no EXE
+# Path to static resources (SQL scripts, images, etc.).
+# These are bundled with the app and are read-only.
 RESOURCES_DIR = APP_ROOT / "resources"
 SQL_PATH = RESOURCES_DIR / "create_db.sql"
 
-# Dados dinâmicos (Banco de Dados) - Ficam no AppData do usuário
+# Path to dynamic user data (the database).
+# This location is writable and persistent.
 DB_DIR = USER_DATA_ROOT
 DB_PATH = DB_DIR / "interns.db"
 
@@ -47,5 +95,6 @@ DB_PATH = DB_DIR / "interns.db"
 #    print(f"DEBUG: Resources esperados: {RESOURCES_DIR}")
 #    print(f"DEBUG: SQL esperado: {SQL_PATH}")
 
-# Garante a criação da pasta de DADOS (não a de resources)
+# Ensure the directory for the database exists before the app tries to use it.
+# This is especially important on the first run.
 DB_DIR.mkdir(parents=True, exist_ok=True)

@@ -182,7 +182,7 @@ class DocumentDialog(QDialog):
         self.intern = intern
         self.service = service
 
-        self.setWindowTitle(f"Docs: {intern.name}")
+        self.setWindowTitle(f"Documentos: {intern.name}")
         self.resize(800, 500)
 
         # Define apenas a cor de fundo do Dialog

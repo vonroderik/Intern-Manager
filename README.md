@@ -115,3 +115,10 @@ The architecture is composed of distinct layers:
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE.md](LICENSE.md) file for more details.
+
+---
+
+## Developed by
+
+Rodrigo Mello
+mellornm@gmail.com

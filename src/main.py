@@ -1,3 +1,10 @@
+"""
+Application entry point and startup configuration.
+
+This script initializes the application's components, including the database,
+service layer, and user interface. It is responsible for orchestrating the
+dependency injection process and launching the main Qt window.
+"""
 import sys
 from pathlib import Path
 from typing import Optional
@@ -37,20 +44,28 @@ from config import DB_DIR
 
 def main():
     """
-    Main entry point of the application.
+    Initializes and runs the Intern Manager application.
 
-    This function orchestrates the entire startup sequence:
-    1. Initializes the Qt Application.
-    2. Establishes the database connection.
-    3. Performs Dependency Injection (Repositories -> Services).
-    4. Seeds default data if the database is empty.
-    5. Checks for and processes any pending CSV imports.
-    6. Launches the main Graphical User Interface (GUI).
+    This function serves as the main entry point. It performs the following
+    steps in order:
+    1.  Initializes the QApplication.
+    2.  Connects to the SQLite database.
+    3.  Sets up the dependency injection container by creating repositories
+        and injecting them into the corresponding service classes.
+    4.  Seeds the database with default data (e.g., evaluation criteria) if
+        it is being run for the first time.
+    5.  Checks a designated directory for a CSV file to perform an automatic
+        data import on startup.
+    6.  Ensures all existing interns have their required documents.
+    7.  Instantiates and displays the main application window (`MainWindow`).
+    8.  Enters the Qt event loop.
     """
     app = QApplication(sys.argv)
 
     print("\n=== SYSTEM STARTUP ===\n")
 
+    # The database connector is the lowest-level dependency.
+    # It needs to be available for the repositories.
     print("INITIALIZING DATABASE CONNECTION")
     try:
         db = DatabaseConnector()
@@ -59,11 +74,16 @@ def main():
         print(f"CRITICAL ERROR: Failed to connect to database. Details: {e}\n")
         return
 
+    # Ensure the database connection is cleanly closed when the app exits.
     app.aboutToQuit.connect(db.close)
 
     print("INITIALIZING SERVICES")
     try:
-        # Repositories
+        # Dependency Injection: Create repository instances first,
+        # then inject them into the corresponding services.
+        # This decouples the business logic (services) from the data access layer (repositories).
+        
+        # Repositories (Data Access Layer)
         repo_venue = VenueRepository(db)
         repo_intern = InternRepository(db)
         repo_doc = DocumentRepository(db)
@@ -73,7 +93,7 @@ def main():
         repo_meeting = MeetingRepository(db)
         report_service = ReportService()
 
-        # Services
+        # Services (Business Logic Layer)
         v_service = VenueService(repo_venue)
         i_service = InternService(repo_intern)
         d_service = DocumentService(repo_doc)
@@ -81,11 +101,11 @@ def main():
         m_service = MeetingService(repo_meeting)
         criteria_service = EvaluationCriteriaService(repo_criteria)
 
-        # Grade & Report Service
+        # Some services might need access to multiple repositories.
         grade_service = GradeService(repo=repo_grade, criteria_repo=repo_criteria)
         report_service = ReportService()
 
-        # Import Service
+        # The import service coordinates with other services to handle bulk data operations.
         imp_service = ImportService(
             intern_service=i_service,
             venue_service=v_service,
@@ -96,17 +116,21 @@ def main():
         print(f"CRITICAL ERROR: Failed to initialize services. Details: {e}\n")
         return
 
+    # Populate the database with default evaluation criteria if it's a fresh setup.
     try:
         seed_default_criteria(criteria_service)
     except Exception as e:
         print(f"WARNING: Failed to seed default criteria. Details: {e}\n")
 
+    # On startup, check for a CSV file in the designated import folder.
+    # This allows for batch-importing data without user interaction.
     print("CHECKING FOR CSV IMPORT...")
     csv_path = get_csv_path()
 
     if csv_path:
         try:
             imp_service.read_file(csv_path)
+            # Make sure the changes from the import are saved.
             if db.conn:
                 db.conn.commit()
             else:
@@ -118,12 +142,15 @@ def main():
 
     print("LAUNCHING GUI...")
 
-    # Initializes documents for existing interns
+    # A safety check. Ensures that every existing intern has their required
+    # documents created, in case they were missed or the system logic changed.
     all_interns = i_service.get_all_interns()
     for intern in all_interns:
         if intern.intern_id:
             d_service.create_initial_documents_batch(intern.intern_id)
 
+    # Inject all necessary services into the main UI window.
+    # The UI layer should only interact with services, never with repositories directly.
     window = MainWindow(
         intern_service=i_service,
         criteria_service=criteria_service,
@@ -145,15 +172,17 @@ def main():
 
 def get_csv_path() -> Optional[Path]:
     """
-    Locates the CSV import file in the data/imports directory.
+    Finds the path to a CSV file for automatic import.
 
-    Traverses the directory structure to find the 'data/imports' folder.
-    If multiple CSV files are present, it selects the first one found
-    and issues a warning.
+    This function scans the `data/imports` directory for any file ending
+    with the `.csv` extension. If multiple CSV files are found, it selects
+    the first one alphabetically and logs a warning.
 
     Returns:
-        Optional[Path]: The path to the CSV file, or None if not found.
+        An optional `Path` object pointing to the first CSV file found,
+        or `None` if no CSV files are present in the import directory.
     """
+    # Standard location for pending import files.
     imports_dir = DB_DIR / "imports"
 
     if not imports_dir.exists():
@@ -164,6 +193,8 @@ def get_csv_path() -> Optional[Path]:
     if not csv_files:
         return None
 
+    # To keep it simple, we only process one file per run.
+    # If there's more than one, just pick the first and let the user know.
     if len(csv_files) > 1:
         print(f"WARNING: Múltiplos CSVs encontrados. Usando {csv_files[0].name}")
 

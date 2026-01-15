@@ -41,7 +41,7 @@ class ReportDialog(QDialog):
         observation_service: ObservationService,
     ):
         super().__init__(parent)
-        self.setWindowTitle(f"Gerar Boletim: {intern.name}")
+        self.setWindowTitle(f"Gerar Relatório: {intern.name}")
         self.resize(500, 450)
 
         # Guarda referências
@@ -178,10 +178,10 @@ class ReportDialog(QDialog):
             )
             self.lbl_grades.setStyleSheet(f"color: {COLORS['success']};")
         else:
-            self.lbl_grades.setText("⚠️ Nenhuma nota lançada (Boletim sairá zerado)")
+            self.lbl_grades.setText("⚠️ Nenhuma nota lançada (Relatório sairá zerado)")
             self.lbl_grades.setStyleSheet(f"color: {COLORS['warning']};")
 
-        # 2. Docs
+        # 2. Documentos
         docs = self.doc_service.get_documents_by_intern(intern_id)
         pending = sum(1 for d in docs if d.status == "Pendente")
         if pending > 0:

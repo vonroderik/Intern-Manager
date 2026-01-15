@@ -1,3 +1,6 @@
+"""
+Main window and user interface for the Intern Manager application.
+"""
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -35,14 +38,13 @@ from services.report_service import ReportService
 # Dialogs
 from ui.dialogs.intern_dialog import InternDialog
 from ui.dialogs.document_dialog import DocumentDialog
-
 from ui.dialogs.grade_dialog import GradeDialog
 from ui.dialogs.meeting_dialog import MeetingDialog
 from ui.dialogs.observation_dialog import ObservationDialog
 from ui.dialogs.report_dialog import ReportDialog
 from ui.dialogs.settings_dialog import SettingsDialog
-
-# Estilos e Componentes
+from ui.dialogs.batch_meeting_dialog import BatchMeetingDialog
+# Styles and Components
 from ui.styles import COLORS
 from ui.dashboard_view import DashboardView
 from ui.delegates import StatusDelegate
@@ -51,6 +53,8 @@ from ui.criteria_view import CriteriaView
 
 
 class MainWindow(QMainWindow):
+    """Main application window, orchestrating all UI components and views."""
+
     def __init__(
         self,
         intern_service: InternService,
@@ -63,6 +67,7 @@ class MainWindow(QMainWindow):
         report_service: ReportService,
         import_service: ImportService,
     ):
+        """Initializes services, window properties, and the main UI."""
         super().__init__()
         self.service = intern_service
         self.criteria_service = criteria_service
@@ -78,11 +83,11 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1280, 800)
         self.setWindowIcon(qta.icon("fa5s.notes-medical", color=COLORS["primary"]))
 
-        # Estilo Global da Janela
+        # Apply global stylesheet
         self.setStyleSheet(f"""
             QMainWindow {{ background-color: {COLORS["light"]}; }}
             
-            /* Tabela Estilizada */
+            /* Styled table for a modern look */
             QTableWidget {{ 
                 background-color: {COLORS["white"]}; 
                 border-radius: 8px; 
@@ -119,45 +124,46 @@ class MainWindow(QMainWindow):
         self.load_data()
 
     def _setup_ui(self):
-        # Container Principal
+        """Builds the main UI layout with a sidebar and content area."""
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # 1. Sidebar
+        # 1. Sidebar for navigation
         self._setup_sidebar(main_layout)
 
-        # 2. Conteúdo (Stack)
+        # 2. Main content area that switches between pages
         self.content_stack = QStackedWidget()
         main_layout.addWidget(self.content_stack)
 
-        # --- Páginas ---
-        # Página 0: Dashboard
+        # --- Pages ---
+        # Page 0: Dashboard
         self.page_dashboard = DashboardView(
             self.service, self.doc_service, self.meeting_service, self.venue_service
         )
         self.content_stack.addWidget(self.page_dashboard)
 
-        # Página 1: Alunos (Lista)
+        # Page 1: Interns List
         self.page_list = QWidget()
         self._setup_list_page()
         self.content_stack.addWidget(self.page_list)
 
-        # Página 2: Locais
+        # Page 2: Venues
         self.page_venues = VenueView(self.venue_service)
         self.content_stack.addWidget(self.page_venues)
 
-        # Página 3: Critérios
+        # Page 3: Criteria
         self.page_criteria = CriteriaView(self.criteria_service)
         self.content_stack.addWidget(self.page_criteria)
 
-        # Inicialização
+        # Connect sidebar navigation to page switching
         self.sidebar_list.currentRowChanged.connect(self.on_sidebar_changed)
         self.sidebar_list.setCurrentRow(0)
 
     def _setup_sidebar(self, parent_layout):
+        """Creates the left-hand navigation sidebar."""
         sidebar_frame = QFrame()
         sidebar_frame.setFixedWidth(260)
         sidebar_frame.setStyleSheet(f"""
@@ -169,7 +175,7 @@ class MainWindow(QMainWindow):
         slayout.setContentsMargins(0, 0, 0, 20)
         slayout.setSpacing(10)
 
-        # Título App
+        # App Title
         app_title = QLabel("InternManager")
         app_title.setStyleSheet(
             "font-size: 20px; font-weight: 900; padding: 30px 20px 5px 20px; letter-spacing: 1px;"
@@ -178,11 +184,10 @@ class MainWindow(QMainWindow):
         app_subtitle.setStyleSheet(
             f"font-size: 12px; font-weight: normal; color: {COLORS['secondary']}; padding: 0 20px 30px 20px;"
         )
-
         slayout.addWidget(app_title)
         slayout.addWidget(app_subtitle)
 
-        # Lista de Navegação
+        # Navigation List
         self.sidebar_list = QListWidget()
         self.sidebar_list.setFrameShape(QFrame.Shape.NoFrame)
         self.sidebar_list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -207,7 +212,7 @@ class MainWindow(QMainWindow):
             }}
         """)
 
-        # Itens
+        # Add navigation items with icons
         self.sidebar_list.addItem(
             QListWidgetItem(qta.icon("fa5s.chart-pie", color="white"), "  Dashboard")
         )
@@ -224,7 +229,7 @@ class MainWindow(QMainWindow):
         slayout.addWidget(self.sidebar_list)
         slayout.addStretch()
 
-        # Rodapé Sidebar
+        # Sidebar footer for settings
         btn_settings = QPushButton(" Configurações")
         btn_settings.setIcon(qta.icon("fa5s.cog", color=COLORS["secondary"]))
         btn_settings.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -238,11 +243,12 @@ class MainWindow(QMainWindow):
         parent_layout.addWidget(sidebar_frame)
 
     def _setup_list_page(self):
+        """Creates the 'Interns' page with a table and action buttons."""
         layout = QVBoxLayout(self.page_list)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(20)
 
-        # Header
+        # Page header
         header = QHBoxLayout()
         lbl = QLabel("Gerenciar Alunos")
         lbl.setStyleSheet(
@@ -262,7 +268,23 @@ class MainWindow(QMainWindow):
         header.addWidget(self.btn_add)
         layout.addLayout(header)
 
-        # Toolbar (Busca)
+        self.btn_add.clicked.connect(self.open_add_dialog)
+        header.addWidget(self.btn_add)
+
+        # --- NOVO BOTÃO ---
+        self.btn_batch = QPushButton(" Reunião em Grupo")
+        self.btn_batch.setIcon(qta.icon("fa5s.users", color="white"))
+        self.btn_batch.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_batch.setStyleSheet(f"""
+            QPushButton {{ background-color: {COLORS['secondary']}; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; margin-left: 10px; }}
+            QPushButton:hover {{ background-color: #5a6268; }}
+        """)
+        self.btn_batch.clicked.connect(self.open_batch_meeting)
+        header.addWidget(self.btn_batch)
+        layout.addLayout(header)
+
+
+        # Toolbar with search and import
         actions = QHBoxLayout()
         self.txt_search = QLineEdit()
         self.txt_search.setPlaceholderText("🔍  Buscar por nome, RA ou local...")
@@ -286,10 +308,10 @@ class MainWindow(QMainWindow):
         actions.addWidget(btn_import)
         layout.addLayout(actions)
 
-        # --- TABELA DE ALUNOS ---
+        # Interns Table
         self.table = QTableWidget()
 
-        # FIX DA PALETA (Para seleção ficar azul bonita)
+        # Fix palette to ensure selection highlight is the correct color
         palette = self.table.palette()
         palette.setColor(QPalette.ColorRole.Highlight, QColor("#BBDEFB"))
         palette.setColor(QPalette.ColorRole.HighlightedText, QColor(COLORS["dark"]))
@@ -299,7 +321,7 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels(
             ["ID", "Nome Completo", "Local de Estágio", "RA", "Status"]
         )
-        self.table.setColumnHidden(0, True)
+        self.table.setColumnHidden(0, True) # Hide internal ID
 
         self.table.horizontalHeader().setSectionResizeMode(
             1, QHeaderView.ResizeMode.Stretch
@@ -312,18 +334,18 @@ class MainWindow(QMainWindow):
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
         self.table.setAlternatingRowColors(True)
-        self.table.setRowHeight(0, 50)
 
-        # Delegate na coluna Status (4)
+        # Use a custom delegate to render the 'Status' column
         self.table.setItemDelegateForColumn(4, StatusDelegate(self.table))
         self.table.doubleClicked.connect(self.open_edit_dialog)
 
         layout.addWidget(self.table)
 
-        # Painel de Ações Inferior
+        # Action panel below the table
         self._setup_action_panel(layout)
 
     def _setup_action_panel(self, parent_layout):
+        """Creates the bottom panel with actions for the selected intern."""
         container = QFrame()
         container.setStyleSheet(
             f"background-color: {COLORS['white']}; border-radius: 8px; border: 1px solid {COLORS['border']};"
@@ -337,7 +359,8 @@ class MainWindow(QMainWindow):
             f"font-weight: bold; color: {COLORS['medium']}; margin-right: 10px;"
         )
         layout.addWidget(lbl)
-
+        
+        # Helper to create styled action buttons
         def make_btn(text, icon, func):
             b = QPushButton(text)
             b.setIcon(qta.icon(icon, color=COLORS["dark"]))
@@ -351,10 +374,10 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(make_btn("Editar", "fa5s.pen", self.open_edit_dialog))
         layout.addWidget(make_btn("Notas", "fa5s.star", self.open_grades_dialog))
-        layout.addWidget(make_btn("Boletim", "fa5s.file-pdf", self.open_report))
-        layout.addWidget(make_btn("Docs", "fa5s.folder-open", self.open_documents))
+        layout.addWidget(make_btn("Relatório", "fa5s.file-pdf", self.open_report))
+        layout.addWidget(make_btn("Documentos", "fa5s.folder-open", self.open_documents))
         layout.addWidget(make_btn("Reuniões", "fa5s.calendar-alt", self.open_meetings))
-        layout.addWidget(make_btn("Obs", "fa5s.eye", self.open_observations))
+        layout.addWidget(make_btn("Observações", "fa5s.eye", self.open_observations))
 
         layout.addStretch()
 
@@ -370,8 +393,9 @@ class MainWindow(QMainWindow):
 
         parent_layout.addWidget(container)
 
-    # --- LÓGICA DE DADOS ---
+    # --- DATA LOGIC ---
     def load_data(self):
+        """Fetches all interns and populates the main table."""
         interns = self.service.get_all_interns()
         all_venues = self.venue_service.get_all()
         venue_map = {v.venue_id: v.venue_name for v in all_venues}
@@ -379,11 +403,10 @@ class MainWindow(QMainWindow):
         self.table.setRowCount(0)
         for row, intern in enumerate(interns):
             self.table.insertRow(row)
-            self.table.setRowHeight(row, 50)  # Altura confortável
+            self.table.setRowHeight(row, 50)
 
             self.table.setItem(row, 0, QTableWidgetItem(str(intern.intern_id)))
 
-            # Nome em Negrito
             name_item = QTableWidgetItem(intern.name)
             font = name_item.font()
             font.setBold(True)
@@ -397,15 +420,17 @@ class MainWindow(QMainWindow):
                 row, 3, QTableWidgetItem(str(intern.registration_number or "-"))
             )
             self.table.setItem(row, 4, QTableWidgetItem(intern.status))
-
+        
+        # Re-apply filter if it exists
         if self.txt_search.text():
             self.filter_table(self.txt_search.text())
 
     def filter_table(self, text):
+        """Hides or shows table rows based on the search text."""
         search = text.lower().strip()
         for row in range(self.table.rowCount()):
             match = False
-            for col in [1, 2, 3]:  # Nome, Local, RA
+            for col in [1, 2, 3]:  # Search name, venue, and registration number
                 item = self.table.item(row, col)
                 if item and search in item.text().lower():
                     match = True
@@ -413,6 +438,7 @@ class MainWindow(QMainWindow):
             self.table.setRowHidden(row, not match)
 
     def get_selected_intern(self):
+        """Retrieves the intern object for the currently selected table row."""
         rows = self.table.selectionModel().selectedRows()
         if not rows:
             QMessageBox.warning(self, "Atenção", "Selecione um aluno na tabela.")
@@ -423,8 +449,9 @@ class MainWindow(QMainWindow):
             return None
         return self.service.get_by_id(int(item_id.text()))
 
-    # --- Wrappers de Dialogs ---
+    # --- DIALOG WRAPPERS ---
     def open_add_dialog(self):
+        """Opens a dialog to add a new intern."""
         d = InternDialog(self, self.venue_service)
         if d.exec():
             try:
@@ -438,13 +465,13 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Erro", f"Erro: {e}")
 
     def open_edit_dialog(self):
+        """Opens a dialog to edit the selected intern."""
         i = self.get_selected_intern()
         if not i:
             return
         d = InternDialog(self, self.venue_service, intern=i)
         if d.exec():
             try:
-                # Update seguro
                 data = d.get_data()
                 i.name = data.name
                 i.venue_id = data.venue_id
@@ -462,6 +489,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Erro", str(e))
 
     def delete_intern(self):
+        """Deletes the selected intern after confirmation."""
         i = self.get_selected_intern()
         if not i:
             return
@@ -479,26 +507,37 @@ class MainWindow(QMainWindow):
             self.page_dashboard.refresh_data()
 
     def open_grades_dialog(self):
+        """Opens the grade management dialog for the selected intern."""
         i = self.get_selected_intern()
         if i:
             GradeDialog(self, i, self.criteria_service, self.grade_service).exec()
 
     def open_documents(self):
+        """Opens the document management dialog for the selected intern."""
         i = self.get_selected_intern()
         if i:
             DocumentDialog(self, i, self.doc_service).exec()
             self.page_dashboard.refresh_data()
 
     def open_meetings(self):
+        """Opens the meeting management dialog for the selected intern."""
         i = self.get_selected_intern()
         if i:
             MeetingDialog(self, i, self.meeting_service).exec()
             self.page_dashboard.refresh_data()
+    
+    def open_observations(self):
+        """Opens the observation dialog for the selected intern."""
+        i = self.get_selected_intern()
+        if i:
+            ObservationDialog(self, i, self.obs_service).exec()
 
     def open_settings(self):
+        """Opens the application settings dialog."""
         SettingsDialog(self).exec()
 
     def import_csv_dialog(self):
+        """Opens a file dialog to import interns from a CSV file."""
         path, _ = QFileDialog.getOpenFileName(self, "Importar CSV", "", "CSV (*.csv)")
         if path:
             try:
@@ -509,9 +548,8 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 QMessageBox.critical(self, "Erro", str(e))
 
-    # --- Navegação ---
-
     def open_report(self):
+        """Generates and displays the report card for the selected intern."""
         i = self.get_selected_intern()
         if i:
             ReportDialog(
@@ -526,17 +564,18 @@ class MainWindow(QMainWindow):
                 self.obs_service,
             ).exec()
 
-    def open_observations(self):
-        i = self.get_selected_intern()
-        if i:
-            ObservationDialog(self, i, self.obs_service).exec()
+    def open_batch_meeting(self):
+        d = BatchMeetingDialog(self, self.service, self.meeting_service, self.venue_service)
+        if d.exec():
+            self.page_dashboard.refresh_data()
 
+    # --- NAVIGATION ---
     def on_sidebar_changed(self, row):
-        # Apenas troca a página. Simples e limpo.
+        """Switches the visible page when a sidebar item is clicked."""
         if row < self.content_stack.count():
             self.content_stack.setCurrentIndex(row)
 
-            # Atualização sob demanda (Lazy loading)
+            # Lazy-load or refresh data for the selected page
             if row == 0:  # Dashboard
                 self.page_dashboard.refresh_data()
             elif row == 1:  # Alunos

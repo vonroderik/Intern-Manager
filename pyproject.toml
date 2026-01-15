@@ -16,6 +16,7 @@ classifiers = [
     "Framework :: PySide6",
 ]
 dependencies = [
+    "matplotlib>=3.10.8",
     "pyinstaller>=6.17.0",
     "pyside6>=6.10.1",
     "qtawesome>=1.4.0",
