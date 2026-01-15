@@ -14,12 +14,7 @@ class StatusDelegate(QStyledItemDelegate):
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # --- MUDANÇA AQUI ---
-        # Ignoramos se está selecionado ou não. O fundo da célula do status
-        # deve ser "invisível" (branco/cor da tabela) para não criar o quadrado feio.
-        # A seleção visual já ocorre nas outras colunas.
         painter.fillRect(option.rect, QColor(COLORS["white"])) 
-        # --------------------
 
         # Define cores da pílula
         bg_color = QColor(COLORS["secondary"])

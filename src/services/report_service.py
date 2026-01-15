@@ -36,11 +36,8 @@ class ReportService:
         buffer = QBuffer(ba)
         buffer.open(QIODevice.OpenModeFlag.WriteOnly)
 
-        # Runtime precisa de "PNG" (str), Pylance quer bytes.
-        # Usamos str + ignore para funcionar E não dar erro no editor.
         image.save(buffer, "PNG")  # type: ignore
 
-        # Conversão direta de Qt C++ para Python String
         return f"data:image/png;base64,{ba.toBase64().toStdString()}"
 
     def generate_pdf(
@@ -67,7 +64,7 @@ class ReportService:
         if logo_path:
             b64 = self._get_image_base64(logo_path)
             if b64:
-                # Centralizado, block
+                # Centralizado
                 logo_html = f'<img src="{b64}" class="logo-img">'
 
         # Cabeçalho Dinâmico

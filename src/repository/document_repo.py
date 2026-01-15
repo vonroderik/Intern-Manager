@@ -50,7 +50,7 @@ class DocumentRepository:
         result = self.cursor.fetchone()
         return result[0] if result else 0
 
-    # ---------------------------------------------------
+
 
     def save(self, document: Document) -> int:
         if document.document_id is not None:

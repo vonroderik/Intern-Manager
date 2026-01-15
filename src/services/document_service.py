@@ -8,7 +8,6 @@ REQUIRED_FIELDS = {
     "intern_id": "ID do Estagiário",
 }
 
-
 class DocumentService(BaseService[Document]):
     REQUIRED_FIELDS = REQUIRED_FIELDS
 
@@ -17,8 +16,6 @@ class DocumentService(BaseService[Document]):
 
     def add_new_document(self, document: Document):
         self._validate_required_fields(document)
-        if not document.status:
-            document.status = "Pendente"
         return self.repo.save(document)
 
     def update_document(self, document: Document):
@@ -29,28 +26,30 @@ class DocumentService(BaseService[Document]):
     def delete_document(self, document: Document):
         return self.delete(document, "document")
 
-    def get_document_by_id(self, doc_id: int) -> Document:
+    # --- MÉTODO ADICIONADO ---
+    def get_documents_by_intern(self, intern_id: int):
+        """Retorna todos os documentos de um estagiário específico."""
+        return self.repo.get_by_intern_id(intern_id)
+    # -------------------------
+
+    def get_document_by_id(self, doc_id: int):
+        """Busca um documento específico pelo ID."""
         return self.repo.get_by_id(doc_id)
 
     def create_initial_documents_batch(self, intern_id: int):
         """
         Gera o kit padrão de documentos para um novo estagiário.
         """
-
         existing = self.repo.get_by_intern_id(intern_id)
         if existing:
             return
 
         docs_to_create = []
-
         for name in DEFAULT_DOCUMENTS_LIST:
+            # is_completed não existe no modelo Document padrão, removi para evitar erro.
+            # Se seu modelo tiver, pode manter, mas o padrão é status='Pendente'
             docs_to_create.append(
-                Document(
-                    intern_id=intern_id,
-                    document_name=name,
-                    status="Pendente",
-                    feedback=None,
-                )
+                Document(intern_id=intern_id, document_name=name, status="Pendente")
             )
 
         self.repo.create_batch(docs_to_create)

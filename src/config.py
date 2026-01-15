@@ -39,7 +39,7 @@ SQL_PATH = RESOURCES_DIR / "create_db.sql"
 DB_DIR = USER_DATA_ROOT
 DB_PATH = DB_DIR / "interns.db"
 
-# --- Debug Crítico ---
+# --- Debug ---
 
 # if getattr(sys, "frozen", False):
 #    print(f"DEBUG: Rodando Congelado (Frozen)")

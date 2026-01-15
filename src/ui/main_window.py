@@ -74,29 +74,41 @@ class MainWindow(QMainWindow):
         
         # Estilo Global da Window
         self.setStyleSheet(f"""
-            QMainWindow {{ background-color: {COLORS['light']}; }}
-            QTableWidget {{ 
-                background-color: {COLORS['white']}; 
-                border-radius: 8px; 
-                border: 1px solid {COLORS['border']};
-                gridline-color: transparent;
-            }}
-            QHeaderView::section {{
-                background-color: {COLORS['white']};
-                color: {COLORS['medium']};
-                padding: 10px;
-                border: none;
-                border-bottom: 2px solid {COLORS['light']};
-                font-weight: bold;
-                text-transform: uppercase;
-            }}
-            QLineEdit {{
-                background-color: {COLORS['white']};
-                border: 1px solid {COLORS['border']};
-                padding: 8px;
-                border-radius: 4px;
-            }}
-        """)
+                    QMainWindow {{ background-color: {COLORS['light']}; }}
+                    
+                    QTableWidget {{ 
+                        background-color: {COLORS['white']}; 
+                        border-radius: 8px; 
+                        border: 1px solid {COLORS['border']};
+                        gridline-color: transparent;
+                        outline: none; /* Remove o retângulo de foco geral da tabela */
+                    }}
+                    
+                    /* --- ADICIONE ISTO --- */
+                    QTableWidget::item:selected {{
+                        background-color: {COLORS['primary_hover']};
+                        border: none;   /* Remove as bordas/linhas azuis da célula selecionada */
+                        outline: none;  /* Remove o pontilhado de foco */
+                        color: white;
+                    }}
+                    
+                    QTableWidget::item:focus {{
+                        border: none;
+                        outline: none;
+                    }}
+                    /* --------------------- */
+
+                    QHeaderView::section {{
+                        background-color: {COLORS['white']};
+                        color: {COLORS['medium']};
+                        padding: 10px;
+                        border: none;
+                        border-bottom: 2px solid {COLORS['light']};
+                        font-weight: bold;
+                        text-transform: uppercase;
+                    }}
+                    /* ... resto do estilo ... */
+                """)
 
         self._setup_ui()
         self.load_data()

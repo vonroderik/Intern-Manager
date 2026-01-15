@@ -1,225 +1,203 @@
 from typing import Dict
 from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QFormLayout,
-    QDialogButtonBox,
-    QLabel,
-    QDoubleSpinBox,
-    QMessageBox,
-    QWidget,
+    QDialog, QVBoxLayout, QFormLayout, QDialogButtonBox, 
+    QLabel, QDoubleSpinBox, QMessageBox, QWidget, QFrame, 
+    QHBoxLayout, QPushButton, QScrollArea
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QKeyEvent
+from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtGui import QColor
+import qtawesome as qta
+
 from core.models.intern import Intern
 from core.models.grade import Grade
 from services.evaluation_criteria_service import EvaluationCriteriaService
 from services.grade_service import GradeService
-
+from ui.styles import COLORS
 
 class SmartGradeInput(QDoubleSpinBox):
-    """
-    A customized QDoubleSpinBox with enhanced UX for grade entry.
-
-    Features:
-    - Auto-selects text upon receiving focus to facilitate overwriting.
-    - Automatically converts '.' to ',' to support numpad usage in locales
-      that use commas as decimal separators.
-    - Hides standard increment/decrement buttons for a cleaner interface.
-    - Aligns text to the right.
-    """
-
+    """Input inteligente e bonito para notas."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
-        self.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet(f"""
+            QDoubleSpinBox {{
+                background-color: {COLORS['light']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+                padding: 5px;
+                font-size: 14px;
+                color: {COLORS['primary']};
+                font-weight: bold;
+            }}
+            QDoubleSpinBox:focus {{
+                background-color: {COLORS['white']};
+                border: 1px solid {COLORS['primary']};
+            }}
+        """)
 
     def focusInEvent(self, event):
-        """
-        Selects all text when the widget gains focus (via click or Tab).
-        Uses a singleShot timer to ensure selection happens after Qt's internal processing.
-        """
         super().focusInEvent(event)
         QTimer.singleShot(0, self.selectAll)
 
-    def keyPressEvent(self, event: QKeyEvent):
-        """
-        Intercepts key presses to enforce specific input behaviors.
-
-        Specifically, converts the period (.) key into a comma (,) to prevent
-        validation errors in locales where comma is the decimal separator.
-        """
-        if event.text() == ".":
-            new_event = QKeyEvent(
-                QKeyEvent.Type.KeyPress,
-                Qt.Key.Key_Comma,
-                Qt.KeyboardModifier.NoModifier,
-                ",",
-            )
-            super().keyPressEvent(new_event)
-        else:
-            super().keyPressEvent(event)
-
-
 class GradeDialog(QDialog):
-    """
-    Dialog window for entering and editing intern grades.
-
-    This dialog dynamically generates input fields based on the currently
-    active evaluation criteria. It calculates the total score in real-time
-    and handles persistence via the GradeService.
-
-    Attributes:
-        intern (Intern): The intern being evaluated.
-        criteria_service (EvaluationCriteriaService): Service to fetch criteria.
-        grade_service (GradeService): Service to fetch and save grades.
-        inputs (Dict[int, SmartGradeInput]): Mapping of criteria_id to input widgets.
-    """
-
-    def __init__(
-        self,
-        parent,
-        intern: Intern,
-        criteria_service: EvaluationCriteriaService,
-        grade_service: GradeService,
-    ):
+    def __init__(self, parent, intern: Intern, criteria_service: EvaluationCriteriaService, grade_service: GradeService):
         super().__init__(parent)
         self.intern = intern
         self.criteria_service = criteria_service
         self.grade_service = grade_service
-
         self.inputs: Dict[int, SmartGradeInput] = {}
 
+        self.setWindowTitle(f"Notas: {intern.name}")
+        self.resize(500, 600)
+        self.setStyleSheet(f"background-color: {COLORS['white']};")
+
+        self.setup_ui()
+        self.load_data()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+
         # Header
-        self.setWindowTitle(f"Avaliação: {self.intern.name}")
-        self.setMinimumWidth(450)
+        header = QHBoxLayout()
+        icon = QLabel(); icon.setPixmap(qta.icon('fa5s.star', color=COLORS['warning']).pixmap(QSize(32, 32)))
+        
+        title_box = QVBoxLayout()
+        title_box.setSpacing(2)
+        lbl_name = QLabel(self.intern.name)
+        lbl_name.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {COLORS['dark']};")
+        lbl_term = QLabel(f"Lançamento de Avaliações - {self.intern.term}")
+        lbl_term.setStyleSheet(f"font-size: 12px; color: {COLORS['secondary']};")
+        
+        title_box.addWidget(lbl_name)
+        title_box.addWidget(lbl_term)
+        header.addWidget(icon)
+        header.addLayout(title_box)
+        header.addStretch()
+        layout.addLayout(header)
 
-        self.main_layout = QVBoxLayout()
-        self.setLayout(self.main_layout)
+        line = QFrame(); line.setFrameShape(QFrame.Shape.HLine); line.setStyleSheet(f"color: {COLORS['border']}")
+        layout.addWidget(line)
 
-        lbl_info = QLabel(
-            f"Lançamento de notas para o RA: {self.intern.registration_number}"
-        )
-        lbl_info.setStyleSheet("color: gray; font-style: italic;")
-        self.main_layout.addWidget(lbl_info)
-
-        # Form
-        self.form_layout = QFormLayout()
-        self.form_layout.setVerticalSpacing(15)
-
+        # Scroll Area para os critérios
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        
         self.form_widget = QWidget()
-        self.form_widget.setLayout(self.form_layout)
-        self.main_layout.addWidget(self.form_widget)
+        self.form_layout = QFormLayout(self.form_widget)
+        self.form_layout.setSpacing(15)
+        self.form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignLeft)
+        
+        scroll.setWidget(self.form_widget)
+        layout.addWidget(scroll)
 
-        # Total
-        self.lbl_total = QLabel("Nota Final: 0.0")
-        self.lbl_total.setStyleSheet(
-            "font-size: 18px; font-weight: bold; color: #2196F3; margin-top: 10px;"
-        )
-        self.lbl_total.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.main_layout.addWidget(self.lbl_total)
+        # Card de Total
+        self.total_frame = QFrame()
+        self.total_frame.setStyleSheet(f"background-color: {COLORS['light']}; border-radius: 8px; border: 1px solid {COLORS['border']};")
+        tf_layout = QHBoxLayout(self.total_frame)
+        
+        lbl_t = QLabel("MÉDIA FINAL:")
+        lbl_t.setStyleSheet(f"font-weight: bold; color: {COLORS['medium']}; font-size: 14px;")
+        
+        self.lbl_total = QLabel("0.00")
+        self.lbl_total.setStyleSheet(f"font-weight: 900; color: {COLORS['dark']}; font-size: 28px;")
+        
+        tf_layout.addWidget(lbl_t)
+        tf_layout.addStretch()
+        tf_layout.addWidget(self.lbl_total)
+        
+        layout.addWidget(self.total_frame)
 
-        # Buttons
-        buttons = (
-            QDialogButtonBox.StandardButton.Save
-            | QDialogButtonBox.StandardButton.Cancel
-        )
-        self.button_box = QDialogButtonBox(buttons)
-        self.button_box.accepted.connect(self.save_grades)
-        self.button_box.rejected.connect(self.reject)
-        self.main_layout.addWidget(self.button_box)
+        # Botões
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        
+        btn_cancel = QPushButton("Cancelar")
+        btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_cancel.setStyleSheet(f"background: transparent; color: {COLORS['secondary']}; border: none; font-weight: 600;")
+        btn_cancel.clicked.connect(self.reject)
+        
+        btn_save = QPushButton(" Salvar Notas")
+        btn_save.setIcon(qta.icon('fa5s.save', color='white'))
+        btn_save.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn_save.setStyleSheet(f"""
+            QPushButton {{ background-color: {COLORS['primary']}; color: white; border: none; padding: 10px 25px; border-radius: 6px; font-weight: bold; font-size: 14px; }}
+            QPushButton:hover {{ background-color: {COLORS['primary_hover']}; }}
+        """)
+        btn_save.clicked.connect(self.save_grades)
+        
+        btn_layout.addWidget(btn_cancel)
+        btn_layout.addWidget(btn_save)
+        layout.addLayout(btn_layout)
 
-        self.populate_fields()
+    def load_data(self):
+        # CORREÇÃO 1: Guard clause para garantir ID
+        if not self.intern.intern_id:
+            return
 
-    def populate_fields(self):
-        """
-        Fetches active criteria and existing grades to build the form dynamically.
+        criteria_list = self.criteria_service.list_active_criteria()
+        existing_grades = self.grade_service.get_grades_by_intern(self.intern.intern_id)
+        grade_map = {g.criteria_id: g.value for g in existing_grades}
 
-        For each criterion, a SmartGradeInput is created. If a grade already
-        exists for that criterion, the input is pre-filled.
-        """
-        try:
-            criteria_list = self.criteria_service.list_active_criteria()
-            existing_grades = self.grade_service.get_grades_by_intern(
-                self.intern.intern_id or 0
-            )
+        # Limpar layout anterior se houver
+        while self.form_layout.rowCount():
+            self.form_layout.removeRow(0)
 
-            grade_map = {
-                g.criteria_id: g.value
-                for g in existing_grades
-                if g.criteria_id is not None
-            }
+        self.inputs.clear()
 
-            for criterion in criteria_list:
-                c_id = criterion.criteria_id
-                if c_id is None:
-                    continue
+        for c in criteria_list:
+            spin = SmartGradeInput()
+            spin.setRange(0.0, c.weight) # Limita ao peso máximo do critério
+            spin.setSingleStep(0.1)
+            
+            # Valor existente ou 0
+            val = grade_map.get(c.criteria_id, 0.0)
+            spin.setValue(val)
+            spin.valueChanged.connect(self.update_total)
 
-                spinner = SmartGradeInput()
+            self.inputs[c.criteria_id] = spin
+            
+            # Label bonito com Peso
+            lbl_text = f"{c.name} <span style='color:{COLORS['secondary']}; font-size:11px;'>(Máx: {c.weight})</span>"
+            lbl = QLabel(lbl_text)
+            lbl.setTextFormat(Qt.TextFormat.RichText)
+            
+            self.form_layout.addRow(lbl, spin)
 
-                max_val = float(criterion.weight)
-                spinner.setRange(0, max_val)
-                spinner.setSingleStep(0.5)
+        self.update_total()
 
-                current_val = grade_map.get(c_id, 0.0)
-                spinner.setValue(float(current_val))
-
-                spinner.valueChanged.connect(self.calculate_total)
-
-                self.inputs[c_id] = spinner
-
-                lbl_text = f"{criterion.name} <span style='color:gray; font-size:10px;'>(Max: {max_val})</span>"
-                label = QLabel(lbl_text)
-
-                self.form_layout.addRow(label, spinner)
-
-            self.calculate_total()
-
-        except Exception as e:
-            QMessageBox.critical(self, "Erro", f"Falha ao carregar critérios: {e}")
-            self.reject()
-
-    def calculate_total(self):
-        """
-        Sums the values of all inputs and updates the total label.
-
-        Changes the label color to Green (Pass) or Red (Fail) based on a
-        threshold of 7.0.
-        """
-        total = sum(spinner.value() for spinner in self.inputs.values())
-        self.lbl_total.setText(f"Nota Final: {total:.2f}")
-
+    def update_total(self):
+        total = sum(spin.value() for spin in self.inputs.values())
+        self.lbl_total.setText(f"{total:.2f}")
+        
+        # Color Coding
         if total >= 7.0:
-            self.lbl_total.setStyleSheet(
-                "font-size: 18px; font-weight: bold; color: #4CAF50; margin-top: 10px;"
-            )
+            self.lbl_total.setStyleSheet(f"font-weight: 900; color: {COLORS['success']}; font-size: 28px;")
+            self.total_frame.setStyleSheet(f"background-color: #D1E7DD; border: 1px solid {COLORS['success']}; border-radius: 8px;")
         else:
-            self.lbl_total.setStyleSheet(
-                "font-size: 18px; font-weight: bold; color: #F44336; margin-top: 10px;"
-            )
+            self.lbl_total.setStyleSheet(f"font-weight: 900; color: {COLORS['danger']}; font-size: 28px;")
+            self.total_frame.setStyleSheet(f"background-color: #F8D7DA; border: 1px solid {COLORS['danger']}; border-radius: 8px;")
 
     def save_grades(self):
-        """
-        Collects data from all inputs and persists them using the GradeService.
+        # CORREÇÃO 2: Guard clause para garantir ID
+        if not self.intern.intern_id:
+            QMessageBox.critical(self, "Erro", "Aluno sem ID!")
+            return
 
-        Constructs a list of Grade objects and sends them for batch processing.
-        Provides user feedback via QMessageBox upon success or failure.
-        """
         grades_to_save = []
-
-        for c_id, spinner in self.inputs.items():
-            value = spinner.value()
-            grades_to_save.append(
-                Grade(
-                    intern_id=self.intern.intern_id,  # type: ignore
-                    criteria_id=c_id,
-                    value=value,
-                )
-            )
-
+        for c_id, spin in self.inputs.items():
+            grades_to_save.append(Grade(
+                intern_id=self.intern.intern_id,
+                criteria_id=c_id,
+                value=spin.value()
+            ))
+        
         try:
             self.grade_service.save_batch_grades(grades_to_save)
-            QMessageBox.information(self, "Sucesso", "Notas lançadas com sucesso!")
+            QMessageBox.information(self, "Sucesso", "Notas salvas com sucesso!")
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, "Erro", f"Não foi possível salvar: {e}")
+            QMessageBox.critical(self, "Erro", f"Erro ao salvar: {e}")

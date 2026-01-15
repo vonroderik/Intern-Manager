@@ -3,12 +3,10 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
     QPushButton, QFrame, QScrollArea
 )
-# CORREÇÃO 1: QSize adicionado
 from PySide6.QtCore import Qt, QSize
 import qtawesome as qta
 
 from ui.styles import COLORS
-# Certifique-se de que existe um __init__.py em src/ui/components/
 from ui.components.metric_card import MetricCard
 
 class DashboardView(QWidget):
@@ -23,7 +21,6 @@ class DashboardView(QWidget):
         self.refresh_data()
 
     def _setup_ui(self):
-        # ... (código anterior mantido até a parte dos alertas) ...
         layout = QVBoxLayout(self)
         layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(25)
@@ -111,7 +108,7 @@ class DashboardView(QWidget):
     def _generate_alerts(self, interns, supervised_ids):
         while self.alert_layout.count():
             item = self.alert_layout.takeAt(0)
-            # CORREÇÃO 2: Verificação segura para evitar erro em 'None'
+
             widget = item.widget()
             if widget:
                 widget.deleteLater()
@@ -129,7 +126,6 @@ class DashboardView(QWidget):
             fl = QHBoxLayout(frame)
             fl.setContentsMargins(15, 10, 15, 10)
             
-            # CORREÇÃO 1: Uso de QSize corrigido aqui
             lbl_icon = QLabel()
             lbl_icon.setPixmap(qta.icon(icon, color=text_col).pixmap(QSize(20, 20)))
             

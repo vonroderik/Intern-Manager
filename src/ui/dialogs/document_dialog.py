@@ -1,24 +1,18 @@
 from PySide6.QtWidgets import (
-    QDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QTableWidget,
-    QTableWidgetItem,
-    QPushButton,
-    QHeaderView,
-    QAbstractItemView,
-    QInputDialog,
-    QMessageBox,
-    QLabel,
-    QComboBox,
-    QTextEdit,
-    QDialogButtonBox,
-    QWidget,
+    QDialog, QVBoxLayout, QHBoxLayout, QTableWidget, 
+    QTableWidgetItem, QPushButton, QHeaderView, 
+    QAbstractItemView, QInputDialog, QMessageBox, 
+    QLabel, QComboBox, QTextEdit, QFrame, QWidget
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QColor
+import qtawesome as qta
+
 from core.models.intern import Intern
 from core.models.document import Document
 from services.document_service import DocumentService
+from ui.styles import COLORS
+from ui.delegates import StatusDelegate 
 
 # --- Dicionário de Broncas Padrão ---
 STANDARD_FEEDBACKS = {
@@ -30,70 +24,121 @@ STANDARD_FEEDBACKS = {
     "Rasuras": "Documento recusado. Motivo: O documento apresenta rasuras ou está ilegível.",
 }
 
-
 class AuditDialog(QDialog):
     """Janela Popup para Auditar (Aprovar/Reprovar) um documento."""
-
+    
     def __init__(self, parent, document: Document):
         super().__init__(parent)
-        self.doc = document
-        self.setWindowTitle(f"Auditoria: {document.document_name}")
-        self.resize(500, 400)
-        self._setup_ui()
+        self.document = document
+        self.setWindowTitle("Auditoria de Documento")
+        self.resize(500, 450)
+        
+        self.setStyleSheet(f"""
+            QDialog {{ background-color: {COLORS['white']}; }}
+            QLabel {{ color: {COLORS['dark']}; font-weight: bold; margin-top: 10px; }}
+            QComboBox, QTextEdit {{
+                background-color: {COLORS['light']};
+                border: 1px solid {COLORS['border']};
+                border-radius: 6px;
+                padding: 8px;
+                color: {COLORS['dark']};
+            }}
+            QComboBox:focus, QTextEdit:focus {{ border: 1px solid {COLORS['primary']}; background-color: {COLORS['white']}; }}
+        """)
+        
+        self.setup_ui()
 
-    def _setup_ui(self):
+    def setup_ui(self):
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(15)
 
-        # Status
+        # Header
+        header = QHBoxLayout()
+        icon = QLabel()
+        icon.setPixmap(qta.icon('fa5s.stamp', color=COLORS['primary']).pixmap(QSize(32, 32)))
+        
+        title_box = QVBoxLayout()
+        lbl_doc = QLabel(self.document.document_name)
+        lbl_doc.setStyleSheet(f"font-size: 18px; color: {COLORS['primary']}; margin: 0;")
+        lbl_sub = QLabel("Avaliação de conformidade")
+        lbl_sub.setStyleSheet(f"font-size: 12px; color: {COLORS['secondary']}; font-weight: normal; margin: 0;")
+        
+        title_box.addWidget(lbl_doc)
+        title_box.addWidget(lbl_sub)
+        header.addWidget(icon)
+        header.addLayout(title_box)
+        header.addStretch()
+        layout.addLayout(header)
+
+        line = QFrame(); line.setFrameShape(QFrame.Shape.HLine); line.setStyleSheet(f"color: {COLORS['border']}")
+        layout.addWidget(line)
+
+        # Status Combo
+        layout.addWidget(QLabel("Decisão:"))
         self.combo_status = QComboBox()
-        self.combo_status.addItems(["Pendente", "Entregue", "Aprovado", "Reprovado"])
-        current_status = self.doc.status or "Pendente"
-        self.combo_status.setCurrentText(current_status)
-        self.combo_status.currentTextChanged.connect(self._on_status_change)
-
-        layout.addWidget(QLabel("Situação do Documento:"))
+        self.combo_status.addItems(["Pendente", "Aprovado", "Reprovado"])
+        # CORREÇÃO 1: Trata None no setCurrentText
+        self.combo_status.setCurrentText(self.document.status or "Pendente")
+        self.combo_status.currentIndexChanged.connect(self.on_status_change)
         layout.addWidget(self.combo_status)
 
-        # Área de Reprovação (Container para esconder/mostrar)
-        self.rejection_widget = QWidget()
-        r_layout = QVBoxLayout(self.rejection_widget)
-        r_layout.setContentsMargins(0, 10, 0, 0)
-
-        # Combo de Motivos Prontos
+        # Motivos Prontos (Só aparece se Reprovado)
+        self.lbl_reasons = QLabel("Motivo da Recusa (Rápido):")
+        layout.addWidget(self.lbl_reasons)
+        
         self.combo_reasons = QComboBox()
+        # CORREÇÃO 2: Convertendo keys para list
         self.combo_reasons.addItems(list(STANDARD_FEEDBACKS.keys()))
-        self.combo_reasons.currentTextChanged.connect(self._fill_feedback)
+        self.combo_reasons.currentTextChanged.connect(self.fill_feedback)
+        layout.addWidget(self.combo_reasons)
 
-        r_layout.addWidget(QLabel("Motivo da Recusa (Preenchimento Rápido):"))
-        r_layout.addWidget(self.combo_reasons)
-
-        r_layout.addWidget(QLabel("Texto do Feedback (Enviado ao aluno):"))
+        # Feedback Texto
+        layout.addWidget(QLabel("Parecer / Feedback:"))
         self.txt_feedback = QTextEdit()
-        self.txt_feedback.setPlaceholderText("Descreva o problema aqui...")
-        self.txt_feedback.setText(self.doc.feedback or "")
-        r_layout.addWidget(self.txt_feedback)
-
-        layout.addWidget(self.rejection_widget)
+        self.txt_feedback.setPlaceholderText("Descreva o problema ou observações...")
+        self.txt_feedback.setText(self.document.feedback or "")
+        layout.addWidget(self.txt_feedback)
 
         # Botões
-        btns = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Save
-            | QDialogButtonBox.StandardButton.Cancel
-        )
-        btns.accepted.connect(self.accept)
-        btns.rejected.connect(self.reject)
-        layout.addWidget(btns)
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        
+        btn_cancel = QPushButton("Cancelar")
+        btn_cancel.setStyleSheet(f"background: transparent; color: {COLORS['secondary']}; border: none; font-weight: bold;")
+        btn_cancel.clicked.connect(self.reject)
+        
+        self.btn_save = QPushButton("Confirmar Decisão")
+        self.btn_save.setIcon(qta.icon('fa5s.check-double', color='white'))
+        self.btn_save.setStyleSheet(f"""
+            QPushButton {{ background-color: {COLORS['primary']}; color: white; border-radius: 6px; padding: 10px 20px; font-weight: bold; border: none; }}
+            QPushButton:hover {{ background-color: {COLORS['primary_hover']}; }}
+        """)
+        self.btn_save.clicked.connect(self.accept)
+        
+        btn_layout.addWidget(btn_cancel)
+        btn_layout.addWidget(self.btn_save)
+        layout.addLayout(btn_layout)
 
         # Estado inicial
-        self._on_status_change(self.doc.status)
+        self.on_status_change()
 
-    def _on_status_change(self, text):
-        """Só mostra a área de feedback se for Reprovado."""
-        is_rejected = text == "Reprovado"
-        self.rejection_widget.setVisible(is_rejected)
+    def on_status_change(self):
+        status = self.combo_status.currentText()
+        is_rejected = (status == "Reprovado")
+        
+        self.lbl_reasons.setVisible(is_rejected)
+        self.combo_reasons.setVisible(is_rejected)
+        
+        # Cor dinâmica do botão
+        if status == "Aprovado":
+            self.btn_save.setStyleSheet(f"background-color: {COLORS['success']}; color: white; border-radius: 6px; padding: 10px 20px; font-weight: bold; border: none;")
+        elif status == "Reprovado":
+            self.btn_save.setStyleSheet(f"background-color: {COLORS['danger']}; color: white; border-radius: 6px; padding: 10px 20px; font-weight: bold; border: none;")
+        else:
+            self.btn_save.setStyleSheet(f"background-color: {COLORS['primary']}; color: white; border-radius: 6px; padding: 10px 20px; font-weight: bold; border: none;")
 
-    def _fill_feedback(self, reason_key):
-        """Preenche o texto automaticamente."""
+    def fill_feedback(self, reason_key):
         text = STANDARD_FEEDBACKS.get(reason_key, "")
         if text:
             self.txt_feedback.setText(text)
@@ -102,132 +147,150 @@ class AuditDialog(QDialog):
         return {
             "status": self.combo_status.currentText(),
             "feedback": self.txt_feedback.toPlainText()
-            if self.combo_status.currentText() == "Reprovado"
-            else None,
         }
 
-
-# --- Classe Principal ---
 class DocumentDialog(QDialog):
+    """Gerenciador de Documentos do Aluno."""
+    
     def __init__(self, parent, intern: Intern, service: DocumentService):
         super().__init__(parent)
         self.intern = intern
         self.service = service
-        self.setWindowTitle(f"Documentos: {self.intern.name}")
-        self.resize(700, 500)
-        self._setup_ui()
+        
+        self.setWindowTitle(f"Docs: {intern.name}")
+        self.resize(800, 500)
+        
+        self.setStyleSheet(f"""
+            QDialog {{ background-color: {COLORS['light']}; }}
+            QTableWidget {{ border-radius: 8px; border: 1px solid {COLORS['border']}; background-color: {COLORS['white']}; }}
+            QHeaderView::section {{ background-color: {COLORS['white']}; color: {COLORS['medium']}; border: none; border-bottom: 2px solid {COLORS['light']}; font-weight: bold; padding: 8px; }}
+        """)
+
+        self.setup_ui()
         self.load_data()
 
-    def _setup_ui(self):
+    def setup_ui(self):
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(15)
+
+        # Header
+        header = QHBoxLayout()
+        icon = QLabel(); icon.setPixmap(qta.icon('fa5s.folder-open', color=COLORS['dark']).pixmap(QSize(28, 28)))
+        lbl = QLabel(f"Documentos de {self.intern.name}")
+        lbl.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {COLORS['dark']};")
+        header.addWidget(icon)
+        header.addWidget(lbl)
+        header.addStretch()
+        layout.addLayout(header)
+
+        # Toolbar
+        toolbar = QHBoxLayout()
+        
+        btn_add = QPushButton("Adicionar Avulso")
+        btn_add.setIcon(qta.icon('fa5s.plus', color=COLORS['dark']))
+        btn_add.clicked.connect(self.add_document)
+        
+        btn_gen = QPushButton("Gerar Kit Padrão")
+        btn_gen.setIcon(qta.icon('fa5s.magic', color='white'))
+        btn_gen.setStyleSheet(f"background-color: {COLORS['primary']}; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold;")
+        btn_gen.clicked.connect(self.generate_defaults)
+        
+        btn_audit = QPushButton("Auditar / Parecer")
+        btn_audit.setIcon(qta.icon('fa5s.stamp', color=COLORS['dark']))
+        btn_audit.clicked.connect(self.audit_document)
+
+        btn_del = QPushButton("Excluir")
+        btn_del.setIcon(qta.icon('fa5s.trash', color=COLORS['danger']))
+        btn_del.setStyleSheet(f"color: {COLORS['danger']};")
+        btn_del.clicked.connect(self.delete_document)
+
+        # Estilo genérico botões brancos
+        for b in [btn_add, btn_audit, btn_del]:
+            if not b.styleSheet():
+                b.setStyleSheet(f"background-color: {COLORS['white']}; border: 1px solid {COLORS['border']}; padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS['dark']};")
+
+        toolbar.addWidget(btn_gen)
+        toolbar.addWidget(btn_add)
+        toolbar.addStretch()
+        toolbar.addWidget(btn_audit)
+        toolbar.addWidget(btn_del)
+        layout.addLayout(toolbar)
 
         # Tabela
         self.table = QTableWidget()
-        self.table.setColumnCount(4)  # ID, Nome, Status, Feedback
-        self.table.setHorizontalHeaderLabels(["ID", "Documento", "Status", "Feedback"])
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(["ID", "Documento", "Status", "Parecer"])
         self.table.setColumnHidden(0, True)
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(True)
+        
+        # Pílulas na coluna Status (índice 2)
+        self.table.setItemDelegateForColumn(2, StatusDelegate(self.table))
         self.table.doubleClicked.connect(self.audit_document)
+        
         layout.addWidget(self.table)
-
-        # Legenda
-        # lbl_hint = QLabel("💡 Dica: Dê um duplo clique no documento para auditar (Aprovar/Reprovar).")
-        # lbl_hint.setStyleSheet("color: #666; font-style: italic;")
-        # layout.addWidget(lbl_hint)
-
-        # Botões
-        btn_layout = QHBoxLayout()
-        self.btn_add = QPushButton("➕ Novo Doc")
-        self.btn_gen = QPushButton("🔄 Gerar Padrão")
-        self.btn_del = QPushButton("🗑️ Excluir")
-
-        self.btn_add.clicked.connect(self.add_document)
-        self.btn_gen.clicked.connect(self.generate_defaults)
-        self.btn_del.clicked.connect(self.delete_document)
-
-        btn_layout.addWidget(self.btn_add)
-        btn_layout.addWidget(self.btn_gen)
-        btn_layout.addStretch()
-        btn_layout.addWidget(self.btn_del)
-        layout.addLayout(btn_layout)
+        
+        # Fechar
+        btn_close = QPushButton("Fechar")
+        btn_close.setStyleSheet(f"background: transparent; color: {COLORS['secondary']}; border: none;")
+        btn_close.clicked.connect(self.accept)
+        layout.addWidget(btn_close, alignment=Qt.AlignmentFlag.AlignRight)
 
     def load_data(self):
-        if self.intern.intern_id is None:
+        # Guard clause: se o aluno não tem ID, não tem documentos
+        if not self.intern.intern_id: 
             return
-        docs = self.service.repo.get_by_intern_id(self.intern.intern_id)
 
+        # CORREÇÃO 3: Nome do método corrigido
+        docs = self.service.get_documents_by_intern(self.intern.intern_id)
+        
         self.table.setRowCount(0)
-        self.btn_gen.setVisible(len(docs) == 0)
-
-        for row, doc in enumerate(docs):
+        for row, d in enumerate(docs):
             self.table.insertRow(row)
+            self.table.setRowHeight(row, 45)
+            
+            self.table.setItem(row, 0, QTableWidgetItem(str(d.document_id)))
+            
+            item_name = QTableWidgetItem(d.document_name)
+            item_name.setFont(self.font()) # Reset font
+            item_name.setFlags(item_name.flags() ^ Qt.ItemFlag.ItemIsEditable)
+            self.table.setItem(row, 1, item_name)
+            
+            self.table.setItem(row, 2, QTableWidgetItem(d.status))
+            self.table.setItem(row, 3, QTableWidgetItem(d.feedback or ""))
 
-            # ID
-            self.table.setItem(row, 0, QTableWidgetItem(str(doc.document_id)))
-
-            # Nome
-            self.table.setItem(row, 1, QTableWidgetItem(doc.document_name))
-
-            # Status Colorido
-            item_status = QTableWidgetItem(doc.status)
-            item_status.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            item_status.setFont(self.table.font())
-
-            if doc.status == "Aprovado":
-                item_status.setForeground(Qt.GlobalColor.green)
-            elif doc.status == "Reprovado":
-                item_status.setForeground(Qt.GlobalColor.red)
-                item_status.setText(f"⛔ {doc.status}")
-            else:
-                item_status.setForeground(Qt.GlobalColor.darkYellow)
-
-            self.table.setItem(row, 2, item_status)
-
-            # Feedback (Resumo)
-            feedback_text = doc.feedback if doc.feedback else "-"
-            self.table.setItem(row, 3, QTableWidgetItem(feedback_text))
-
+    # --- Actions ---
     def audit_document(self):
-        """Abre a tela de auditoria."""
         row = self.table.currentRow()
-        if row < 0:
-            return
-
+        if row < 0: return
+        
+        # CORREÇÃO 4: Checagem segura de Item
         item_id = self.table.item(row, 0)
-        if not item_id:
-            return
+        if not item_id: return
         doc_id = int(item_id.text())
-
-        # Agora usamos o método correto do Service!
+        
         doc = self.service.get_document_by_id(doc_id)
-
         if doc:
             audit = AuditDialog(self, doc)
             if audit.exec():
                 data = audit.get_data()
                 doc.status = data["status"]
                 doc.feedback = data["feedback"]
-
                 self.service.update_document(doc)
                 self.load_data()
 
     def add_document(self):
         if self.intern.intern_id is None:
-            QMessageBox.warning(
-                self, "Erro", "Salve o aluno antes de adicionar documentos."
-            )
+            QMessageBox.warning(self, "Erro", "Salve o aluno antes de adicionar documentos.")
             return
         name, ok = QInputDialog.getText(self, "Novo", "Nome do documento:")
         if ok and name:
-            new_doc = Document(
-                intern_id=self.intern.intern_id, document_name=name, status="Pendente"
-            )
+            new_doc = Document(intern_id=self.intern.intern_id, document_name=name, status="Pendente")
             self.service.add_new_document(new_doc)
             self.load_data()
 
@@ -238,13 +301,16 @@ class DocumentDialog(QDialog):
 
     def delete_document(self):
         row = self.table.currentRow()
-        if row < 0:
-            return
+        if row < 0: return
+        
+        # CORREÇÃO 4: Checagem segura de Item
         item_id = self.table.item(row, 0)
-        if not item_id:
-            return
+        if not item_id: return
         doc_id = int(item_id.text())
-        doc = self.service.get_document_by_id(doc_id)  # Usando service
-        if doc:
-            self.service.delete_document(doc)
-            self.load_data()
+        
+        # CORREÇÃO 5: Deletar passando Objeto, não ID
+        if QMessageBox.question(self, "Excluir", "Apagar documento?", QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
+            doc = self.service.get_document_by_id(doc_id)
+            if doc:
+                self.service.delete_document(doc)
+                self.load_data()
