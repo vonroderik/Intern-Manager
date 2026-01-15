@@ -8,6 +8,7 @@ REQUIRED_FIELDS = {
     "intern_id": "ID do Estagiário",
 }
 
+
 class DocumentService(BaseService[Document]):
     REQUIRED_FIELDS = REQUIRED_FIELDS
 
@@ -30,6 +31,7 @@ class DocumentService(BaseService[Document]):
     def get_documents_by_intern(self, intern_id: int):
         """Retorna todos os documentos de um estagiário específico."""
         return self.repo.get_by_intern_id(intern_id)
+
     # -------------------------
 
     def get_document_by_id(self, doc_id: int):

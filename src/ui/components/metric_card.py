@@ -1,12 +1,20 @@
 # src/ui/components/metric_card.py
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import (
+    QFrame,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QGraphicsDropShadowEffect,
+)
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QColor
 import qtawesome as qta
 from ui.styles import COLORS
 
+
 class MetricCard(QFrame):
     """Card Visual para o Dashboard."""
+
     def __init__(self, title, value, icon_name, color_key="primary"):
         super().__init__()
         self.setStyleSheet(f"""
@@ -16,7 +24,7 @@ class MetricCard(QFrame):
                 border: 1px solid {COLORS["border"]};
             }}
         """)
-        
+
         # Sombra suave
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(15)
@@ -38,14 +46,18 @@ class MetricCard(QFrame):
         # Textos
         text_layout = QVBoxLayout()
         text_layout.setSpacing(5)
-        
+
         lbl_title = QLabel(title.upper())
-        lbl_title.setStyleSheet(f"color: {COLORS['medium']}; font-size: 12px; font-weight: bold;")
-        
+        lbl_title.setStyleSheet(
+            f"color: {COLORS['medium']}; font-size: 12px; font-weight: bold;"
+        )
+
         # Guardamos referência ao label de valor para atualizar depois
         self.lbl_value = QLabel(str(value))
-        self.lbl_value.setStyleSheet(f"color: {COLORS['dark']}; font-size: 28px; font-weight: 900;")
-        
+        self.lbl_value.setStyleSheet(
+            f"color: {COLORS['dark']}; font-size: 28px; font-weight: 900;"
+        )
+
         text_layout.addWidget(lbl_title)
         text_layout.addWidget(self.lbl_value)
         layout.addLayout(text_layout)

@@ -1,34 +1,75 @@
 from data.database import DatabaseConnector
 from core.models.intern import Intern
 from typing import Optional, List
-from sqlite3 import Connection, Cursor
-
+from sqlite3 import Connection, Cursor, Row
 
 class InternRepository:
     def __init__(self, db: DatabaseConnector):
         self.db = db
         if db.conn is None or db.cursor is None:
-            raise RuntimeError(
-                "Repository initialized without a valid database connection."
-            )
+            raise RuntimeError("Repository initialized without a valid database connection.")
         self.conn: Connection = db.conn
         self.cursor: Cursor = db.cursor
+        
+        # GARANTIA: Força o modo de dicionário para não dependermos da ordem das colunas
+        self.conn.row_factory = Row
+
+    def _parse_row(self, row: Row) -> Intern:
+        """Converte linha do banco para Objeto Intern de forma segura."""
+        return Intern(
+            intern_id=row["intern_id"],
+            name=row["name"],
+            registration_number=row["registration_number"],
+            term=row["term"],
+            email=row["email"],
+            start_date=row["start_date"],
+            end_date=row["end_date"],
+            working_days=row["working_days"],
+            working_hours=row["working_hours"],
+            venue_id=row["venue_id"]
+        )
+
+    def get_all(self) -> List[Intern]:
+        # Selecionamos explicitamente para garantir que as colunas existam
+        sql_query = """
+        SELECT intern_id, name, registration_number, term, email, start_date, end_date, 
+        working_days, working_hours, venue_id FROM interns ORDER BY name COLLATE NOCASE ASC
+        """
+        self.cursor.execute(sql_query)
+        results = self.cursor.fetchall()
+        return [self._parse_row(row) for row in results]
+
+    def get_by_id(self, intern_id: int) -> Optional[Intern]:
+        sql_query = """
+        SELECT intern_id, name, registration_number, term, email, start_date, end_date, 
+        working_days, working_hours, venue_id FROM interns WHERE intern_id = ?
+        """
+        self.cursor.execute(sql_query, (intern_id,))
+        row = self.cursor.fetchone()
+        return self._parse_row(row) if row else None
+
+    def get_by_registration_number(self, ra: str) -> Optional[Intern]:
+        sql_query = """
+        SELECT intern_id, name, registration_number, term, email, start_date, end_date, 
+        working_days, working_hours, venue_id FROM interns WHERE registration_number = ?
+        """
+        self.cursor.execute(sql_query, (ra,))
+        row = self.cursor.fetchone()
+        return self._parse_row(row) if row else None
 
     def save(self, intern: Intern) -> int:
         if intern.intern_id is not None:
             raise ValueError("Cannot save an intern that already has an ID.")
 
-        # REMOVIDO is_active DAQUI
+        # A ordem aqui deve bater EXATAMENTE com a ordem do 'data' abaixo
         sql_query = """
         INSERT INTO interns (
             name, registration_number, term, email, 
-            start_date, end_date, venue_id,
-            working_days, working_hours
-        )
+            start_date, end_date, working_days, working_hours, venue_id
+        ) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
-        # REMOVIDO is_active DAQUI TAMBÉM (Agora são 9 itens)
         data = (
             intern.name,
             intern.registration_number,
@@ -36,14 +77,13 @@ class InternRepository:
             intern.email,
             intern.start_date,
             intern.end_date,
-            intern.venue_id,
-            intern.working_days,
-            intern.working_hours
+            intern.working_days,   # Confirme que isso é Dias
+            intern.working_hours,  # Confirme que isso é Horas
+            intern.venue_id
         )
 
         self.cursor.execute(sql_query, data)
         self.conn.commit()
-
         if self.cursor.lastrowid is None:
             raise RuntimeError("Database failed to generate an ID.")
         return self.cursor.lastrowid
@@ -55,8 +95,8 @@ class InternRepository:
         sql_query = """
         UPDATE interns SET
             name = ?, registration_number = ?, term = ?, email = ?, 
-            start_date = ?, end_date = ?, venue_id = ?,
-            working_days = ?, working_hours = ?,
+            start_date = ?, end_date = ?, working_days = ?, working_hours = ?, 
+            venue_id = ?, 
             last_update = strftime('%Y-%m-%d %H:%M:%S', 'now', 'localtime')
         WHERE intern_id = ?
         """
@@ -67,9 +107,9 @@ class InternRepository:
             intern.email,
             intern.start_date,
             intern.end_date,
-            intern.venue_id,
             intern.working_days,
             intern.working_hours,
+            intern.venue_id,
             intern.intern_id,
         )
 
@@ -77,69 +117,15 @@ class InternRepository:
         self.conn.commit()
         return self.cursor.rowcount > 0
 
-    def get_all(self) -> List[Intern]:
-        sql_query = "SELECT * FROM interns ORDER BY name ASC"
-        self.cursor.execute(sql_query)
-        rows = self.cursor.fetchall()
-        return [self._parse_row(row) for row in rows]
-
-    def get_by_id(self, intern_id: int) -> Optional[Intern]:
-        sql_query = "SELECT * FROM interns WHERE intern_id = ?"
-        self.cursor.execute(sql_query, (intern_id,))
-        row = self.cursor.fetchone()
-        if row:
-            return self._parse_row(row)
-        return None
-
-    def get_by_registration_number(self, ra: str) -> Optional[Intern]:
-        sql_query = "SELECT * FROM interns WHERE registration_number = ?"
-        self.cursor.execute(sql_query, (ra,))
-        row = self.cursor.fetchone()
-        if row:
-            return self._parse_row(row)
-        return None
-
     def delete(self, intern: Intern) -> bool:
         if intern.intern_id is None:
             raise ValueError("Cannot delete an intern without an ID.")
-
+        
+        # Deletar dependências (Documents, Meetings, Grades, Observations)
+        # O SQLite faria isso sozinho se ON DELETE CASCADE estiver ativo e PRAGMA foreign_keys = ON
+        # Mas por segurança, podemos deletar explicitamente ou confiar no CASCADE do seu create_db.sql
+        
         sql_query = "DELETE FROM interns WHERE intern_id = ?"
         self.cursor.execute(sql_query, (intern.intern_id,))
         self.conn.commit()
         return self.cursor.rowcount > 0
-
-    def _parse_row(self, row) -> Intern:
-        # Tenta mapear colunas extras se existirem, senão None
-        # O banco antigo pode ter 8 colunas (até venue_id). O novo terá 10 ou mais.
-        
-        # Mapeamento básico seguro
-        i = Intern(
-            intern_id=row[0],
-            name=row[1],
-            registration_number=row[2],
-            term=row[3],
-            email=row[4],
-            start_date=row[5],
-            end_date=row[6],
-            # venue_id costuma ser o último na estrutura antiga, ou varia.
-            # Vamos tentar ler indices com segurança
-            venue_id=None,
-            working_days=None,
-            working_hours=None
-        )
-        
-        # Tenta popular venue_id (geralmente indice 7 ou 9 dependendo da versão)
-        # Se você recriou o banco com o código novo, working_days/hours devem estar nos indices 7 e 8
-        try:
-            if len(row) > 7: i.venue_id = row[7] # Caso antigo
-            if len(row) > 8: 
-                # Se tem mais colunas, a ordem muda. No SAVE usamos: name...venue, days, hours
-                # Mas no SELECT * a ordem é a da criação da tabela.
-                # Assumindo criação: ... venue_id, working_days, working_hours
-                i.venue_id = row[7]
-                i.working_days = row[8]
-                i.working_hours = row[9]
-        except IndexError:
-            pass
-            
-        return i

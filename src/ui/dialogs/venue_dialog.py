@@ -1,14 +1,21 @@
 from typing import Optional
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLineEdit,
-    QLabel, QPushButton, QFrame, QGridLayout, QWidget
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QLabel,
+    QPushButton,
+    QFrame,
+    QGridLayout,
+    QWidget,
 )
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QColor
 import qtawesome as qta
 
 from core.models.venue import Venue
 from ui.styles import COLORS
+
 
 class VenueDialog(QDialog):
     def __init__(self, parent=None, venue: Optional[Venue] = None):
@@ -16,32 +23,32 @@ class VenueDialog(QDialog):
         self.venue = venue
         self.setWindowTitle("Gerenciar Local")
         self.setMinimumWidth(500)
-        
+
         # Estilo CSS Limpo
         self.setStyleSheet(f"""
-            QDialog {{ background-color: {COLORS['white']}; }}
+            QDialog {{ background-color: {COLORS["white"]}; }}
             
             QLabel {{ 
-                color: {COLORS['medium']}; 
+                color: {COLORS["medium"]}; 
                 font-size: 12px; 
                 font-weight: bold; 
                 margin-top: 5px;
             }}
             
             QLineEdit {{
-                background-color: {COLORS['light']};
-                border: 1px solid {COLORS['border']};
+                background-color: {COLORS["light"]};
+                border: 1px solid {COLORS["border"]};
                 border-radius: 6px;
                 padding: 10px;
                 font-size: 14px;
-                color: {COLORS['dark']};
+                color: {COLORS["dark"]};
             }}
             QLineEdit:focus {{ 
-                background-color: {COLORS['white']};
-                border: 1px solid {COLORS['primary']}; 
+                background-color: {COLORS["white"]};
+                border: 1px solid {COLORS["primary"]}; 
             }}
         """)
-        
+
         self._setup_ui()
         if self.venue:
             self._load_data()
@@ -53,27 +60,31 @@ class VenueDialog(QDialog):
 
         # --- 1. Cabeçalho ---
         header = QHBoxLayout()
-        
+
         # Ícone Grande
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(qta.icon('fa5s.hospital-alt', color=COLORS['primary']).pixmap(QSize(32, 32)))
+        icon_lbl.setPixmap(
+            qta.icon("fa5s.hospital-alt", color=COLORS["primary"]).pixmap(QSize(32, 32))
+        )
         header.addWidget(icon_lbl)
-        
+
         # Textos
         title_box = QVBoxLayout()
         title_box.setSpacing(2)
         lbl_title = QLabel("Dados do Local")
         lbl_title.setStyleSheet(f"font-size: 18px; color: {COLORS['dark']}; margin: 0;")
         lbl_sub = QLabel("Cadastre hospitais, clínicas ou laboratórios parceiros.")
-        lbl_sub.setStyleSheet(f"font-size: 12px; color: {COLORS['secondary']}; font-weight: normal; margin: 0;")
-        
+        lbl_sub.setStyleSheet(
+            f"font-size: 12px; color: {COLORS['secondary']}; font-weight: normal; margin: 0;"
+        )
+
         title_box.addWidget(lbl_title)
         title_box.addWidget(lbl_sub)
         header.addLayout(title_box)
         header.addStretch()
-        
+
         layout.addLayout(header)
-        
+
         # Linha Divisória
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
@@ -90,7 +101,9 @@ class VenueDialog(QDialog):
         # -- Nome do Local (Largura Total) --
         self.txt_name = QLineEdit()
         self.txt_name.setPlaceholderText("Ex: Hospital Santa Casa")
-        glayout.addWidget(QLabel("Nome do Local *"), 0, 0, 1, 2) # Linha 0, Col 0, Ocupa 1 linha, 2 colunas
+        glayout.addWidget(
+            QLabel("Nome do Local *"), 0, 0, 1, 2
+        )  # Linha 0, Col 0, Ocupa 1 linha, 2 colunas
         glayout.addWidget(self.txt_name, 1, 0, 1, 2)
 
         # -- Endereço (Largura Total) --
@@ -107,7 +120,7 @@ class VenueDialog(QDialog):
         # -- Email (Coluna 1) e Telefone (Coluna 2) --
         self.txt_email = QLineEdit()
         self.txt_email.setPlaceholderText("email@exemplo.com")
-        
+
         self.txt_phone = QLineEdit()
         self.txt_phone.setPlaceholderText("(00) 00000-0000")
 
@@ -118,9 +131,7 @@ class VenueDialog(QDialog):
         glayout.addWidget(self.txt_phone, 7, 1)
 
         layout.addWidget(fields_widget)
-        layout.addStretch() # Empurra tudo para cima
-
-        
+        layout.addStretch()  # Empurra tudo para cima
 
         # --- 3. Botões ---
         btn_layout = QHBoxLayout()
@@ -131,30 +142,30 @@ class VenueDialog(QDialog):
         self.btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_cancel.setStyleSheet(f"""
             QPushButton {{
-                background-color: {COLORS['light']};
-                color: {COLORS['medium']};
+                background-color: {COLORS["light"]};
+                color: {COLORS["medium"]};
                 border: none;
                 padding: 10px 20px;
                 border-radius: 6px;
                 font-weight: 600;
             }}
-            QPushButton:hover {{ background-color: #E1DFDD; color: {COLORS['dark']}; }}
+            QPushButton:hover {{ background-color: #E1DFDD; color: {COLORS["dark"]}; }}
         """)
         self.btn_cancel.clicked.connect(self.reject)
 
         self.btn_save = QPushButton("Salvar Local")
         self.btn_save.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_save.setIcon(qta.icon('fa5s.check', color='white'))
+        self.btn_save.setIcon(qta.icon("fa5s.check", color="white"))
         self.btn_save.setStyleSheet(f"""
             QPushButton {{
-                background-color: {COLORS['primary']};
+                background-color: {COLORS["primary"]};
                 color: white;
                 border: none;
                 padding: 10px 25px;
                 border-radius: 6px;
                 font-weight: bold;
             }}
-            QPushButton:hover {{ background-color: {COLORS['primary_hover']}; }}
+            QPushButton:hover {{ background-color: {COLORS["primary_hover"]}; }}
         """)
         self.btn_save.clicked.connect(self.validate_and_accept)
 
@@ -163,7 +174,8 @@ class VenueDialog(QDialog):
         layout.addLayout(btn_layout)
 
     def _load_data(self):
-        if not self.venue: return
+        if not self.venue:
+            return
         self.txt_name.setText(self.venue.venue_name)
         self.txt_address.setText(self.venue.venue_address or "")
         self.txt_supervisor.setText(self.venue.supervisor_name or "")
@@ -174,7 +186,10 @@ class VenueDialog(QDialog):
         if not self.txt_name.text().strip():
             # Um balãozinho de erro mais bonito seria ideal, mas QMessageBox serve
             from PySide6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, "Campo Obrigatório", "Por favor, informe o Nome do Local.")
+
+            QMessageBox.warning(
+                self, "Campo Obrigatório", "Por favor, informe o Nome do Local."
+            )
             self.txt_name.setFocus()
             return
         self.accept()

@@ -1,6 +1,6 @@
 from data.database import DatabaseConnector
 from core.models.meeting import Meeting
-from typing import Optional, List
+from typing import List
 from sqlite3 import Connection, Cursor
 
 
@@ -24,7 +24,9 @@ class MeetingRepository:
         """
         Busca todas as reuniões de um estagiário específico.
         """
-        sql_query = "SELECT * FROM meetings WHERE intern_id = ? ORDER BY meeting_date DESC"
+        sql_query = (
+            "SELECT * FROM meetings WHERE intern_id = ? ORDER BY meeting_date DESC"
+        )
         self.cursor.execute(sql_query, (intern_id,))
         rows = self.cursor.fetchall()
         return [self._parse_row(row) for row in rows]
@@ -44,7 +46,7 @@ class MeetingRepository:
         """
         # Converte True/False para 1/0
         present_int = 1 if meeting.is_intern_present else 0
-        
+
         data = (meeting.intern_id, meeting.meeting_date, present_int)
 
         self.cursor.execute(sql_query, data)

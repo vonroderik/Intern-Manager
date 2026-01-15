@@ -1,7 +1,14 @@
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QListWidget, QListWidgetItem, 
-    QLabel, QPushButton, QTextEdit, QMessageBox, 
-    QWidget, QHBoxLayout, QFrame
+    QDialog,
+    QVBoxLayout,
+    QListWidget,
+    QListWidgetItem,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QMessageBox,
+    QHBoxLayout,
+    QFrame,
 )
 from PySide6.QtCore import Qt, QSize
 import qtawesome as qta
@@ -11,6 +18,7 @@ from core.models.observation import Observation
 from services.observation_service import ObservationService
 from ui.styles import COLORS
 
+
 class ObservationDialog(QDialog):
     def __init__(self, parent, intern: Intern, service: ObservationService):
         super().__init__(parent)
@@ -19,9 +27,9 @@ class ObservationDialog(QDialog):
 
         self.setWindowTitle(f"Observações: {self.intern.name}")
         self.resize(550, 650)
-        
+
         self.setStyleSheet(f"""
-            QDialog {{ background-color: {COLORS['light']}; }}
+            QDialog {{ background-color: {COLORS["light"]}; }}
             
             QListWidget {{
                 background-color: transparent;
@@ -29,27 +37,27 @@ class ObservationDialog(QDialog):
                 outline: none;
             }}
             QListWidget::item {{
-                background-color: {COLORS['white']};
-                border: 1px solid {COLORS['border']};
+                background-color: {COLORS["white"]};
+                border: 1px solid {COLORS["border"]};
                 border-radius: 6px;
                 padding: 10px;
                 margin-bottom: 10px;
-                color: {COLORS['dark']};
+                color: {COLORS["dark"]};
             }}
             QListWidget::item:selected {{
-                border: 1px solid {COLORS['primary']};
+                border: 1px solid {COLORS["primary"]};
                 background-color: #E3F2FD; /* Azul bem clarinho */
-                color: {COLORS['dark']};
+                color: {COLORS["dark"]};
             }}
             
             QTextEdit {{
-                background-color: {COLORS['white']};
-                border: 1px solid {COLORS['border']};
+                background-color: {COLORS["white"]};
+                border: 1px solid {COLORS["border"]};
                 border-radius: 6px;
                 padding: 10px;
                 font-size: 13px;
             }}
-            QTextEdit:focus {{ border: 1px solid {COLORS['primary']}; }}
+            QTextEdit:focus {{ border: 1px solid {COLORS["primary"]}; }}
         """)
 
         self._setup_ui()
@@ -62,9 +70,14 @@ class ObservationDialog(QDialog):
 
         # --- Header ---
         header = QHBoxLayout()
-        icon = QLabel(); icon.setPixmap(qta.icon('fa5s.sticky-note', color=COLORS['warning']).pixmap(QSize(28, 28)))
+        icon = QLabel()
+        icon.setPixmap(
+            qta.icon("fa5s.sticky-note", color=COLORS["warning"]).pixmap(QSize(28, 28))
+        )
         lbl = QLabel("Caderno de Observações")
-        lbl.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {COLORS['dark']};")
+        lbl.setStyleSheet(
+            f"font-size: 18px; font-weight: bold; color: {COLORS['dark']};"
+        )
         header.addWidget(icon)
         header.addWidget(lbl)
         header.addStretch()
@@ -74,73 +87,82 @@ class ObservationDialog(QDialog):
         self.list_widget = QListWidget()
         self.list_widget.setWordWrap(True)
         # Padding interno nos itens
-        self.list_widget.setSpacing(5) 
+        self.list_widget.setSpacing(5)
         layout.addWidget(self.list_widget)
 
         # Botão de apagar (pequeno, alinhado à direita do feed)
         h_del = QHBoxLayout()
         h_del.addStretch()
         self.btn_del = QPushButton(" Apagar Selecionada")
-        self.btn_del.setIcon(qta.icon('fa5s.trash', color=COLORS['danger']))
+        self.btn_del.setIcon(qta.icon("fa5s.trash", color=COLORS["danger"]))
         self.btn_del.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_del.setStyleSheet(f"color: {COLORS['danger']}; background: transparent; border: none; font-weight: 600;")
+        self.btn_del.setStyleSheet(
+            f"color: {COLORS['danger']}; background: transparent; border: none; font-weight: 600;"
+        )
         self.btn_del.clicked.connect(self.delete_selected)
         h_del.addWidget(self.btn_del)
         layout.addLayout(h_del)
 
-        line = QFrame(); line.setFrameShape(QFrame.Shape.HLine); line.setStyleSheet(f"color: {COLORS['border']}")
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setStyleSheet(f"color: {COLORS['border']}")
         layout.addWidget(line)
 
         # --- Nova Nota ---
         layout.addWidget(QLabel("<b>Nova Anotação:</b>"))
         self.txt_new = QTextEdit()
-        self.txt_new.setPlaceholderText("Escreva aqui detalhes sobre o desempenho, comportamento ou incidentes...")
+        self.txt_new.setPlaceholderText(
+            "Escreva aqui detalhes sobre o desempenho, comportamento ou incidentes..."
+        )
         self.txt_new.setMaximumHeight(100)
         layout.addWidget(self.txt_new)
 
         # Botão Salvar
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
-        
+
         btn_cancel = QPushButton("Fechar")
-        btn_cancel.setStyleSheet(f"background: transparent; color: {COLORS['secondary']}; border: none;")
+        btn_cancel.setStyleSheet(
+            f"background: transparent; color: {COLORS['secondary']}; border: none;"
+        )
         btn_cancel.clicked.connect(self.accept)
-        
+
         self.btn_add = QPushButton(" Adicionar Nota")
-        self.btn_add.setIcon(qta.icon('fa5s.paper-plane', color='white'))
+        self.btn_add.setIcon(qta.icon("fa5s.paper-plane", color="white"))
         self.btn_add.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_add.setStyleSheet(f"""
             QPushButton {{
-                background-color: {COLORS['primary']}; color: white; border: none; 
+                background-color: {COLORS["primary"]}; color: white; border: none; 
                 padding: 8px 20px; border-radius: 6px; font-weight: bold;
             }}
-            QPushButton:hover {{ background-color: {COLORS['primary_hover']}; }}
+            QPushButton:hover {{ background-color: {COLORS["primary_hover"]}; }}
         """)
         self.btn_add.clicked.connect(self.add_observation)
-        
+
         btn_layout.addWidget(btn_cancel)
         btn_layout.addWidget(self.btn_add)
         layout.addLayout(btn_layout)
 
     def load_data(self):
-        if not self.intern.intern_id: return
+        if not self.intern.intern_id:
+            return
         obs_list = self.service.get_observations_by_intern(self.intern.intern_id)
 
-        # Ordenar: mais recentes no final (estilo chat) ou no começo? 
+        # Ordenar: mais recentes no final (estilo chat) ou no começo?
         # Geralmente anotações recentes no topo é melhor para leitura rápida?
         # Vamos manter ordem de inserção (antigo -> novo) que é padrão, ou inverta se preferir.
-        
+
         self.list_widget.clear()
         for obs in obs_list:
             # Texto com data (se seu model tiver created_at, use-o. Se não, só o texto)
             # Vou assumir só texto por enquanto.
-            
+
             item = QListWidgetItem(obs.observation)
             # Guardamos o objeto inteiro para deletar depois
-            item.setData(Qt.ItemDataRole.UserRole, obs) 
-            
+            item.setData(Qt.ItemDataRole.UserRole, obs)
+
             self.list_widget.addItem(item)
-            
+
         self.list_widget.scrollToBottom()
 
     def add_observation(self):
@@ -149,12 +171,10 @@ class ObservationDialog(QDialog):
             return
 
         content = self.txt_new.toPlainText().strip()
-        if not content: return
+        if not content:
+            return
 
-        new_obs = Observation(
-            intern_id=self.intern.intern_id,
-            observation=content
-        )
+        new_obs = Observation(intern_id=self.intern.intern_id, observation=content)
 
         try:
             self.service.add_new_observation(new_obs)
@@ -165,12 +185,22 @@ class ObservationDialog(QDialog):
 
     def delete_selected(self):
         item = self.list_widget.currentItem()
-        if not item: return
+        if not item:
+            return
 
         obs_obj = item.data(Qt.ItemDataRole.UserRole)
-        if not isinstance(obs_obj, Observation): return
+        if not isinstance(obs_obj, Observation):
+            return
 
-        if QMessageBox.question(self, "Confirmar", "Apagar essa anotação?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
+        if (
+            QMessageBox.question(
+                self,
+                "Confirmar",
+                "Apagar essa anotação?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            == QMessageBox.StandardButton.Yes
+        ):
             try:
                 self.service.delete_observation(obs_obj)
                 self.load_data()

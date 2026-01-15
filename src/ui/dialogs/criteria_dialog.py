@@ -1,7 +1,13 @@
 from typing import Optional
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLineEdit,
-    QLabel, QPushButton, QDoubleSpinBox, QFrame, QWidget
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QLabel,
+    QPushButton,
+    QDoubleSpinBox,
+    QFrame,
 )
 from PySide6.QtCore import Qt, QSize
 import qtawesome as qta
@@ -9,10 +15,12 @@ import qtawesome as qta
 from core.models.evaluation_criteria import EvaluationCriteria
 from ui.styles import COLORS
 
+
 class CriteriaDialog(QDialog):
     """
     Formulário para Criar ou Editar um Critério de Avaliação.
     """
+
     def __init__(self, parent=None, criteria: Optional[EvaluationCriteria] = None):
         super().__init__(parent)
         self.criteria = criteria
@@ -21,26 +29,26 @@ class CriteriaDialog(QDialog):
 
         # Estilo CSS
         self.setStyleSheet(f"""
-            QDialog {{ background-color: {COLORS['white']}; }}
+            QDialog {{ background-color: {COLORS["white"]}; }}
             
             QLabel {{ 
-                color: {COLORS['medium']}; 
+                color: {COLORS["medium"]}; 
                 font-size: 12px; 
                 font-weight: bold; 
                 margin-top: 5px;
             }}
             
             QLineEdit, QDoubleSpinBox {{
-                background-color: {COLORS['light']};
-                border: 1px solid {COLORS['border']};
+                background-color: {COLORS["light"]};
+                border: 1px solid {COLORS["border"]};
                 border-radius: 6px;
                 padding: 10px;
                 font-size: 14px;
-                color: {COLORS['dark']};
+                color: {COLORS["dark"]};
             }}
             QLineEdit:focus, QDoubleSpinBox:focus {{ 
-                background-color: {COLORS['white']};
-                border: 1px solid {COLORS['primary']}; 
+                background-color: {COLORS["white"]};
+                border: 1px solid {COLORS["primary"]}; 
             }}
             
             QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {{
@@ -61,13 +69,17 @@ class CriteriaDialog(QDialog):
         # --- Cabeçalho ---
         header = QHBoxLayout()
         icon_lbl = QLabel()
-        icon_lbl.setPixmap(qta.icon('fa5s.clipboard-list', color=COLORS['primary']).pixmap(QSize(28, 28)))
-        
+        icon_lbl.setPixmap(
+            qta.icon("fa5s.clipboard-list", color=COLORS["primary"]).pixmap(
+                QSize(28, 28)
+            )
+        )
+
         title_box = QVBoxLayout()
         title_box.setSpacing(2)
         lbl_title = QLabel("Dados do Critério")
         lbl_title.setStyleSheet(f"font-size: 16px; color: {COLORS['dark']}; margin: 0;")
-        
+
         title_box.addWidget(lbl_title)
         header.addWidget(icon_lbl)
         header.addLayout(title_box)
@@ -82,13 +94,15 @@ class CriteriaDialog(QDialog):
         # --- Campos ---
         self.txt_name = QLineEdit()
         self.txt_name.setPlaceholderText("Ex: Prova Teórica, Seminário...")
-        
+
         self.spin_weight = QDoubleSpinBox()
         self.spin_weight.setRange(0.0, 10.0)
         self.spin_weight.setSingleStep(0.5)
         self.spin_weight.setSuffix(" pts")
         self.spin_weight.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.spin_weight.setStyleSheet(f"color: {COLORS['primary']}; font-weight: bold; font-size: 16px;")
+        self.spin_weight.setStyleSheet(
+            f"color: {COLORS['primary']}; font-weight: bold; font-size: 16px;"
+        )
 
         self.txt_description = QLineEdit()
         self.txt_description.setPlaceholderText("Detalhes opcionais...")
@@ -112,22 +126,22 @@ class CriteriaDialog(QDialog):
         self.btn_cancel.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_cancel.setStyleSheet(f"""
             QPushButton {{
-                background-color: {COLORS['light']}; color: {COLORS['medium']}; border: none;
+                background-color: {COLORS["light"]}; color: {COLORS["medium"]}; border: none;
                 padding: 10px 20px; border-radius: 6px; font-weight: 600;
             }}
-            QPushButton:hover {{ background-color: #E1DFDD; color: {COLORS['dark']}; }}
+            QPushButton:hover {{ background-color: #E1DFDD; color: {COLORS["dark"]}; }}
         """)
         self.btn_cancel.clicked.connect(self.reject)
 
         self.btn_save = QPushButton("Salvar")
         self.btn_save.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_save.setIcon(qta.icon('fa5s.check', color='white'))
+        self.btn_save.setIcon(qta.icon("fa5s.check", color="white"))
         self.btn_save.setStyleSheet(f"""
             QPushButton {{
-                background-color: {COLORS['primary']}; color: white; border: none;
+                background-color: {COLORS["primary"]}; color: white; border: none;
                 padding: 10px 25px; border-radius: 6px; font-weight: bold;
             }}
-            QPushButton:hover {{ background-color: {COLORS['primary_hover']}; }}
+            QPushButton:hover {{ background-color: {COLORS["primary_hover"]}; }}
         """)
         self.btn_save.clicked.connect(self.validate_and_accept)
 
@@ -136,7 +150,8 @@ class CriteriaDialog(QDialog):
         layout.addLayout(btn_layout)
 
     def _load_data(self):
-        if not self.criteria: return
+        if not self.criteria:
+            return
         self.txt_name.setText(self.criteria.name)
         self.spin_weight.setValue(self.criteria.weight)
         if self.criteria.description:
@@ -151,11 +166,11 @@ class CriteriaDialog(QDialog):
 
     def get_data(self) -> EvaluationCriteria:
         c_id = self.criteria.criteria_id if self.criteria else None
-        
+
         # CORREÇÃO: Argumento 'is_active' removido, pois não existe no modelo
         return EvaluationCriteria(
             criteria_id=c_id,
             name=self.txt_name.text().strip(),
             weight=self.spin_weight.value(),
-            description=self.txt_description.text().strip()
+            description=self.txt_description.text().strip(),
         )

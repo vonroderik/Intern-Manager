@@ -1,13 +1,19 @@
 from datetime import datetime
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-    QPushButton, QFrame, QScrollArea
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QFrame,
+    QScrollArea,
 )
 from PySide6.QtCore import Qt, QSize
 import qtawesome as qta
 
 from ui.styles import COLORS
 from ui.components.metric_card import MetricCard
+
 
 class DashboardView(QWidget):
     def __init__(self, intern_service, doc_service, meeting_service, venue_service):
@@ -16,7 +22,7 @@ class DashboardView(QWidget):
         self.d_service = doc_service
         self.m_service = meeting_service
         self.v_service = venue_service
-        
+
         self._setup_ui()
         self.refresh_data()
 
@@ -29,17 +35,21 @@ class DashboardView(QWidget):
         header = QHBoxLayout()
         title_box = QVBoxLayout()
         title = QLabel("Visão Geral do Semestre")
-        title.setStyleSheet(f"font-size: 26px; font-weight: 800; color: {COLORS['dark']};")
+        title.setStyleSheet(
+            f"font-size: 26px; font-weight: 800; color: {COLORS['dark']};"
+        )
         subtitle = QLabel("Monitore o progresso e pendências dos alunos.")
         subtitle.setStyleSheet(f"font-size: 14px; color: {COLORS['medium']};")
-        
+
         title_box.addWidget(title)
         title_box.addWidget(subtitle)
-        
+
         btn_refresh = QPushButton(" Atualizar Dados")
-        btn_refresh.setIcon(qta.icon('fa5s.sync-alt', color="white"))
+        btn_refresh.setIcon(qta.icon("fa5s.sync-alt", color="white"))
         btn_refresh.setCursor(Qt.CursorShape.PointingHandCursor)
-        btn_refresh.setStyleSheet(f"background-color: {COLORS['primary']}; color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; border: none;")
+        btn_refresh.setStyleSheet(
+            f"background-color: {COLORS['primary']}; color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; border: none;"
+        )
         btn_refresh.clicked.connect(self.refresh_data)
 
         header.addLayout(title_box)
@@ -49,10 +59,16 @@ class DashboardView(QWidget):
 
         # Cards
         cards_layout = QHBoxLayout()
-        self.card_total = MetricCard("Total Alunos", "0", 'fa5s.user-graduate', 'primary')
-        self.card_docs = MetricCard("Docs Pendentes", "0", 'fa5s.file-contract', 'danger')
-        self.card_meetings = MetricCard("Reuniões (Mês)", "0", 'fa5s.calendar-check', 'success')
-        self.card_venues = MetricCard("Locais Ativos", "0", 'fa5s.hospital', 'warning')
+        self.card_total = MetricCard(
+            "Total Alunos", "0", "fa5s.user-graduate", "primary"
+        )
+        self.card_docs = MetricCard(
+            "Docs Pendentes", "0", "fa5s.file-contract", "danger"
+        )
+        self.card_meetings = MetricCard(
+            "Reuniões (Mês)", "0", "fa5s.calendar-check", "success"
+        )
+        self.card_venues = MetricCard("Locais Ativos", "0", "fa5s.hospital", "warning")
 
         cards_layout.addWidget(self.card_total)
         cards_layout.addWidget(self.card_docs)
@@ -62,7 +78,9 @@ class DashboardView(QWidget):
 
         # Alertas
         lbl_alerts = QLabel("📢 Atenção Necessária")
-        lbl_alerts.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {COLORS['dark']}; margin-top: 10px;")
+        lbl_alerts.setStyleSheet(
+            f"font-size: 18px; font-weight: bold; color: {COLORS['dark']}; margin-top: 10px;"
+        )
         layout.addWidget(lbl_alerts)
 
         scroll = QScrollArea()
@@ -95,7 +113,7 @@ class DashboardView(QWidget):
                 m_date = datetime.strptime(m.meeting_date, "%Y-%m-%d")
                 if m_date.month == now.month and m_date.year == now.year:
                     meetings_this_month += 1
-            except:
+            except Exception:
                 pass
 
         self.card_total.set_value(len(interns))
@@ -116,23 +134,42 @@ class DashboardView(QWidget):
         def add_alert_widget(text, type="warning"):
             frame = QFrame()
             if type == "warning":
-                bg, border, icon, text_col = "#FFF4CE", "#FFD700", "fa5s.exclamation-triangle", "#664d03"
+                bg, border, icon, text_col = (
+                    "#FFF4CE",
+                    "#FFD700",
+                    "fa5s.exclamation-triangle",
+                    "#664d03",
+                )
             elif type == "danger":
-                bg, border, icon, text_col = "#F8D7DA", "#F5C6CB", "fa5s.times-circle", "#721c24"
+                bg, border, icon, text_col = (
+                    "#F8D7DA",
+                    "#F5C6CB",
+                    "fa5s.times-circle",
+                    "#721c24",
+                )
             else:
-                bg, border, icon, text_col = "#D1E7DD", "#BADBCC", "fa5s.check-circle", "#0f5132"
+                bg, border, icon, text_col = (
+                    "#D1E7DD",
+                    "#BADBCC",
+                    "fa5s.check-circle",
+                    "#0f5132",
+                )
 
-            frame.setStyleSheet(f"QFrame {{ background-color: {bg}; border: 1px solid {border}; border-radius: 6px; }}")
+            frame.setStyleSheet(
+                f"QFrame {{ background-color: {bg}; border: 1px solid {border}; border-radius: 6px; }}"
+            )
             fl = QHBoxLayout(frame)
             fl.setContentsMargins(15, 10, 15, 10)
-            
+
             lbl_icon = QLabel()
             lbl_icon.setPixmap(qta.icon(icon, color=text_col).pixmap(QSize(20, 20)))
-            
+
             lbl_text = QLabel(text)
             lbl_text.setWordWrap(True)
-            lbl_text.setStyleSheet(f"color: {text_col}; font-weight: 500; border: none;")
-            
+            lbl_text.setStyleSheet(
+                f"color: {text_col}; font-weight: 500; border: none;"
+            )
+
             fl.addWidget(lbl_icon)
             fl.addWidget(lbl_text, 1)
             self.alert_layout.addWidget(frame)
@@ -142,12 +179,18 @@ class DashboardView(QWidget):
             names = ", ".join([i.name.split()[0] for i in unsupervised[:5]])
             rest = len(unsupervised) - 5
             msg = f"<b>{len(unsupervised)} Alunos nunca foram supervisionados!</b><br>Verifique: {names}"
-            if rest > 0: msg += f" e mais {rest}..."
+            if rest > 0:
+                msg += f" e mais {rest}..."
             add_alert_widget(msg, "warning")
 
         no_ra = [i for i in interns if not i.registration_number]
         if no_ra:
-            add_alert_widget(f"Existem <b>{len(no_ra)} alunos</b> sem matrícula (RA).", "danger")
+            add_alert_widget(
+                f"Existem <b>{len(no_ra)} alunos</b> sem matrícula (RA).", "danger"
+            )
 
         if not unsupervised and not no_ra and interns:
-            add_alert_widget("Tudo em dia! Todos os alunos ativos estão sendo supervisionados.", "success")
+            add_alert_widget(
+                "Tudo em dia! Todos os alunos ativos estão sendo supervisionados.",
+                "success",
+            )

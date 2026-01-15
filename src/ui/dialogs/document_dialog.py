@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QTextEdit, QFrame, QWidget
 )
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QPalette
 import qtawesome as qta
 
 from core.models.intern import Intern
@@ -78,7 +78,6 @@ class AuditDialog(QDialog):
         layout.addWidget(QLabel("Decisão:"))
         self.combo_status = QComboBox()
         self.combo_status.addItems(["Pendente", "Aprovado", "Reprovado"])
-        # CORREÇÃO 1: Trata None no setCurrentText
         self.combo_status.setCurrentText(self.document.status or "Pendente")
         self.combo_status.currentIndexChanged.connect(self.on_status_change)
         layout.addWidget(self.combo_status)
@@ -88,7 +87,6 @@ class AuditDialog(QDialog):
         layout.addWidget(self.lbl_reasons)
         
         self.combo_reasons = QComboBox()
-        # CORREÇÃO 2: Convertendo keys para list
         self.combo_reasons.addItems(list(STANDARD_FEEDBACKS.keys()))
         self.combo_reasons.currentTextChanged.connect(self.fill_feedback)
         layout.addWidget(self.combo_reasons)
@@ -130,7 +128,6 @@ class AuditDialog(QDialog):
         self.lbl_reasons.setVisible(is_rejected)
         self.combo_reasons.setVisible(is_rejected)
         
-        # Cor dinâmica do botão
         if status == "Aprovado":
             self.btn_save.setStyleSheet(f"background-color: {COLORS['success']}; color: white; border-radius: 6px; padding: 10px 20px; font-weight: bold; border: none;")
         elif status == "Reprovado":
@@ -160,11 +157,8 @@ class DocumentDialog(QDialog):
         self.setWindowTitle(f"Docs: {intern.name}")
         self.resize(800, 500)
         
-        self.setStyleSheet(f"""
-            QDialog {{ background-color: {COLORS['light']}; }}
-            QTableWidget {{ border-radius: 8px; border: 1px solid {COLORS['border']}; background-color: {COLORS['white']}; }}
-            QHeaderView::section {{ background-color: {COLORS['white']}; color: {COLORS['medium']}; border: none; border-bottom: 2px solid {COLORS['light']}; font-weight: bold; padding: 8px; }}
-        """)
+        # Define apenas a cor de fundo do Dialog
+        self.setStyleSheet(f"QDialog {{ background-color: {COLORS['light']}; }}")
 
         self.setup_ui()
         self.load_data()
@@ -205,7 +199,6 @@ class DocumentDialog(QDialog):
         btn_del.setStyleSheet(f"color: {COLORS['danger']};")
         btn_del.clicked.connect(self.delete_document)
 
-        # Estilo genérico botões brancos
         for b in [btn_add, btn_audit, btn_del]:
             if not b.styleSheet():
                 b.setStyleSheet(f"background-color: {COLORS['white']}; border: 1px solid {COLORS['border']}; padding: 8px 15px; border-radius: 4px; font-weight: 600; color: {COLORS['dark']};")
@@ -217,8 +210,50 @@ class DocumentDialog(QDialog):
         toolbar.addWidget(btn_del)
         layout.addLayout(toolbar)
 
-        # Tabela
+# --- TABELA ---
         self.table = QTableWidget()
+        
+        # --- AJUSTE DE CONTRASTE ---
+        # 1. Definimos um Azul mais forte (#BBDEFB) na Paleta para destacar bem,
+        #    mesmo se a linha de trás for cinza.
+        palette = self.table.palette()
+        palette.setColor(QPalette.ColorRole.Highlight, QColor("#BBDEFB"))
+        palette.setColor(QPalette.ColorRole.HighlightedText, QColor(COLORS['dark'])) 
+        self.table.setPalette(palette)
+
+        # 2. CSS Ajustado:
+        #    - Define explicitamente a cor alternada (zebra) como #FAFAFA (quase branco)
+        #    - Define o Hover como #E0E0E0 (cinza médio) para ser visível sobre a zebra
+        self.table.setStyleSheet(f"""
+            QTableWidget {{ 
+                border-radius: 8px; 
+                border: 1px solid {COLORS['border']}; 
+                background-color: {COLORS['white']};
+                alternate-background-color: #FAFAFA; /* Zebra bem clarinha */
+                gridline-color: transparent;
+                outline: none;
+            }}
+            QHeaderView::section {{ 
+                background-color: {COLORS['white']}; 
+                color: {COLORS['medium']}; 
+                border: none; 
+                border-bottom: 2px solid {COLORS['light']}; 
+                font-weight: bold; 
+                padding: 8px; 
+            }}
+            /* O Hover tem que ser mais escuro que a linha alternada */
+            QTableWidget::item:hover {{
+                background-color: #E0E0E0; 
+                color: {COLORS['dark']};
+            }}
+            /* Reforço da seleção para garantir */
+            QTableWidget::item:selected {{
+                background-color: #BBDEFB;
+                color: {COLORS['dark']};
+                border: none;
+            }}
+        """)
+
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["ID", "Documento", "Status", "Parecer"])
         self.table.setColumnHidden(0, True)
@@ -235,18 +270,15 @@ class DocumentDialog(QDialog):
         
         layout.addWidget(self.table)
         
-        # Fechar
         btn_close = QPushButton("Fechar")
         btn_close.setStyleSheet(f"background: transparent; color: {COLORS['secondary']}; border: none;")
         btn_close.clicked.connect(self.accept)
         layout.addWidget(btn_close, alignment=Qt.AlignmentFlag.AlignRight)
 
     def load_data(self):
-        # Guard clause: se o aluno não tem ID, não tem documentos
         if not self.intern.intern_id: 
             return
 
-        # CORREÇÃO 3: Nome do método corrigido
         docs = self.service.get_documents_by_intern(self.intern.intern_id)
         
         self.table.setRowCount(0)
@@ -257,19 +289,17 @@ class DocumentDialog(QDialog):
             self.table.setItem(row, 0, QTableWidgetItem(str(d.document_id)))
             
             item_name = QTableWidgetItem(d.document_name)
-            item_name.setFont(self.font()) # Reset font
+            item_name.setFont(self.font()) 
             item_name.setFlags(item_name.flags() ^ Qt.ItemFlag.ItemIsEditable)
             self.table.setItem(row, 1, item_name)
             
             self.table.setItem(row, 2, QTableWidgetItem(d.status))
             self.table.setItem(row, 3, QTableWidgetItem(d.feedback or ""))
 
-    # --- Actions ---
     def audit_document(self):
         row = self.table.currentRow()
         if row < 0: return
         
-        # CORREÇÃO 4: Checagem segura de Item
         item_id = self.table.item(row, 0)
         if not item_id: return
         doc_id = int(item_id.text())
@@ -303,12 +333,10 @@ class DocumentDialog(QDialog):
         row = self.table.currentRow()
         if row < 0: return
         
-        # CORREÇÃO 4: Checagem segura de Item
         item_id = self.table.item(row, 0)
         if not item_id: return
         doc_id = int(item_id.text())
         
-        # CORREÇÃO 5: Deletar passando Objeto, não ID
         if QMessageBox.question(self, "Excluir", "Apagar documento?", QMessageBox.StandardButton.Yes|QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
             doc = self.service.get_document_by_id(doc_id)
             if doc:

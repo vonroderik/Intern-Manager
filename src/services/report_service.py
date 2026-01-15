@@ -144,18 +144,25 @@ class ReportService:
         else:
             venue_html = "<p style='color:red; font-style:italic;'>Local de estágio não vinculado.</p>"
 
-        # Datas
+        # Datas (Mantendo lógica original)
         date_emission = datetime.now().strftime("%d/%m/%Y às %H:%M")
-        start_fmt = (
-            datetime.strptime(intern.start_date, "%Y-%m-%d").strftime("%d/%m/%Y")
-            if intern.start_date
-            else "-"
-        )
-        end_fmt = (
-            datetime.strptime(intern.end_date, "%Y-%m-%d").strftime("%d/%m/%Y")
-            if intern.end_date
-            else "-"
-        )
+        
+        # Mantendo exatamente como você pediu, sem alterações na lógica
+        if intern.start_date:
+            try:
+                start_fmt = datetime.strptime(intern.start_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+            except ValueError:
+                start_fmt = intern.start_date # Fallback se o dado estiver 'sujo'
+        else:
+            start_fmt = "-"
+
+        if intern.end_date:
+            try:
+                end_fmt = datetime.strptime(intern.end_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+            except ValueError:
+                end_fmt = intern.end_date
+        else:
+            end_fmt = "-"
 
         local_data_sig = (
             f"{city_state}, {datetime.now().strftime('%d de %B de %Y')}"
@@ -330,6 +337,8 @@ class ReportService:
                         <tr><th>RA:</th><td>{intern.registration_number}</td></tr>
                         <tr><th>Semestre:</th><td>{intern.term}</td></tr>
                         <tr><th>Vigência:</th><td>{start_fmt} a {end_fmt}</td></tr>
+                        <tr><th>Jornada:</th><td>{intern.working_days or "-"}</td></tr>
+                        <tr><th>Horário:</th><td>{intern.working_hours or "-"}</td></tr>
                     </table>
                 </div>
             </div>
