@@ -227,7 +227,7 @@ class InternDialog(QDialog):
         
         # Campos Novos
         self.txt_hours.setText(self.intern.working_hours or "")
-        self.txt_days.setText(self.intern.working_days or "")
+        self.txt_days.setText(str(self.intern.working_days or ""))
         
         if self.intern.venue_id:
             idx = self.combo_venue.findData(self.intern.venue_id)

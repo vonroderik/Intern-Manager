@@ -82,3 +82,7 @@ class ObservationService(BaseService[Observation]):
             bool: True if the deletion was successful, False otherwise.
         """
         return self.delete(observation, "observation")
+
+    def get_observations_by_intern(self, intern_id: int):
+            """Retorna todas as observações de um estagiário."""
+            return self.repo.get_by_intern(intern_id)

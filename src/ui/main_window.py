@@ -342,7 +342,7 @@ class MainWindow(QMainWindow):
             self.table.setItem(row, 2, QTableWidgetItem(venue_name))
             
             # RA
-            self.table.setItem(row, 3, QTableWidgetItem(intern.registration_number or "-"))
+            self.table.setItem(row, 3, QTableWidgetItem(str(intern.registration_number or "-")))
             
             # Status (Texto simples aqui, o Delegate desenha a pílula)
             self.table.setItem(row, 4, QTableWidgetItem(intern.status))
