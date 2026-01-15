@@ -66,6 +66,7 @@ class MainWindow(QMainWindow):
         meeting_service: MeetingService,
         report_service: ReportService,
         import_service: ImportService,
+        export_service=None,
     ):
         """Initializes services, window properties, and the main UI."""
         super().__init__()
@@ -78,6 +79,7 @@ class MainWindow(QMainWindow):
         self.meeting_service = meeting_service
         self.report_service = report_service
         self.import_service = import_service
+        self.export_service = export_service
 
         self.setWindowTitle("InternManager Pro 2026")
         self.setMinimumSize(1280, 800)
@@ -297,7 +299,7 @@ class MainWindow(QMainWindow):
         actions.addWidget(self.txt_search)
         actions.addStretch()
 
-        btn_import = QPushButton(" Importar CSV")
+        btn_import = QPushButton(" Importar Planilha")
         btn_import.setIcon(qta.icon("fa5s.file-import", color=COLORS["dark"]))
         btn_import.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_import.setStyleSheet(f"""
@@ -534,19 +536,28 @@ class MainWindow(QMainWindow):
 
     def open_settings(self):
         """Opens the application settings dialog."""
-        SettingsDialog(self).exec()
+        SettingsDialog(self, export_service=self.export_service).exec()
 
     def import_csv_dialog(self):
-        """Opens a file dialog to import interns from a CSV file."""
-        path, _ = QFileDialog.getOpenFileName(self, "Importar CSV", "", "CSV (*.csv)")
+        # Filtro atualizado para aceitar Excel e CSV
+        path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Importar Alunos", 
+            "", 
+            "Planilhas (*.xlsx *.xls *.csv);;Todos os Arquivos (*)"
+        )
+        
         if path:
             try:
                 self.import_service.read_file(path)
+                
+                # Atualiza a tela
                 self.load_data()
                 self.page_dashboard.refresh_data()
-                QMessageBox.information(self, "Sucesso", "Importação concluída.")
+                
+                QMessageBox.information(self, "Sucesso", "Importação concluída com sucesso!")
             except Exception as e:
-                QMessageBox.critical(self, "Erro", str(e))
+                QMessageBox.critical(self, "Erro", f"Erro ao importar arquivo:\n{str(e)}")
 
     def open_report(self):
         """Generates and displays the report card for the selected intern."""

@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFileDialog,
     QLabel,
+    QFrame
 )
 from PySide6.QtCore import Qt, QSettings, QSize
 import qtawesome as qta
@@ -17,13 +18,16 @@ from ui.styles import COLORS
 
 class SettingsDialog(QDialog):
     """
-    Janela para configurar dados globais do sistema (Cabeçalho do PDF, etc).
+    Janela para configurar dados globais do sistema e exportar dados.
     """
 
-    def __init__(self, parent=None):
+    # ADICIONADO: export_service no __init__
+    def __init__(self, parent=None, export_service=None):
         super().__init__(parent)
+        self.export_service = export_service # Guarda a referência
+        
         self.setWindowTitle("Configurações do Sistema")
-        self.resize(550, 400)
+        self.resize(550, 500) # Aumentei um pouco a altura
 
         # Estilo
         self.setStyleSheet(f"""
@@ -48,7 +52,7 @@ class SettingsDialog(QDialog):
             QLineEdit:focus {{ border: 1px solid {COLORS["primary"]}; }}
         """)
 
-        # Persistência via QSettings (padrão do Qt, salva no Registro/Ini)
+        # Persistência via QSettings
         self.settings = QSettings("MyOrganization", "InternManager2026")
 
         self._setup_ui()
@@ -74,27 +78,23 @@ class SettingsDialog(QDialog):
         header.addStretch()
         layout.addLayout(header)
 
-        # Grupo: Cabeçalho dos Relatórios
-        group = QGroupBox("Personalização dos Relatórios (PDF)")
+        # --- Grupo 1: Relatórios ---
+        group_rep = QGroupBox("Personalização dos Relatórios (PDF)")
         form = QFormLayout()
         form.setSpacing(15)
 
         self.txt_institution = QLineEdit()
         self.txt_institution.setPlaceholderText("Ex: Faculdade de Tecnologia...")
-
         self.txt_supervisor = QLineEdit()
         self.txt_supervisor.setPlaceholderText("Ex: Prof. Dr. Fulano de Tal")
-
         self.txt_city = QLineEdit()
         self.txt_city.setPlaceholderText("Ex: São Paulo - SP")
 
-        # Seleção de Logo
         self.txt_logo_path = QLineEdit()
         self.txt_logo_path.setReadOnly(True)
         self.txt_logo_path.setPlaceholderText("Caminho da imagem do logo...")
 
-        btn_logo = QPushButton(" Buscar Imagem")
-        btn_logo.setIcon(qta.icon("fa5s.image", color=COLORS["dark"]))
+        btn_logo = QPushButton(" Buscar")
         btn_logo.setCursor(Qt.CursorShape.PointingHandCursor)
         btn_logo.clicked.connect(self.select_logo)
 
@@ -102,22 +102,50 @@ class SettingsDialog(QDialog):
         logo_layout.addWidget(self.txt_logo_path)
         logo_layout.addWidget(btn_logo)
 
-        # Labels bold
         def lbl(t):
             lbl_style = QLabel(t)
             lbl_style.setStyleSheet("font-weight: bold;")
             return lbl_style
 
-        form.addRow(lbl("Nome da Instituição:"), self.txt_institution)
-        form.addRow(lbl("Nome do Coordenador:"), self.txt_supervisor)
+        form.addRow(lbl("Instituição:"), self.txt_institution)
+        form.addRow(lbl("Coordenador:"), self.txt_supervisor)
         form.addRow(lbl("Cidade/UF:"), self.txt_city)
         form.addRow(lbl("Logotipo:"), logo_layout)
 
-        group.setLayout(form)
-        layout.addWidget(group)
+        group_rep.setLayout(form)
+        layout.addWidget(group_rep)
+
+        # --- Grupo 2: Dados e Backup (NOVO) ---
+        group_data = QGroupBox("Dados e Backup")
+        data_layout = QVBoxLayout()
+        
+        lbl_bkp = QLabel("Exporte todos os dados do sistema para uma planilha Excel (.xlsx).")
+        lbl_bkp.setStyleSheet(f"color: {COLORS['secondary']}; font-weight: normal;")
+        data_layout.addWidget(lbl_bkp)
+
+        self.btn_export = QPushButton(" Exportar Banco de Dados (Excel)")
+        self.btn_export.setIcon(qta.icon("fa5s.file-excel", color="white"))
+        self.btn_export.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_export.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {COLORS["success"]}; color: white; border: none; 
+                padding: 10px; border-radius: 6px; font-weight: bold; text-align: left; padding-left: 15px;
+            }}
+            QPushButton:hover {{ background-color: #0E6A0E; }}
+        """)
+        self.btn_export.clicked.connect(self.export_data)
+        
+        if not self.export_service:
+            self.btn_export.setEnabled(False)
+            self.btn_export.setText("Exportar (Serviço indisponível)")
+
+        data_layout.addWidget(self.btn_export)
+        group_data.setLayout(data_layout)
+        layout.addWidget(group_data)
+
         layout.addStretch()
 
-        # Botões
+        # Botões Rodapé
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
 
@@ -151,7 +179,6 @@ class SettingsDialog(QDialog):
             self.txt_logo_path.setText(path)
 
     def _load_data(self):
-        # QSettings retorna 'None' se a chave não existir, convertemos para string vazia
         self.txt_institution.setText(
             str(self.settings.value("institution_name", "") or "")
         )
@@ -169,3 +196,17 @@ class SettingsDialog(QDialog):
 
         QMessageBox.information(self, "Salvo", "Configurações atualizadas com sucesso!")
         self.accept()
+
+    def export_data(self):
+        if not self.export_service:
+            return
+
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Exportar para Excel", "backup_estagio.xlsx", "Excel Files (*.xlsx)"
+        )
+        if path:
+            try:
+                self.export_service.export_to_excel(path)
+                QMessageBox.information(self, "Sucesso", f"Dados exportados para:\n{path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Erro", f"Falha na exportação:\n{e}")

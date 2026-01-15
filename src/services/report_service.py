@@ -12,7 +12,6 @@ from core.models.document import Document
 from core.models.meeting import Meeting
 from core.models.observation import Observation
 
-
 class ReportService:
     """
     Serviço de Geração de Relatórios (PDF).
@@ -64,7 +63,6 @@ class ReportService:
         if logo_path:
             b64 = self._get_image_base64(logo_path)
             if b64:
-                # Centralizado
                 logo_html = f'<img src="{b64}" class="logo-img">'
 
         # Cabeçalho Dinâmico
@@ -98,7 +96,7 @@ class ReportService:
             </tr>
             """
 
-        status_text = "APROVADO" if total_score >= 7.0 else "EM ANÁLISE / REPROVADO"
+        status_text = "APROVADO" if total_score >= 7.0 else "EM ANÁLISE"
         status_color = "#2E7D32" if total_score >= 7.0 else "#C62828"
 
         # Frequência
@@ -112,11 +110,15 @@ class ReportService:
         docs_rows = ""
         pending_docs = 0
         for d in documents:
-            if d.status:
-                st = "<span style='color:#2E7D32; font-weight:bold'>Entregue</span>"
+            # CORREÇÃO DE LÓGICA AQUI: Comparação explícita com "Aprovado"
+            if d.status == "Aprovado":
+                st = "<span style='color:#2E7D32; font-weight:bold'>Aprovado</span>"
             else:
-                st = "<span style='color:#C62828; font-weight:bold'>Pendente</span>"
+                # Se for Pendente, Reprovado ou Vazio, cai aqui
+                status_real = d.status if d.status else "Pendente"
+                st = f"<span style='color:#C62828; font-weight:bold'>{status_real}</span>"
                 pending_docs += 1
+                
             docs_rows += (
                 f"<tr><td>{d.document_name}</td><td class='text-center'>{st}</td></tr>"
             )
@@ -144,25 +146,20 @@ class ReportService:
         else:
             venue_html = "<p style='color:red; font-style:italic;'>Local de estágio não vinculado.</p>"
 
-        # Datas (Mantendo lógica original)
+        # Datas
         date_emission = datetime.now().strftime("%d/%m/%Y às %H:%M")
 
-        # Mantendo exatamente como você pediu, sem alterações na lógica
         if intern.start_date:
             try:
-                start_fmt = datetime.strptime(intern.start_date, "%Y-%m-%d").strftime(
-                    "%d/%m/%Y"
-                )
+                start_fmt = datetime.strptime(intern.start_date, "%Y-%m-%d").strftime("%d/%m/%Y")
             except ValueError:
-                start_fmt = intern.start_date  # Fallback se o dado estiver 'sujo'
+                start_fmt = intern.start_date
         else:
             start_fmt = "-"
 
         if intern.end_date:
             try:
-                end_fmt = datetime.strptime(intern.end_date, "%Y-%m-%d").strftime(
-                    "%d/%m/%Y"
-                )
+                end_fmt = datetime.strptime(intern.end_date, "%Y-%m-%d").strftime("%d/%m/%Y")
             except ValueError:
                 end_fmt = intern.end_date
         else:
@@ -180,144 +177,30 @@ class ReportService:
         <head>
         <meta charset="utf-8">
         <style>
-        body {{
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 10pt;
-            color: #222;
-            line-height: 1.4;
-        }}
-
-        .header {{
-            text-align: center;
-            border-bottom: 2px solid #ccc;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }}
-
-        .logo-img {{
-            height: 80px;
-            margin-bottom: 8px;
-        }}
-
-        .header-title {{
-            font-size: 18pt;
-            font-weight: bold;
-            color: #003366;
-        }}
-
-        .header-sub {{
-            font-size: 9.5pt;
-            color: #555;
-        }}
-
-        h2 {{
-            font-size: 12pt;
-            color: #003366;
-            border-bottom: 2px solid #003366;
-            padding-bottom: 4px;
-            margin-top: 18px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }}
-
-        .info-box {{
-            border: 1px solid #ddd;
-            padding: 8px;
-            margin-bottom: 10px;
-        }}
-
-        .info-table {{
-            width: 100%;
-            border-collapse: collapse;
-        }}
-
-        .info-table th {{
-            text-align: left;
-            width: 120px;
-            font-weight: bold;
-            padding: 4px 6px 4px 0;
-        }}
-
-        .info-table td {{
-            padding: 4px 0;
-        }}
-
-        .grid {{
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 9pt;
-        }}
-
-        .grid th {{
-            background: #eaeaea;
-            border: 1px solid #000;
-            padding: 6px;
-            text-align: left;
-        }}
-
-        .grid td {{
-            border: 1px solid #000;
-            padding: 6px;
-        }}
-
-        .text-center {{
-            text-align: center;
-        }}
-
-        .two-col {{
-            width: 100%;
-        }}
-
-        .left {{
-            width: 48%;
-            float: left;
-        }}
-
-        .right {{
-            width: 48%;
-            float: right;
-        }}
-
-        .clear {{
-            clear: both;
-        }}
-
-        .summary {{
-            border: 2px solid #ccc;
-            width: 220px;
-            float: right;
-            text-align: center;
-            padding: 8px;
-            margin-top: 10px;
-        }}
-
-        .final-grade {{
-            font-size: 20pt;
-            font-weight: bold;
-            color: {status_color};
-        }}
-
-        .signature {{
-            text-align: center;
-            margin-top: 40px;
-        }}
-
-        .signature-line {{
-            width: 350px;
-            border-top: 1px solid #000;
-            margin: 0 auto;
-        }}
-
-        .footer {{
-            margin-top: 30px;
-            font-size: 8.5pt;
-            text-align: center;
-            color: #777;
-        }}
-
-        .page-break {{
-            page-break-before: always;
-        }}
+        body {{ font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #222; line-height: 1.4; }}
+        .header {{ text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 20px; }}
+        .logo-img {{ height: 80px; margin-bottom: 8px; }}
+        .header-title {{ font-size: 18pt; font-weight: bold; color: #003366; }}
+        .header-sub {{ font-size: 9.5pt; color: #555; }}
+        h2 {{ font-size: 12pt; color: #003366; border-bottom: 2px solid #003366; padding-bottom: 4px; margin-top: 18px; margin-bottom: 8px; text-transform: uppercase; }}
+        .info-box {{ border: 1px solid #ddd; padding: 8px; margin-bottom: 10px; }}
+        .info-table {{ width: 100%; border-collapse: collapse; }}
+        .info-table th {{ text-align: left; width: 120px; font-weight: bold; padding: 4px 6px 4px 0; }}
+        .info-table td {{ padding: 4px 0; }}
+        .grid {{ width: 100%; border-collapse: collapse; font-size: 9pt; }}
+        .grid th {{ background: #eaeaea; border: 1px solid #000; padding: 6px; text-align: left; }}
+        .grid td {{ border: 1px solid #000; padding: 6px; }}
+        .text-center {{ text-align: center; }}
+        .two-col {{ width: 100%; }}
+        .left {{ width: 48%; float: left; }}
+        .right {{ width: 48%; float: right; }}
+        .clear {{ clear: both; }}
+        .summary {{ border: 2px solid #ccc; width: 220px; float: right; text-align: center; padding: 8px; margin-top: 10px; }}
+        .final-grade {{ font-size: 20pt; font-weight: bold; color: {status_color}; }}
+        .signature {{ text-align: center; margin-top: 40px; }}
+        .signature-line {{ width: 350px; border-top: 1px solid #000; margin: 0 auto; }}
+        .footer {{ margin-top: 30px; font-size: 8.5pt; text-align: center; color: #777; }}
+        .page-break {{ page-break-before: always; }}
         </style>
         </head>
 
@@ -422,7 +305,6 @@ class ReportService:
         printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
         printer.setOutputFileName(filepath)
         printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-
         margins = QMarginsF(15, 15, 15, 15)
         printer.setPageMargins(margins, QPageLayout.Unit.Millimeter)
 

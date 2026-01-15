@@ -34,6 +34,7 @@ from services.grade_service import GradeService
 from services.import_service import ImportService
 from services.meeting_service import MeetingService
 from services.report_service import ReportService
+from services.export_service import ExportService
 
 # Utils
 from utils.seeder import seed_default_criteria
@@ -100,6 +101,7 @@ def main():
         obs_service = ObservationService(repo_obs)
         m_service = MeetingService(repo_meeting)
         criteria_service = EvaluationCriteriaService(repo_criteria)
+        
 
         # Some services might need access to multiple repositories.
         grade_service = GradeService(repo=repo_grade, criteria_repo=repo_criteria)
@@ -111,6 +113,7 @@ def main():
             venue_service=v_service,
             document_service=d_service,
         )
+        export_service = ExportService(db)
         print("   -> Services initialized successfully\n")
     except Exception as e:
         print(f"CRITICAL ERROR: Failed to initialize services. Details: {e}\n")
@@ -161,6 +164,7 @@ def main():
         meeting_service=m_service,
         report_service=report_service,
         import_service=imp_service,
+        export_service=export_service,
     )
 
     window.show()

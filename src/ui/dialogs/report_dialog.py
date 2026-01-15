@@ -68,7 +68,6 @@ class ReportDialog(QDialog):
         """)
 
         self._setup_ui()
-        # Carrega dados preliminares para mostrar resumo
         self._load_summary()
 
     def _setup_ui(self):
@@ -105,7 +104,7 @@ class ReportDialog(QDialog):
         line.setStyleSheet(f"color: {COLORS['border']}")
         layout.addWidget(line)
 
-        # --- Resumo do Conteúdo (Checklist) ---
+        # --- Resumo do Conteúdo ---
         self.info_container = QWidget()
         info_layout = QVBoxLayout(self.info_container)
         info_layout.setSpacing(10)
@@ -114,7 +113,6 @@ class ReportDialog(QDialog):
         lbl_info.setStyleSheet("font-weight: bold; margin-bottom: 5px;")
         info_layout.addWidget(lbl_info)
 
-        # Labels de status (serão preenchidos no _load_summary)
         self.lbl_grades = QLabel("⌛ Verificando Notas...")
         self.lbl_docs = QLabel("⌛ Verificando Documentos...")
         self.lbl_meetings = QLabel("⌛ Verificando Supervisão...")
@@ -126,7 +124,6 @@ class ReportDialog(QDialog):
         layout.addWidget(self.info_container)
         layout.addStretch()
 
-        # --- Barra de Progresso (Escondida inicialmente) ---
         self.progress = QProgressBar()
         self.progress.setVisible(False)
         layout.addWidget(self.progress)
@@ -159,23 +156,17 @@ class ReportDialog(QDialog):
         layout.addLayout(btn_layout)
 
     def _load_summary(self):
-        # CORREÇÃO PYLANCE: Verificamos se o ID existe antes de usar.
         if self.intern.intern_id is None:
             self.lbl_grades.setText("Erro: Aluno não salvo no banco de dados.")
             return
 
-        # Atribuímos a uma variável local 'int' garantida
         intern_id = self.intern.intern_id
 
         # 1. Notas
         grades = self.grade_service.get_grades_by_intern(intern_id)
         if grades:
-            avg = sum(
-                g.value for g in grades
-            )  # Soma simples ou média ponderada dependendo da sua regra
-            self.lbl_grades.setText(
-                f"✅ {len(grades)} Notas lançadas (Soma: {avg:.1f})"
-            )
+            avg = sum(g.value for g in grades)
+            self.lbl_grades.setText(f"✅ {len(grades)} Notas lançadas (Soma: {avg:.1f})")
             self.lbl_grades.setStyleSheet(f"color: {COLORS['success']};")
         else:
             self.lbl_grades.setText("⚠️ Nenhuma nota lançada (Relatório sairá zerado)")
@@ -183,7 +174,9 @@ class ReportDialog(QDialog):
 
         # 2. Documentos
         docs = self.doc_service.get_documents_by_intern(intern_id)
-        pending = sum(1 for d in docs if d.status == "Pendente")
+        # CORREÇÃO DE LÓGICA: Considera pendente tudo que não for "Aprovado"
+        pending = sum(1 for d in docs if d.status != "Aprovado")
+        
         if pending > 0:
             self.lbl_docs.setText(f"⚠️ {pending} Documentos pendentes de aprovação")
             self.lbl_docs.setStyleSheet(f"color: {COLORS['warning']};")
@@ -197,18 +190,11 @@ class ReportDialog(QDialog):
 
     def generate_report(self):
         if self.intern.intern_id is None:
-            QMessageBox.warning(
-                self,
-                "Erro",
-                "Este aluno ainda não foi salvo. Salve antes de gerar relatório.",
-            )
+            QMessageBox.warning(self, "Erro", "Este aluno ainda não foi salvo. Salve antes de gerar relatório.")
             return
 
-        # Selecionar onde salvar
         filename = f"Relatorio_{self.intern.name.replace(' ', '_')}.pdf"
-        path, _ = QFileDialog.getSaveFileName(
-            self, "Salvar Relatório PDF", filename, "PDF Files (*.pdf)"
-        )
+        path, _ = QFileDialog.getSaveFileName(self, "Salvar Relatório PDF", filename, "PDF Files (*.pdf)")
 
         if not path:
             return
@@ -218,18 +204,14 @@ class ReportDialog(QDialog):
         self.progress.setVisible(True)
         self.progress.setValue(20)
 
-        # Simulação de progresso visual (já que a geração é síncrona e rápida, só pra dar feedback)
         QTimer.singleShot(100, lambda: self._process_generation(path))
 
     def _process_generation(self, path):
         try:
-            # CORREÇÃO PYLANCE: Nova verificação de segurança
             if self.intern.intern_id is None:
                 raise ValueError("ID do aluno inválido.")
 
             intern_id = self.intern.intern_id
-
-            # Coleta Dados Finais
             self.progress.setValue(40)
 
             venue = None
@@ -237,8 +219,6 @@ class ReportDialog(QDialog):
                 venue = self.venue_service.get_by_id(self.intern.venue_id)
 
             all_criteria = self.criteria_service.list_active_criteria()
-
-            # Usamos a variável local 'intern_id' que é garantidamente int
             grades = self.grade_service.get_grades_by_intern(intern_id)
             documents = self.doc_service.get_documents_by_intern(intern_id)
             meetings = self.meeting_service.get_meetings_by_intern(intern_id)
@@ -246,7 +226,6 @@ class ReportDialog(QDialog):
 
             self.progress.setValue(70)
 
-            # Gera PDF
             self.report_service.generate_pdf(
                 filepath=path,
                 intern=self.intern,
@@ -259,15 +238,11 @@ class ReportDialog(QDialog):
             )
 
             self.progress.setValue(100)
-            QMessageBox.information(
-                self, "Sucesso", f"Relatório salvo com sucesso!\n{path}"
-            )
+            QMessageBox.information(self, "Sucesso", f"Relatório salvo com sucesso!\n{path}")
             self.accept()
 
         except Exception as e:
             self.progress.setVisible(False)
             self.btn_generate.setEnabled(True)
             self.btn_generate.setText("Tentar Novamente")
-            QMessageBox.critical(
-                self, "Erro Fatal", f"Não foi possível gerar o PDF.\nErro: {e}"
-            )
+            QMessageBox.critical(self, "Erro Fatal", f"Não foi possível gerar o PDF.\nErro: {e}")
