@@ -205,7 +205,7 @@ class InternDialog(QDialog):
         form_layout.addRow(lbl("E-mail:"), self.txt_email)
         form_layout.addRow(lbl("Local de Estágio:"), venue_layout)
         form_layout.addRow(lbl("Semestre:"), self.combo_term)
-        form_layout.addRow(lbl("Carga Horária:"), hours_layout)
+        form_layout.addRow(lbl("Horários:"), hours_layout)
 
         date_layout = QHBoxLayout()
         date_layout.addWidget(lbl("Início:"))
