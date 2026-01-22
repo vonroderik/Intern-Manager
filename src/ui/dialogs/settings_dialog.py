@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFileDialog,
     QLabel,
-    QFrame
 )
 from PySide6.QtCore import Qt, QSettings, QSize
 import qtawesome as qta
@@ -24,10 +23,10 @@ class SettingsDialog(QDialog):
     # ADICIONADO: export_service no __init__
     def __init__(self, parent=None, export_service=None):
         super().__init__(parent)
-        self.export_service = export_service # Guarda a referência
-        
+        self.export_service = export_service  # Guarda a referência
+
         self.setWindowTitle("Configurações do Sistema")
-        self.resize(550, 500) # Aumentei um pouco a altura
+        self.resize(550, 500)  # Aumentei um pouco a altura
 
         # Estilo
         self.setStyleSheet(f"""
@@ -84,11 +83,13 @@ class SettingsDialog(QDialog):
         form.setSpacing(15)
 
         self.txt_institution = QLineEdit()
-        self.txt_institution.setPlaceholderText("Ex: Faculdade de Tecnologia...")
+        self.txt_institution.setPlaceholderText(
+            "Ex: UNISINOS - Curso de Biomedicina..."
+        )
         self.txt_supervisor = QLineEdit()
-        self.txt_supervisor.setPlaceholderText("Ex: Prof. Dr. Fulano de Tal")
+        self.txt_supervisor.setPlaceholderText("Ex: Prof. Dr. João da Silva")
         self.txt_city = QLineEdit()
-        self.txt_city.setPlaceholderText("Ex: São Paulo - SP")
+        self.txt_city.setPlaceholderText("Ex: São Leopoldo - RS")
 
         self.txt_logo_path = QLineEdit()
         self.txt_logo_path.setReadOnly(True)
@@ -108,7 +109,7 @@ class SettingsDialog(QDialog):
             return lbl_style
 
         form.addRow(lbl("Instituição:"), self.txt_institution)
-        form.addRow(lbl("Coordenador:"), self.txt_supervisor)
+        form.addRow(lbl("Supervisor:"), self.txt_supervisor)
         form.addRow(lbl("Cidade/UF:"), self.txt_city)
         form.addRow(lbl("Logotipo:"), logo_layout)
 
@@ -118,8 +119,10 @@ class SettingsDialog(QDialog):
         # --- Grupo 2: Dados e Backup (NOVO) ---
         group_data = QGroupBox("Dados e Backup")
         data_layout = QVBoxLayout()
-        
-        lbl_bkp = QLabel("Exporte todos os dados do sistema para uma planilha Excel (.xlsx).")
+
+        lbl_bkp = QLabel(
+            "Exporte todos os dados do sistema para uma planilha Excel (.xlsx)."
+        )
         lbl_bkp.setStyleSheet(f"color: {COLORS['secondary']}; font-weight: normal;")
         data_layout.addWidget(lbl_bkp)
 
@@ -134,7 +137,7 @@ class SettingsDialog(QDialog):
             QPushButton:hover {{ background-color: #0E6A0E; }}
         """)
         self.btn_export.clicked.connect(self.export_data)
-        
+
         if not self.export_service:
             self.btn_export.setEnabled(False)
             self.btn_export.setText("Exportar (Serviço indisponível)")
@@ -207,6 +210,8 @@ class SettingsDialog(QDialog):
         if path:
             try:
                 self.export_service.export_to_excel(path)
-                QMessageBox.information(self, "Sucesso", f"Dados exportados para:\n{path}")
+                QMessageBox.information(
+                    self, "Sucesso", f"Dados exportados para:\n{path}"
+                )
             except Exception as e:
                 QMessageBox.critical(self, "Erro", f"Falha na exportação:\n{e}")

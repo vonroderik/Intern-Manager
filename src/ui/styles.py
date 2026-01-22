@@ -14,7 +14,6 @@ COLORS = {
     "border": "#E1DFDD",
     "sidebar_bg": "#201F1E",  # Fundo escuro da sidebar
     "sidebar_text": "#F3F2F1",
-    "white": "#FFFFFF"
 }
 
 

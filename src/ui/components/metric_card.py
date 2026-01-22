@@ -33,7 +33,7 @@ class MetricCard(QFrame):
         shadow.setColor(QColor(0, 0, 0, 30))
         self.setGraphicsEffect(shadow)
 
-        layout = QHBoxLayout(self)
+        layout = QHBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
 

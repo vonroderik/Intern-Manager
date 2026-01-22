@@ -10,8 +10,10 @@ from PySide6.QtWidgets import (
     QWidget,
     QProgressBar,
 )
-from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtCore import Qt, QSize, QTimer, QUrl
+from PySide6.QtGui import QDesktopServices
 import qtawesome as qta
+
 
 from core.models.intern import Intern
 
@@ -166,7 +168,9 @@ class ReportDialog(QDialog):
         grades = self.grade_service.get_grades_by_intern(intern_id)
         if grades:
             avg = sum(g.value for g in grades)
-            self.lbl_grades.setText(f"✅ {len(grades)} Notas lançadas (Soma: {avg:.1f})")
+            self.lbl_grades.setText(
+                f"✅ {len(grades)} Notas lançadas (Soma: {avg:.1f})"
+            )
             self.lbl_grades.setStyleSheet(f"color: {COLORS['success']};")
         else:
             self.lbl_grades.setText("⚠️ Nenhuma nota lançada (Relatório sairá zerado)")
@@ -176,7 +180,7 @@ class ReportDialog(QDialog):
         docs = self.doc_service.get_documents_by_intern(intern_id)
         # CORREÇÃO DE LÓGICA: Considera pendente tudo que não for "Aprovado"
         pending = sum(1 for d in docs if d.status != "Aprovado")
-        
+
         if pending > 0:
             self.lbl_docs.setText(f"⚠️ {pending} Documentos pendentes de aprovação")
             self.lbl_docs.setStyleSheet(f"color: {COLORS['warning']};")
@@ -190,11 +194,17 @@ class ReportDialog(QDialog):
 
     def generate_report(self):
         if self.intern.intern_id is None:
-            QMessageBox.warning(self, "Erro", "Este aluno ainda não foi salvo. Salve antes de gerar relatório.")
+            QMessageBox.warning(
+                self,
+                "Erro",
+                "Este aluno ainda não foi salvo. Salve antes de gerar relatório.",
+            )
             return
 
         filename = f"Relatorio_{self.intern.name.replace(' ', '_')}.pdf"
-        path, _ = QFileDialog.getSaveFileName(self, "Salvar Relatório PDF", filename, "PDF Files (*.pdf)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Salvar Relatório PDF", filename, "PDF Files (*.pdf)"
+        )
 
         if not path:
             return
@@ -238,11 +248,23 @@ class ReportDialog(QDialog):
             )
 
             self.progress.setValue(100)
-            QMessageBox.information(self, "Sucesso", f"Relatório salvo com sucesso!\n{path}")
+            reply = QMessageBox.question(
+                self,
+                "Sucesso",
+                "Relatório gerado com sucesso!\n\nDeseja abrir o arquivo agora?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+            # --------------------------------------------
+
             self.accept()
 
         except Exception as e:
             self.progress.setVisible(False)
             self.btn_generate.setEnabled(True)
             self.btn_generate.setText("Tentar Novamente")
-            QMessageBox.critical(self, "Erro Fatal", f"Não foi possível gerar o PDF.\nErro: {e}")
+            QMessageBox.critical(
+                self, "Erro Fatal", f"Não foi possível gerar o PDF.\nErro: {e}"
+            )

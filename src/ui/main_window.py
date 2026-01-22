@@ -1,6 +1,7 @@
 """
 Main window and user interface for the Intern Manager application.
 """
+
 from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -19,6 +20,7 @@ from PySide6.QtWidgets import (
     QStackedWidget,
     QListWidget,
     QListWidgetItem,
+    QMenu,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
@@ -44,6 +46,7 @@ from ui.dialogs.observation_dialog import ObservationDialog
 from ui.dialogs.report_dialog import ReportDialog
 from ui.dialogs.settings_dialog import SettingsDialog
 from ui.dialogs.batch_meeting_dialog import BatchMeetingDialog
+
 # Styles and Components
 from ui.styles import COLORS
 from ui.dashboard_view import DashboardView
@@ -182,7 +185,7 @@ class MainWindow(QMainWindow):
         app_title.setStyleSheet(
             "font-size: 20px; font-weight: 900; padding: 30px 20px 5px 20px; letter-spacing: 1px;"
         )
-        app_subtitle = QLabel("Pro 2026")
+        app_subtitle = QLabel("versão 1.0.0")
         app_subtitle.setStyleSheet(
             f"font-size: 12px; font-weight: normal; color: {COLORS['secondary']}; padding: 0 20px 30px 20px;"
         )
@@ -273,18 +276,16 @@ class MainWindow(QMainWindow):
         self.btn_add.clicked.connect(self.open_add_dialog)
         header.addWidget(self.btn_add)
 
-        # --- NOVO BOTÃO ---
         self.btn_batch = QPushButton(" Reunião em Grupo")
         self.btn_batch.setIcon(qta.icon("fa5s.users", color="white"))
         self.btn_batch.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_batch.setStyleSheet(f"""
-            QPushButton {{ background-color: {COLORS['secondary']}; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; margin-left: 10px; }}
+            QPushButton {{ background-color: {COLORS["secondary"]}; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; margin-left: 10px; }}
             QPushButton:hover {{ background-color: #5a6268; }}
         """)
         self.btn_batch.clicked.connect(self.open_batch_meeting)
         header.addWidget(self.btn_batch)
         layout.addLayout(header)
-
 
         # Toolbar with search and import
         actions = QHBoxLayout()
@@ -323,7 +324,7 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels(
             ["ID", "Nome Completo", "Local de Estágio", "RA", "Status"]
         )
-        self.table.setColumnHidden(0, True) # Hide internal ID
+        self.table.setColumnHidden(0, True)  # Hide internal ID
 
         self.table.horizontalHeader().setSectionResizeMode(
             1, QHeaderView.ResizeMode.Stretch
@@ -333,6 +334,11 @@ class MainWindow(QMainWindow):
         )
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+
+        # Right-click menu
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._open_context_menu)
+
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
         self.table.setAlternatingRowColors(True)
@@ -361,7 +367,7 @@ class MainWindow(QMainWindow):
             f"font-weight: bold; color: {COLORS['medium']}; margin-right: 10px;"
         )
         layout.addWidget(lbl)
-        
+
         # Helper to create styled action buttons
         def make_btn(text, icon, func):
             b = QPushButton(text)
@@ -377,7 +383,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(make_btn("Editar", "fa5s.pen", self.open_edit_dialog))
         layout.addWidget(make_btn("Notas", "fa5s.star", self.open_grades_dialog))
         layout.addWidget(make_btn("Relatório", "fa5s.file-pdf", self.open_report))
-        layout.addWidget(make_btn("Documentos", "fa5s.folder-open", self.open_documents))
+        layout.addWidget(
+            make_btn("Documentos", "fa5s.folder-open", self.open_documents)
+        )
         layout.addWidget(make_btn("Reuniões", "fa5s.calendar-alt", self.open_meetings))
         layout.addWidget(make_btn("Observações", "fa5s.eye", self.open_observations))
 
@@ -422,7 +430,7 @@ class MainWindow(QMainWindow):
                 row, 3, QTableWidgetItem(str(intern.registration_number or "-"))
             )
             self.table.setItem(row, 4, QTableWidgetItem(intern.status))
-        
+
         # Re-apply filter if it exists
         if self.txt_search.text():
             self.filter_table(self.txt_search.text())
@@ -527,7 +535,7 @@ class MainWindow(QMainWindow):
         if i:
             MeetingDialog(self, i, self.meeting_service).exec()
             self.page_dashboard.refresh_data()
-    
+
     def open_observations(self):
         """Opens the observation dialog for the selected intern."""
         i = self.get_selected_intern()
@@ -541,23 +549,27 @@ class MainWindow(QMainWindow):
     def import_csv_dialog(self):
         # Filtro atualizado para aceitar Excel e CSV
         path, _ = QFileDialog.getOpenFileName(
-            self, 
-            "Importar Alunos", 
-            "", 
-            "Planilhas (*.xlsx *.xls *.csv);;Todos os Arquivos (*)"
+            self,
+            "Importar Alunos",
+            "",
+            "Planilhas (*.xlsx *.xls *.csv);;Todos os Arquivos (*)",
         )
-        
+
         if path:
             try:
                 self.import_service.read_file(path)
-                
+
                 # Atualiza a tela
                 self.load_data()
                 self.page_dashboard.refresh_data()
-                
-                QMessageBox.information(self, "Sucesso", "Importação concluída com sucesso!")
+
+                QMessageBox.information(
+                    self, "Sucesso", "Importação concluída com sucesso!"
+                )
             except Exception as e:
-                QMessageBox.critical(self, "Erro", f"Erro ao importar arquivo:\n{str(e)}")
+                QMessageBox.critical(
+                    self, "Erro", f"Erro ao importar arquivo:\n{str(e)}"
+                )
 
     def open_report(self):
         """Generates and displays the report card for the selected intern."""
@@ -576,7 +588,9 @@ class MainWindow(QMainWindow):
             ).exec()
 
     def open_batch_meeting(self):
-        d = BatchMeetingDialog(self, self.service, self.meeting_service, self.venue_service)
+        d = BatchMeetingDialog(
+            self, self.service, self.meeting_service, self.venue_service
+        )
         if d.exec():
             self.page_dashboard.refresh_data()
 
@@ -595,3 +609,91 @@ class MainWindow(QMainWindow):
                 self.page_venues.refresh_data()
             elif row == 3:  # Critérios
                 self.page_criteria.refresh_data()
+
+    def _open_context_menu(self, pos):
+        """Cria e exibe o menu de botão direito na tabela."""
+        # 1. Verifica se o clique foi em cima de uma linha válida
+        item = self.table.itemAt(pos)
+        if not item:
+            return  # Clicou no vazio, não faz nada
+
+        # Garante que a linha clicada seja selecionada
+        self.table.selectRow(item.row())
+
+        # 2. Cria o Menu
+        menu = QMenu(self)
+        # Estilo para ficar bonitão (igual ao resto do sistema)
+        menu.setStyleSheet(f"""
+                QMenu {{ 
+                    background-color: {COLORS["white"]}; 
+                    border: 1px solid {COLORS["border"]}; 
+                    border-radius: 6px;
+                    padding: 5px;
+                }}
+                QMenu::item {{ 
+                    padding: 8px 25px; 
+                    border-radius: 4px;
+                    color: {COLORS["dark"]};
+                    font-weight: 500;
+                }}
+                QMenu::item:selected {{ 
+                    background-color: {COLORS["light"]}; 
+                    color: {COLORS["primary"]}; 
+                }}
+                QMenu::separator {{
+                    height: 1px;
+                    background: {COLORS["border"]};
+                    margin: 5px 10px;
+                }}
+            """)
+
+        # 3. Adiciona as Ações (Reutilizando os ícones e métodos que já existem)
+
+        # Ação: Editar
+        act_edit = menu.addAction(
+            qta.icon("fa5s.pen", color=COLORS["dark"]), "  Editar Cadastro"
+        )
+        act_edit.triggered.connect(self.open_edit_dialog)
+
+        menu.addSeparator()
+
+        # Ação: Notas
+        act_grades = menu.addAction(
+            qta.icon("fa5s.star", color="#F5A623"), "  Lançar Notas"
+        )
+        act_grades.triggered.connect(self.open_grades_dialog)
+
+        # Ação: Documentos
+        act_docs = menu.addAction(
+            qta.icon("fa5s.folder-open", color="#4A90E2"), "  Documentos"
+        )
+        act_docs.triggered.connect(self.open_documents)
+
+        # Ação: Reuniões
+        act_meet = menu.addAction(
+            qta.icon("fa5s.calendar-alt", color="#50E3C2"), "  Supervisões"
+        )
+        act_meet.triggered.connect(self.open_meetings)
+
+        # Ação: Observações
+        act_obs = menu.addAction(qta.icon("fa5s.eye", color="#9013FE"), "  Observações")
+        act_obs.triggered.connect(self.open_observations)
+
+        menu.addSeparator()
+
+        # Ação: Relatório (PDF)
+        act_pdf = menu.addAction(
+            qta.icon("fa5s.file-pdf", color="#D0021B"), "  Gerar Relatório Final"
+        )
+        act_pdf.triggered.connect(self.open_report)
+
+        menu.addSeparator()
+
+        # Ação: Excluir (Destaque em Vermelho)
+        act_del = menu.addAction(
+            qta.icon("fa5s.trash-alt", color="#D0021B"), "  Excluir Aluno"
+        )
+        act_del.triggered.connect(self.delete_intern)
+
+        # 4. Exibe o menu na posição global do mouse
+        menu.exec(self.table.mapToGlobal(pos))

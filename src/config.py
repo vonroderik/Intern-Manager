@@ -22,6 +22,7 @@ Attributes:
                    This is an alias for USER_DATA_ROOT.
     DB_PATH (Path): The full path to the SQLite database file (`interns.db`).
 """
+
 import sys
 import os
 from pathlib import Path

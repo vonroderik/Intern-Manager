@@ -12,6 +12,7 @@ from core.models.document import Document
 from core.models.meeting import Meeting
 from core.models.observation import Observation
 
+
 class ReportService:
     """
     Serviço de Geração de Relatórios (PDF).
@@ -118,7 +119,7 @@ class ReportService:
                 status_real = d.status if d.status else "Pendente"
                 st = f"<span style='color:#C62828; font-weight:bold'>{status_real}</span>"
                 pending_docs += 1
-                
+
             docs_rows += (
                 f"<tr><td>{d.document_name}</td><td class='text-center'>{st}</td></tr>"
             )
@@ -151,7 +152,9 @@ class ReportService:
 
         if intern.start_date:
             try:
-                start_fmt = datetime.strptime(intern.start_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+                start_fmt = datetime.strptime(intern.start_date, "%Y-%m-%d").strftime(
+                    "%d/%m/%Y"
+                )
             except ValueError:
                 start_fmt = intern.start_date
         else:
@@ -159,7 +162,9 @@ class ReportService:
 
         if intern.end_date:
             try:
-                end_fmt = datetime.strptime(intern.end_date, "%Y-%m-%d").strftime("%d/%m/%Y")
+                end_fmt = datetime.strptime(intern.end_date, "%Y-%m-%d").strftime(
+                    "%d/%m/%Y"
+                )
             except ValueError:
                 end_fmt = intern.end_date
         else:

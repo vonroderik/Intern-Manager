@@ -184,7 +184,7 @@ class InternDialog(QDialog):
 
         # Jornada e Horário
         self.txt_hours = QLineEdit()
-        self.txt_hours.setPlaceholderText("Ex: 30h semanais")
+        self.txt_hours.setPlaceholderText("Ex: 9h - 15h")
 
         self.txt_days = QLineEdit()
         self.txt_days.setPlaceholderText("Ex: Seg a Sex")

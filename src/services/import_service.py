@@ -7,6 +7,7 @@ from services.document_service import DocumentService
 from core.models.venue import Venue
 from core.models.intern import Intern
 
+
 class ImportService:
     def __init__(
         self,
@@ -46,7 +47,7 @@ class ImportService:
         """Lê CSV tentando diferentes encodings."""
         rows = []
         encodings = ["utf-8-sig", "latin-1", "cp1252"]
-        
+
         for enc in encodings:
             try:
                 with open(path, "r", newline="", encoding=enc) as f:
@@ -56,7 +57,7 @@ class ImportService:
                         dialect = csv.Sniffer().sniff(sample)
                         delimiter = dialect.delimiter
                     except csv.Error:
-                        delimiter = ";" 
+                        delimiter = ";"
 
                     reader = csv.DictReader(f, delimiter=delimiter)
                     rows = list(reader)
@@ -65,38 +66,42 @@ class ImportService:
                 continue
             except Exception as e:
                 raise e
-        
+
         raise ValueError("Não foi possível decodificar o arquivo CSV.")
 
     def _read_excel(self, path: Path) -> list[dict]:
         """Lê Excel e usa a primeira linha como cabeçalho."""
         wb = openpyxl.load_workbook(path, data_only=True)
         sheet = wb.active
-        
+
         if sheet is None:
             raise ValueError("O arquivo Excel não possui uma planilha ativa.")
-        
+
         rows = []
         headers = []
-        
+
         # iter_rows retorna células. values_only=True retorna os valores direto.
         for i, row in enumerate(sheet.iter_rows(values_only=True)):
             if i == 0:
                 # Cabeçalho
-                headers = [str(cell).strip() if cell else f"col_{j}" for j, cell in enumerate(row)]
+                headers = [
+                    str(cell).strip() if cell else f"col_{j}"
+                    for j, cell in enumerate(row)
+                ]
                 continue
-            
+
             row_dict = {}
             has_data = False
             for j, value in enumerate(row):
                 if j < len(headers):
                     val_str = str(value).strip() if value is not None else ""
                     row_dict[headers[j]] = val_str
-                    if val_str: has_data = True
-            
+                    if val_str:
+                        has_data = True
+
             if has_data:
                 rows.append(row_dict)
-                
+
         return rows
 
     def _process_data(self, rows: list[dict]):
@@ -133,25 +138,31 @@ class ImportService:
                 }
 
                 if existing_venue:
-                    self.venue_service.update_venue(Venue(venue_id=existing_venue.venue_id, **venue_data))
+                    self.venue_service.update_venue(
+                        Venue(venue_id=existing_venue.venue_id, **venue_data)
+                    )
                     current_venue_id = existing_venue.venue_id
                 else:
-                    current_venue_id = self.venue_service.add_new_venue(Venue(**venue_data))
-                
+                    current_venue_id = self.venue_service.add_new_venue(
+                        Venue(**venue_data)
+                    )
+
                 # Fallback
                 if current_venue_id is None:
                     v = self.venue_service.repo.get_by_name(venue_name)
-                    if v: current_venue_id = v.venue_id
+                    if v:
+                        current_venue_id = v.venue_id
 
                 if current_venue_id is not None:
                     processed_venues.add(venue_name)
                     venue_id_map[venue_name] = current_venue_id
-            
+
             elif venue_name:
                 current_venue_id = venue_id_map.get(venue_name)
                 if not current_venue_id:
                     v = self.venue_service.repo.get_by_name(venue_name)
-                    if v: current_venue_id = v.venue_id
+                    if v:
+                        current_venue_id = v.venue_id
 
             # --- Processa Aluno ---
             if intern_name in processed_interns:
@@ -170,13 +181,19 @@ class ImportService:
             }
 
             if existing_intern:
-                self.intern_service.update_intern(Intern(intern_id=existing_intern.intern_id, **intern_data))
+                self.intern_service.update_intern(
+                    Intern(intern_id=existing_intern.intern_id, **intern_data)
+                )
             else:
-                new_intern_id = self.intern_service.add_new_intern(Intern(**intern_data))
+                new_intern_id = self.intern_service.add_new_intern(
+                    Intern(**intern_data)
+                )
                 # Cria documentos iniciais
                 if new_intern_id:
                     try:
-                        self.document_service.create_initial_documents_batch(new_intern_id)
+                        self.document_service.create_initial_documents_batch(
+                            new_intern_id
+                        )
                     except Exception:
                         pass
 

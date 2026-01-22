@@ -5,7 +5,9 @@ This script initializes the application's components, including the database,
 service layer, and user interface. It is responsible for orchestrating the
 dependency injection process and launching the main Qt window.
 """
+
 import sys
+import ctypes
 from pathlib import Path
 from typing import Optional
 
@@ -61,6 +63,8 @@ def main():
     7.  Instantiates and displays the main application window (`MainWindow`).
     8.  Enters the Qt event loop.
     """
+    myappid = "mycompany.internmanager.pro.2026"  # Uma string qualquer única
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     app = QApplication(sys.argv)
 
     print("\n=== SYSTEM STARTUP ===\n")
@@ -83,7 +87,7 @@ def main():
         # Dependency Injection: Create repository instances first,
         # then inject them into the corresponding services.
         # This decouples the business logic (services) from the data access layer (repositories).
-        
+
         # Repositories (Data Access Layer)
         repo_venue = VenueRepository(db)
         repo_intern = InternRepository(db)
@@ -101,7 +105,6 @@ def main():
         obs_service = ObservationService(repo_obs)
         m_service = MeetingService(repo_meeting)
         criteria_service = EvaluationCriteriaService(repo_criteria)
-        
 
         # Some services might need access to multiple repositories.
         grade_service = GradeService(repo=repo_grade, criteria_repo=repo_criteria)
